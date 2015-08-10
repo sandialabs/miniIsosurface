@@ -113,32 +113,6 @@ void extractIsosurfaceFromBlock(const Image3D_t &vol, const unsigned ext[6],
 				pos[7][1] = ypos + spacing[1];
 				pos[7][2] = zpos + spacing[2];
 
-//				for (int iEdge=0;iEdge<12;iEdge++) {
-//					unsigned edgeIndex = edgeIndices.getEdgeIndex(xidx, yidx, zidx, iEdge);
-//					int v1 =MarchingCubesTables::getEdgeVertices(iEdge)[0];
-//					int v2 =MarchingCubesTables::getEdgeVertices(iEdge)[1];
-//					if (edgeIndex== 45421931 ) {
-//						CLOG(logDEBUG) << "Found edge: 45421931==================";
-//						CLOG(logDEBUG) << "val 1: " << val[v1];
-//						CLOG(logDEBUG) << "val 2: " << val[v2];
-//						CLOG(logDEBUG) << "x:     " << xidx;
-//						CLOG(logDEBUG) << "y:     " << yidx;
-//						CLOG(logDEBUG) << "z:     " << zidx;
-//						float_t w = (isoval - val[v1]) / (val[v2] - val[v1]);
-//						CLOG(logDEBUG) << "w:     " << w;
-//
-//						for (int i = 0; i < 8; ++i) {
-//							if (val[i] >= isoval) {
-//								CLOG(logDEBUG)<< "gt: " << val[i];
-//							}
-//							else {
-//								CLOG(logDEBUG)<< "smaller: " << val[i];
-//							}
-//						}
-//					}
-//				}
-
-
 				// get the triangles to generate
 				const int *edges = MarchingCubesTables::getCaseTrianglesEdges(
 						cellId);

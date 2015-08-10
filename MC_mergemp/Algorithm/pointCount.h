@@ -16,6 +16,6 @@
 #include"../../utils/types.h"
 
 unsigned countPointsInBlock(const Image3D_t &, const unsigned ext[6], float_t,
-		EdgeIndexer_t &,PointMap_t &);
+		EdgeIndexer_t &);
 
 #endif /* ALGORITHM_POINTCOUNT_H_ */

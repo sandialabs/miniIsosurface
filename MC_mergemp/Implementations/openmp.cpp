@@ -48,9 +48,13 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 
-	PointMap_t ptMapDEBUG;
+	Timer RunTime;
+	countPointsInBlock(vol, fullExtent, isoval,edgeIndices);
 
-	countPointsInBlock(vol, fullExtent, isoval,edgeIndices,ptMapDEBUG);
+	// Stop Clock
+	RunTime.stop();
+	//Report and save YAML file
+	RunTime.reportTime(doc);
 
 	#pragma omp parallel
 	{

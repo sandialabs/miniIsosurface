@@ -19,6 +19,7 @@
 #include"../../utils/Reporting/YAML_Element.hpp"
 #include"../../utils/Reporting/YAML_Doc.hpp"
 #include"../../utils/Reporting/Log.h"
+#include"../../utils/Reporting/Timer.h"
 
 // Local implementation headers -------
 // Algorithm objects/functions
