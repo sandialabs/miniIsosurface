@@ -47,13 +47,12 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned nblocks = numBlockPages * numBlockRows * numBlockCols;
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
-	CLOG(logDEBUG) << "nAllEdges: " << edgeIndices.nAllEdges;
 
 	PointMap_t ptMapDEBUG;
 
 	countPointsInBlock(vol, fullExtent, isoval,edgeIndices,ptMapDEBUG);
 
-	#pragma omp ordered
+	#pragma omp parallel
 	{
 		TriangleMesh_t threadMesh;
 		PointMap_t threadPointMap;
@@ -97,19 +96,6 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 		{
 			// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
 			*mesh += threadMesh;
-		}
-
-		// ============= Debug edges =======
-		unsigned diff=0;
-		for (PointMap_t::iterator it = ptMapDEBUG.begin(); it != ptMapDEBUG.end(); ++it) {
-			unsigned EdgeIdx=it->first;
-			if (threadPointMap.find(EdgeIdx) == threadPointMap.end()) {
-				CLOG(logDEBUG) << "Overcounted edge indices: " << EdgeIdx;
-				diff++;
-			}
-			if (diff>3) {
-				break;
-			}
 		}
 	}
 	CLOG(logDEBUG1) << "Mesh verts: " << mesh->numberOfVertices();

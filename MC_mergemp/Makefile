@@ -12,7 +12,7 @@
 # ========== Macros =============================
 
 # project name (generate executable with this name)
-TARGET          = MCMerge
+TARGET          = MCMerge.exe
 
 # Compiler and flags
 CC              = g++

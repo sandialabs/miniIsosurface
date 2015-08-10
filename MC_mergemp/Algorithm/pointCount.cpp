@@ -8,7 +8,7 @@
 #include"pointCount.h"
 
 static inline void counter(float_t * vals, float_t &isoval, unsigned &nUniquePts, PointMap_t &ptMapDebug, unsigned &edgeIndex) {
-	if (vals[0] >= isoval && vals[1] <= isoval) {
+	if (vals[0] >= isoval && vals[1] < isoval) {
 		if (!(vals[0] == isoval && vals[1] == isoval)) {
 			nUniquePts++;
 			if (ptMapDebug.find(edgeIndex) == ptMapDebug.end()) {
@@ -17,7 +17,7 @@ static inline void counter(float_t * vals, float_t &isoval, unsigned &nUniquePts
 			}
 		}
 	}
-	else if (vals[0] <= isoval && vals[1] >= isoval) {
+	else if (vals[0] < isoval && vals[1] >= isoval) {
 		if (!(vals[0] == isoval && vals[1] == isoval)) {
 			nUniquePts++;
 			if (ptMapDebug.find(edgeIndex) == ptMapDebug.end()) {
@@ -46,9 +46,9 @@ unsigned countPointsInBlock(const Image3D_t &vol, const unsigned ext[6],
 
 	unsigned nUniquePts=0;
 
-	CLOG(logDEBUG) << "nExedges: " << edgeIndices.nXedges;
-	CLOG(logDEBUG) << "nExedges: " << edgeIndices.nXYedges;
-	CLOG(logDEBUG) << "nExedges: " << edgeIndices.nAllEdges;
+//	CLOG(logDEBUG) << "nExedges: " << edgeIndices.nXedges;
+//	CLOG(logDEBUG) << "nExedges: " << edgeIndices.nXYedges;
+//	CLOG(logDEBUG) << "nExedges: " << edgeIndices.nAllEdges;
 	/*
 	 * For cache efficiency, create two parallel buffers
 	 */
@@ -88,6 +88,6 @@ unsigned countPointsInBlock(const Image3D_t &vol, const unsigned ext[6],
 		counter(val,isoval,nUniquePts, ptMapDebug,iEdge);
 	}
 
-	CLOG(logDEBUG) << "# of unique points: " << nUniquePts;
+	CLOG(logDEBUG1) << "# of unique points: " << nUniquePts;
 }
 
