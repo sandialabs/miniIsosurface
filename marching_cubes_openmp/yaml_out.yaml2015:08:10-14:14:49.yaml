@@ -1,0 +1,11 @@
+Mini-Application Name: Marching Cubes
+Mini-Application Version: 0.1
+Volume image data file path: ../Data/in.vtk
+File x-dimension: 512
+File y-dimension: 512
+File z-dimension: 361
+Number of points in image volume: 94633984
+Marching cubes algorithm: OpenMP
+Total Program CPU Time (clicks): 1.813e+07
+Total Program CPU Time (seconds): 18.13
+Total Program WALL Time (seconds): 6.30085

@@ -11,7 +11,7 @@
 # ========== Macros =============================
 
 # project name (generate executable with this name)
-TARGET          = MCoMP
+TARGET          = MCoMP.exe
 
 # Compiler and flags
 CC              = g++

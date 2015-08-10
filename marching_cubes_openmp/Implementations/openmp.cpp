@@ -7,7 +7,7 @@
 
 #include"openmp.h"
 
-static const unsigned grainDim = 32;
+static const unsigned grainDim = 256;
 
 namespace openmp {
 
