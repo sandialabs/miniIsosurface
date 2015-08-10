@@ -7,7 +7,7 @@
 
 #include"openmp.h"
 
-static const unsigned grainDim = 1024;
+static const unsigned grainDim = 256;
 
 namespace openmp {
 
@@ -48,13 +48,7 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 
-	Timer RunTime;
 	countPointsInBlock(vol, fullExtent, isoval,edgeIndices);
-
-	// Stop Clock
-	RunTime.stop();
-	//Report and save YAML file
-	RunTime.reportTime(doc);
 
 	#pragma omp parallel
 	{

@@ -28,7 +28,7 @@
 
 int main(int argc, char* argv[]) {
 
-	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
+	LOG::ReportingLevel() = logINFO; // Debug level is hard coded
 
 	// Initialize the user interface
 	MPterface mainUI(argc,argv);
