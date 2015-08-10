@@ -30,6 +30,9 @@
 callgrind.*
 cachegrind.*
 
+# Run results
+yaml_out.*
+
 # Ignore directories
 build/
 Data/
