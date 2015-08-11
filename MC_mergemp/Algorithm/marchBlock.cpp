@@ -23,8 +23,8 @@ void extractIsosurfaceFromBlock(const Image3D_t &vol, const unsigned ext[6],
 	const float_t *spacing = vol.getSpacing();
 	const float_t *buffer = vol.getData();
 
-	CLOG(logDEBUG1) << "Extent: " << ext[0] << " " << ext[1] << " "
-			<< ext[2] << " " << ext[3] << " " << ext[4] << " " << ext[5];
+//	CLOG(logDEBUG1) << "Extent: " << ext[0] << " " << ext[1] << " "
+//			<< ext[2] << " " << ext[3] << " " << ext[4] << " " << ext[5];
 
 	unsigned sliceSize = dims[0] * dims[1];
 

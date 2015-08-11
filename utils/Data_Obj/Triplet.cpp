@@ -70,6 +70,15 @@ Triplet<T>& Triplet<T>::operator+=(const T term) {
 	return *this;
 }
 
+template<typename T>
+Triplet<T>& Triplet<T>::operator+=(const Triplet term) {
+	coordinates[0] += term.coordinates[0];
+	coordinates[1] += term.coordinates[1];
+	coordinates[2] += term.coordinates[2];
+
+	return *this;
+}
+
 // Comparison
 template<typename T>
 bool Triplet<T>::operator==(const Triplet & Tri) const {

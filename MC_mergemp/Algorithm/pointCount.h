@@ -15,6 +15,11 @@
 // Data Objects
 #include"../../utils/types.h"
 
+typedef Triplet<unsigned> Point3dIdx;
+
+unsigned countPointsInVolume(const Image3D_t &, const unsigned ext[6], float_t,
+		EdgeIndexer_t &);
+
 unsigned countPointsInBlock(const Image3D_t &, const unsigned ext[6], float_t,
 		EdgeIndexer_t &);
 

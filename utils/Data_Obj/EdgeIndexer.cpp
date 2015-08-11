@@ -89,51 +89,47 @@ const unsigned EdgeIndexer<T>::edgeIndexZaxis(unsigned x, unsigned y,
 	return nXYedges + x + (rangeX + 1) * y + (rangeX + 1) * (rangeY + 1) * z;
 }
 
-//template<typename T>
-//const void EdgeIndexer<T>::getPointCoordinates(unsigned edgeIndex,Point3dIdx& r1,Point3dIdx& r2) const {
-//	unsigned x,y,z;
-//	unsigned x1,y1,z1;
-//	switch (edgeIndex) {
-//	// Edges parallel to the x-axis
-//	case edgeIndex < nXedges:
-//
-//		x=edgeIndex % rangeX;
-//		z=edgeIndex/(rangeX*(rangeY+1));
-//		y=(edgeIndex-z*rangeX*(rangeY+1))/rangeX;
-//
-//		x1=x+1;
-//		y1=y;
-//		z1=z;
-//
-//		break;
-//	// Edges parallel to the y-axis
-//	case edgeIndex >= nXedges && edgeIndex < nXYedges:
-//
-//		x=(edgeIndex-nXedges) % (rangeX+1);
-//		z=(edgeIndex-nXedges)/(rangeY*(rangeX+1));
-//		y=(edgeIndex-nXedges-z*rangeY*(rangeX+1))/(rangeX+1);
-//
-//		x1=x;
-//		y1=y+1;
-//		z1=z;
-//
-//		break;
-//	// Edges parallel to the z-axis
-//	default:
-//
-//		x=(edgeIndex-nXYedges) % (rangeX+1);
-//		z=(edgeIndex-nXYedges)/((rangeY+1)*(rangeX+1));
-//		y=(edgeIndex-nXedges-z*(rangeY+1)*(rangeX+1))/(rangeX+1);
-//
-//		x1=x;
-//		y1=y;
-//		z1=z+1;
-//
-//		break;
-//	}
-//	r1.setCoordinates(x,y,z);
-//	r2.setCoordinates(x1,y1,z1);
-//}
+template<typename T>
+const void EdgeIndexer<T>::getPointCoordinates(unsigned edgeIndex,Point3dIdx& r1,Point3dIdx& r2) const {
+	unsigned x,y,z;
+	unsigned x1,y1,z1;
+	if (edgeIndex < nXedges) {
+
+		x=edgeIndex % rangeX;
+		z=edgeIndex/(rangeX*(rangeY+1));
+		y=(edgeIndex-z*rangeX*(rangeY+1))/rangeX;
+
+		x1=x+1;
+		y1=y;
+		z1=z;
+
+	}
+	// Edges parallel to the y-axis
+	else if (edgeIndex >= nXedges && edgeIndex < nXYedges) {
+
+		x=(edgeIndex-nXedges) % (rangeX+1);
+		z=(edgeIndex-nXedges)/(rangeY*(rangeX+1));
+		y=(edgeIndex-nXedges-z*rangeY*(rangeX+1))/(rangeX+1);
+
+		x1=x;
+		y1=y+1;
+		z1=z;
+
+	}
+	// Edges parallel to the z-axis
+	else {
+
+		x=(edgeIndex-nXYedges) % (rangeX+1);
+		z=(edgeIndex-nXYedges)/((rangeY+1)*(rangeX+1));
+		y=(edgeIndex-nXYedges-z*(rangeY+1)*(rangeX+1))/(rangeX+1);
+
+		x1=x;
+		y1=y;
+		z1=z+1;
+	}
+	r1.setCoordinates(x,y,z);
+	r2.setCoordinates(x1,y1,z1);
+}
 
 
 

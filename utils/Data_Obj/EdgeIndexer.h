@@ -32,7 +32,7 @@ public:
 
 	// Adding to points to the edge index
 	const unsigned getEdgeIndex(unsigned, unsigned, unsigned, int) const;
-//	const void getPointCoordinates(unsigned,Point3dIdx&,Point3dIdx&) const;
+	const void getPointCoordinates(unsigned,Point3dIdx&,Point3dIdx&) const;
 
 	// This function is not a member b/c we keep I/O separate
 	template <typename Anything> friend void saveTriangleMesh(const EdgeIndexer<Anything> *, const char *);

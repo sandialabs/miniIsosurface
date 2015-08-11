@@ -40,6 +40,7 @@ public:
 	void operator=(const T*);
 	void operator=(const Triplet&);
 	Triplet& operator+=(const T);
+	Triplet& operator+=(const Triplet);
 
 	// Comparison
 	bool operator==(const Triplet &) const;

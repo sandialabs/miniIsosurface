@@ -74,6 +74,13 @@ void TriangleMesh<T>::addTriangle(Triangle TriIndex) {
 }
 
 template<typename T>
+void TriangleMesh<T>::resetTheMesh(void) {
+	points.resize(0);
+	normals.resize(0);
+	indices.resize(0);
+}
+
+template<typename T>
 TriangleMesh<T>& TriangleMesh<T>::operator+=(TriangleMesh<T>& newMesh) {
 	unsigned nPointsStart = this->numberOfVertices();
 	unsigned nTrianglesNew = newMesh.numberOfTriangles();

@@ -7,7 +7,7 @@
 
 #include"openmp.h"
 
-static const unsigned grainDim = 256;
+static const unsigned grainDim = 1;
 
 namespace openmp {
 
@@ -48,15 +48,16 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 
-	countPointsInBlock(vol, fullExtent, isoval,edgeIndices);
 
-	#pragma omp parallel
+	#pragma omp ordered
 	{
 		TriangleMesh_t threadMesh;
 		PointMap_t threadPointMap;
 
 		#pragma omp for nowait
 		for (unsigned i = 0; i < nblocks; ++i) {
+			threadPointMap.clear();
+			threadMesh.resetTheMesh();
 			//CLOG(logDEBUG) << "Iteration " << i;
 			unsigned blockPageIdx = i / nblocksPerPage;
 			unsigned blockRowIdx = (i % nblocksPerPage) / numBlockCols;
@@ -76,11 +77,10 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 			unsigned blockExtent[6];
 			blockRange.extent(blockExtent);
 
-			unsigned approxNumberOfEdges = 3*(pto-pfrom+1)*(rto-rfrom+1)*(cto-cfrom+1);
+			EdgeIndexer_t blockEdgeIndices(blockExtent);
+			unsigned mapSize = countPointsInBlock(vol, blockExtent, isoval,blockEdgeIndices);
 
-			unsigned mapSize = approxNumberOfEdges; // Very approximate hack..
 			threadPointMap.rehash(mapSize);
-			//threadPointMap.resize(localEdgeIndices.nAllEdges,-1);
 
 			extractIsosurfaceFromBlock(vol, blockExtent, isoval, threadPointMap,edgeIndices,
 					&threadMesh);

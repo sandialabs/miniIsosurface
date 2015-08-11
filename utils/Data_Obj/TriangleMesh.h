@@ -38,6 +38,8 @@ public:
 	void addTriangle(unsigned,unsigned,unsigned);
 	void addTriangle(Triangle);
 
+	void resetTheMesh(void);
+
 	// Combine 2 meshes
 	TriangleMesh& operator+=(TriangleMesh&);
 

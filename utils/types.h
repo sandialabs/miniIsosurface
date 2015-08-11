@@ -27,6 +27,5 @@ typedef Triplet<float_t> PositionVector_t;
 typedef Triplet<unsigned> IndexTriplet_t;
 
 typedef std::unordered_map<unsigned,unsigned> PointMap_t;
-//typedef std::vecotr<unsigned> PointMap_t;
 
 #endif /* TYPES_H_ */
