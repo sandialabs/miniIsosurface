@@ -7,14 +7,14 @@
 
 #include"openmp.h"
 
-static const unsigned grainDim = 1;
+static const unsigned grainDim = 256;
 
 namespace openmp {
 
 void extractIsosurface(const Image3D_t &vol, float_t isoval,
 		TriangleMesh_t *&mesh, YAML_Doc& doc) {
 
-	mesh = new TriangleMesh_t();
+	TriangleMesh_t beforeMergeMesh;
 
 	const unsigned *dims = vol.getDimension();
 	const float_t *origin = vol.getOrigin();
@@ -39,6 +39,7 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned fullExtent[6];
 	fullRange.extent(fullExtent);
 	EdgeIndexer_t edgeIndices(fullExtent);
+	MapReverse mapReverse;
 
 	unsigned numBlockPages = numBlocks(fullRange.pages());
 	unsigned numBlockRows = numBlocks(fullRange.rows());
@@ -48,17 +49,14 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 
-
-	#pragma omp ordered
+	#pragma omp parallel
 	{
 		TriangleMesh_t threadMesh;
 		PointMap_t threadPointMap;
+		MapReverse threadMapReverse;
 
 		#pragma omp for nowait
 		for (unsigned i = 0; i < nblocks; ++i) {
-			threadPointMap.clear();
-			threadMesh.resetTheMesh();
-			//CLOG(logDEBUG) << "Iteration " << i;
 			unsigned blockPageIdx = i / nblocksPerPage;
 			unsigned blockRowIdx = (i % nblocksPerPage) / numBlockCols;
 			unsigned blockColIdx = (i % nblocksPerPage) % numBlockCols;
@@ -78,12 +76,16 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 			blockRange.extent(blockExtent);
 
 			EdgeIndexer_t blockEdgeIndices(blockExtent);
-			unsigned mapSize = countPointsInBlock(vol, blockExtent, isoval,blockEdgeIndices);
+			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
+
+			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
+			threadPointMap.rehash(mapSize);
 
 			threadPointMap.rehash(mapSize);
 
 			extractIsosurfaceFromBlock(vol, blockExtent, isoval, threadPointMap,edgeIndices,
 					&threadMesh);
+			threadMapReverse.setArrays(threadPointMap);
 		}
 
 		/*
@@ -92,10 +94,21 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 		 */
 		#pragma omp critical
 		{
+			const unsigned nPoints=mapReverse.getSize();
+			threadMapReverse += nPoints;
+			mapReverse+=threadMapReverse;
 			// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
-			*mesh += threadMesh;
+			beforeMergeMesh += threadMesh;
 		}
 	}
+	mapReverse.sortYourSelf();
+	mapReverse.getNewIndices();
+
+	CLOG(logDEBUG) << "new";
+	mesh = new TriangleMesh_t();
+	mesh->buildMesh(beforeMergeMesh,mapReverse);
+
+	CLOG(logDEBUG1) << "OpenMP raw mesh verts: " << beforeMergeMesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh verts: " << mesh->numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << mesh->numberOfTriangles();
 }

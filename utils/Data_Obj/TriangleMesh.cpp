@@ -15,6 +15,49 @@ TriangleMesh<T>::TriangleMesh() {
 }
 
 template<typename T>
+void TriangleMesh<T>::buildMesh(TriangleMesh& ogMesh,MapReverse& newPtMap) {
+	/*
+	 * Iterates through the entire dataArray in newPtMap and creates
+	 * a new mesh from the new point indices in newPointIdx
+	 */
+	unsigned nOgPoints=newPtMap.getSize();
+	// As many new points as last index in the dataArray
+	unsigned nNewPoints=newPtMap.dataArray.end()->newPointIdx;
+	// Allocate space in the new mesh
+	this->points.resize(nNewPoints);
+	this->normals.resize(nNewPoints);
+
+	/*
+	 * Assign all the new points and normals correctly
+	 */
+	for (unsigned iPoint=0; iPoint < nOgPoints; iPoint++) {
+
+		unsigned newPtIndex=newPtMap.dataArray[iPoint].newPointIdx;
+		unsigned ogPtIndex=newPtMap.dataArray[iPoint].pointIdx;
+		const float_t * ogCoords = ogMesh.getPointPosition(ogPtIndex);
+		const float_t * ogNormal = ogMesh.getNormalVector(ogPtIndex);
+
+		this->setPoint(newPtIndex,ogCoords);
+		this->setNormal(newPtIndex,ogNormal);
+	}
+
+	/*
+	 * Get the triangles
+	 */
+	unsigned nTriangles = ogMesh.numberOfTriangles();
+	newPtMap.sortByOldIndex();
+	for (unsigned iTriangle=0; iTriangle < nTriangles;++iTriangle) {
+		const unsigned *ogTriangleIdxs=ogMesh.getTriangleIndices(iTriangle);
+		unsigned newTriangleIdxs[3];
+		newTriangleIdxs[0]=newPtMap.dataArray[ogTriangleIdxs[0]].newPointIdx;
+		newTriangleIdxs[1]=newPtMap.dataArray[ogTriangleIdxs[1]].newPointIdx;
+		newTriangleIdxs[2]=newPtMap.dataArray[ogTriangleIdxs[2]].newPointIdx;
+
+		this->addTriangle(newTriangleIdxs);
+	}
+}
+
+template<typename T>
 TriangleMesh<T>::~TriangleMesh() {
 	// Not needed
 }
@@ -71,6 +114,18 @@ void TriangleMesh<T>::addTriangle(unsigned a, unsigned b, unsigned c) {
 template<typename T>
 void TriangleMesh<T>::addTriangle(Triangle TriIndex) {
 	indices.push_back(TriIndex);
+}
+
+template<typename T>
+void TriangleMesh<T>::setPoint(unsigned position, const T * coordinates) {
+	Point3d pt(coordinates);
+	points[position]=pt;
+}
+
+template<typename T>
+void TriangleMesh<T>::setNormal(unsigned position, const T * normal) {
+	Vector3d pt(normal);
+	normals[position]=pt;
 }
 
 template<typename T>

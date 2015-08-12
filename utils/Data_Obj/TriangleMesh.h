@@ -11,6 +11,7 @@
 #include"../includes.h"
 
 #include"./Triplet.h"
+#include"./MapReverse.h"
 
 // Reporting Headers
 #include"../Reporting/Log.h"
@@ -23,9 +24,12 @@ class TriangleMesh {
 	typedef Triplet<unsigned> Triangle;
 public:
 	TriangleMesh();
+	TriangleMesh(TriangleMesh&,MapReverse&);
 	virtual ~TriangleMesh();
 
 	// Data member interface: write
+	void buildMesh(TriangleMesh&,MapReverse&);
+
 	void addPoint(T *);
 	void addPoint(T,T,T);
 	void addPoint(Point3d);
@@ -38,6 +42,8 @@ public:
 	void addTriangle(unsigned,unsigned,unsigned);
 	void addTriangle(Triangle);
 
+	void setPoint(unsigned,const T *);
+	void setNormal(unsigned,const T *);
 	void resetTheMesh(void);
 
 	// Combine 2 meshes

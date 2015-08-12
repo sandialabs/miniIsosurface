@@ -27,6 +27,19 @@ private:
 	const char* const fileName;
 };
 
+class object_not_sorted: public std::exception {
+public:
+	object_not_sorted(const char* const objectName) :
+		objectName(objectName) {
+
+		CLOG(logERROR) << "The MapReverse object is not sorted";
+		CLOG(logERROR) << "Do not call MapReverse::getNewIndices if the object is not sorted";
+	}
+
+private:
+	const char* const objectName;
+};
+
 class bad_format: public std::exception {
 public:
 	bad_format(const char* const message) :
