@@ -81,11 +81,16 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
 			threadPointMap.rehash(mapSize);
 
-			threadPointMap.rehash(mapSize);
-
 			extractIsosurfaceFromBlock(vol, blockExtent, isoval, threadPointMap,edgeIndices,
 					&threadMesh);
+
+			//Timer subTime;
 			threadMapReverse.setArrays(threadPointMap);
+//			// Stop Clock
+//			subTime.stop();
+//
+//			//Report and save YAML file
+//			subTime.reportTime();
 		}
 
 		/*
@@ -101,8 +106,15 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 			beforeMergeMesh += threadMesh;
 		}
 	}
+
+	Timer subTime;
 	mapReverse.sortYourSelf();
 	mapReverse.getNewIndices();
+	// Stop Clock
+	subTime.stop();
+
+	//Report and save YAML file
+	subTime.reportTime();
 
 	CLOG(logDEBUG) << "new";
 	mesh = new TriangleMesh_t();

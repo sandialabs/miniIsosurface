@@ -22,6 +22,7 @@ public:
 
 	void stop(void);
 	void reportTime(YAML_Doc &) const;
+	void reportTime(void) const;
 
 private:
 	struct timespec start, finish;

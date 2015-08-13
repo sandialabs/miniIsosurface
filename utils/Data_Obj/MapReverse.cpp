@@ -13,6 +13,10 @@ MapReverse::MapReverse(void) {
 	oldIdx_sorted=false;
 }
 
+void MapReverse::preAllocate(unsigned nPoints) {
+	dataArray.resize(nPoints);
+}
+
 void MapReverse::setArrays(const PointMap_type &pointMap) {
 	/*
 	 * This object reverses the point map
@@ -20,7 +24,8 @@ void MapReverse::setArrays(const PointMap_type &pointMap) {
 	 * edgeIdxArray : point indices pointing to edge indices
 	 */
 	unsigned nPoints = pointMap.size();
-	dataArray.resize(nPoints);
+	this->preAllocate(nPoints);
+	#pragma omp parallel for nowait
 	for (PointMap_type::const_iterator it=pointMap.begin(); it != pointMap.end(); ++it) {
 		dataArray[it->second].edgeIdx=it->first;
 		dataArray[it->second].pointIdx=it->second;
@@ -66,6 +71,7 @@ void MapReverse::getNewIndices(void) {
 
 MapReverse& MapReverse::operator+=(const unsigned increment) {
 
+	# pragma omp parallel for nowait
 	for (unsigned iPoint=0; iPoint<this->getSize(); iPoint++) {
 		this->dataArray[iPoint].pointIdx+=increment;
 	}

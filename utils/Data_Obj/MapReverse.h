@@ -13,6 +13,7 @@
 // Reporting Headers
 #include"../Reporting/Log.h"
 #include"../Reporting/IO_errors.h"
+#include"../Reporting/Timer.h"
 
 typedef std::unordered_map<unsigned,unsigned> PointMap_type;
 
@@ -40,6 +41,7 @@ public:
 	virtual ~MapReverse();
 
 	// write
+	void preAllocate(const unsigned);
 	void setArrays(const PointMap_type &);
 	void sortYourSelf(void);
 	void sortByOldIndex(void);

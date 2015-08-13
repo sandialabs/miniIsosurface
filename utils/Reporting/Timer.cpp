@@ -33,6 +33,12 @@ void Timer::reportTime(YAML_Doc &doc) const {
 	doc.add("Total Program WALL Time (seconds)",totalWallTime);
 }
 
+void Timer::reportTime(void) const {
+	CLOG(logYAML) << "Total Subroutine CPU Time (clicks): " << tCPU;
+	CLOG(logYAML) << "Total Subroutine CPU Time (seconds): " << totalCPUtime;
+	CLOG(logYAML) << "Total Subroutine WALL Time (seconds): " << totalWallTime;
+}
+
 Timer::~Timer() {
 	// TODO Auto-generated destructor stub
 }
