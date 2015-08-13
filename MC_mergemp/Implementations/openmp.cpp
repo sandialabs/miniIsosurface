@@ -107,14 +107,8 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 		}
 	}
 
-	Timer subTime;
 	mapReverse.sortYourSelf();
 	mapReverse.getNewIndices();
-	// Stop Clock
-	subTime.stop();
-
-	//Report and save YAML file
-	subTime.reportTime();
 
 	CLOG(logDEBUG) << "new";
 	mesh = new TriangleMesh_t();
