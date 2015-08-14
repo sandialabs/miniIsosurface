@@ -10,40 +10,62 @@
 MapReverse::MapReverse(void) {
 	// not necessary
 	edge_sorted=false;
-	oldIdx_sorted=false;
+	//oldIdx_sorted=false;
 }
 
 void MapReverse::preAllocate(unsigned nPoints) {
 	dataArray.resize(nPoints);
 }
 
-void MapReverse::setArrays(const PointMap_type &pointMap) {
+void MapReverse::setArrays(PointMap_type &pointMap) {
 	/*
 	 * This object reverses the point map
 	 * pointMap: edges pointing to point indices
 	 * edgeIdxArray : point indices pointing to edge indices
 	 */
-	unsigned nPoints = pointMap.size();
-	this->preAllocate(nPoints);
-	#pragma omp parallel for nowait
-	for (PointMap_type::const_iterator it=pointMap.begin(); it != pointMap.end(); ++it) {
-		dataArray[it->second].edgeIdx=it->first;
-		dataArray[it->second].pointIdx=it->second;
+	unsigned nEdges = pointMap.size();
+	this->preAllocate(nEdges);
+
+	// Start the clock
+	Timer RunTime;
+	//#pragma omp parallel for
+	for (unsigned iEdge=0;iEdge<nEdges;++iEdge) {
+		unsigned iPoint = pointMap[iEdge];
+		dataArray[iPoint].edgeIdx=iEdge;
+		dataArray[iPoint].pointIdx=iPoint;
 	}
+
+	// Stop Clock
+	RunTime.stop();
+
+	//Report and save YAML file
+	RunTime.reportTime();
+//	for (PointMap_type::const_iterator it=pointMap.begin(); it != pointMap.end(); ++it) {
+//		dataArray[it->second].edgeIdx=it->first;
+//		dataArray[it->second].pointIdx=it->second;
+//	}
 }
 
 void MapReverse::sortYourSelf(void) {
 
 	std::sort(dataArray.begin(), dataArray.end(), ByEdgeIdx());
 	edge_sorted=true;
-	oldIdx_sorted=false;
+	//oldIdx_sorted=false;
 }
 
-void MapReverse::sortByOldIndex(void) {
+std::vector<unsigned> MapReverse::oldToNewIdxMap(void) {
 
-	std::sort(dataArray.begin(), dataArray.end(), ByPointIdx());
-	edge_sorted=false;
-	oldIdx_sorted=true;
+	unsigned nPoints=getSize();
+	std::vector<unsigned> oldToNewMap;
+	oldToNewMap.resize(nPoints);
+
+	#pragma omp parallel for
+	for(unsigned iPoint=0;iPoint<nPoints;++iPoint) {
+		unsigned ptIdxOld=dataArray[iPoint].pointIdx;
+		oldToNewMap[ptIdxOld] = dataArray[iPoint].newPointIdx;
+	}
+
+	return oldToNewMap;
 }
 
 void MapReverse::getNewIndices(void) {
@@ -71,7 +93,7 @@ void MapReverse::getNewIndices(void) {
 
 MapReverse& MapReverse::operator+=(const unsigned increment) {
 
-	# pragma omp parallel for nowait
+	# pragma omp parallel for
 	for (unsigned iPoint=0; iPoint<this->getSize(); iPoint++) {
 		this->dataArray[iPoint].pointIdx+=increment;
 	}

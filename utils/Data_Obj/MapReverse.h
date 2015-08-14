@@ -42,9 +42,9 @@ public:
 
 	// write
 	void preAllocate(const unsigned);
-	void setArrays(const PointMap_type &);
+	void setArrays(PointMap_type &);
 	void sortYourSelf(void);
-	void sortByOldIndex(void);
+	std::vector<unsigned> oldToNewIdxMap(void);
 	MapReverse& operator+=(const unsigned);
 	MapReverse& operator+=(const MapReverse&);
 	void getNewIndices(void);
@@ -54,7 +54,7 @@ public:
 
 	std::vector<edgePointPair> dataArray;
 	bool edge_sorted;
-	bool oldIdx_sorted;
+	//bool oldIdx_sorted;
 };
 
 #endif /* IMPLEMENTATIONS_MAPREVERSE_H_ */

@@ -45,16 +45,19 @@ void TriangleMesh<T>::buildMesh(TriangleMesh& ogMesh,MapReverse& newPtMap) {
 	 * Get the triangles
 	 */
 	unsigned nTriangles = ogMesh.numberOfTriangles();
-	newPtMap.sortByOldIndex();
+	std::vector<unsigned> oldToNewMap = newPtMap.oldToNewIdxMap();
+
+	//# pragma omp parallel for
 	for (unsigned iTriangle=0; iTriangle < nTriangles;++iTriangle) {
 		const unsigned *ogTriangleIdxs=ogMesh.getTriangleIndices(iTriangle);
 		unsigned newTriangleIdxs[3];
-		newTriangleIdxs[0]=newPtMap.dataArray[ogTriangleIdxs[0]].newPointIdx;
-		newTriangleIdxs[1]=newPtMap.dataArray[ogTriangleIdxs[1]].newPointIdx;
-		newTriangleIdxs[2]=newPtMap.dataArray[ogTriangleIdxs[2]].newPointIdx;
+		newTriangleIdxs[0]=oldToNewMap[ogTriangleIdxs[0]];
+		newTriangleIdxs[1]=oldToNewMap[ogTriangleIdxs[1]];
+		newTriangleIdxs[2]=oldToNewMap[ogTriangleIdxs[2]];
 
 		this->addTriangle(newTriangleIdxs);
 	}
+
 }
 
 template<typename T>

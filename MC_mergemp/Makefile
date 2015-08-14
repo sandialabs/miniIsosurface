@@ -17,6 +17,7 @@ TARGET          = MCMerge.exe
 # Compiler and flags
 CC              = g++
 CXXFLAGS        = -O2 -fopenmp -std=c++0x
+GPERF_FLAG 		= -lprofiler
 #CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
 
 # Source and build directories
@@ -38,7 +39,7 @@ UTILS_OBJ	   := $(wildcard $(UTILS_DIR)/*.o)
 
 all: main.o $(OBJECTS) $(UTILS_OBJ)
 	@echo "Linking object files...";
-	@$(CC) $(CXXFLAGS) $(BUILDDIR)/main.o $(OBJECTS) $(UTILS_OBJ) -o $(BUILDDIR)/$(TARGET);
+	@$(CC) $(CXXFLAGS) $(BUILDDIR)/main.o $(OBJECTS) $(UTILS_OBJ) -o $(BUILDDIR)/$(TARGET) $(GPERF_FLAG);
 	@echo "Compiled and linked "$(BUILDDIR)/$(TARGET)" successfully!"
 
 # Compiler commands
