@@ -10,10 +10,10 @@
 
 // Common utility headers -------------
 // Data Objects
-#include"../../utils/types.h"
+#include"../../common/types.h"
 
 // User Interface
-#include"../../utils/User_Interface/UI.h"
+#include"../../common/User_Interface/UI.h"
 
 // Local implementation headers -------
 // Marching Cubes Implementation

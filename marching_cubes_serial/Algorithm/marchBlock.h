@@ -10,13 +10,13 @@
 
 // Common utility headers -------------
 // Standard C/C++ library
-#include"../../utils/includes.h"
+#include"../../common/includes.h"
 
 // Data Objects
-#include"../../utils/types.h"
+#include"../../common/types.h"
 
 // Constants
-#include"../../utils/Constants/MarchingCubesTables.h"
+#include"../../common/Constants/MarchingCubesTables.h"
 
 // Local implementation headers -------
 // Algorithm objects/functions

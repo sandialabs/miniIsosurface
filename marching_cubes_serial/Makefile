@@ -24,7 +24,7 @@ BUILD_DIRECTORY = build
 BUILDDIR        = $(BUILD_DIRECTORY)
 
 # Utility object code
-UTILS_DIR       = ../utils/build
+UTILS_DIR       = ../common/build
 
 # Get source code files and generate object names
 SOURCES        := $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cpp))

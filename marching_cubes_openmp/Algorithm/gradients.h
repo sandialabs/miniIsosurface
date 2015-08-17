@@ -10,13 +10,13 @@
 
 // Common utility headers -------------
 // Standard C/C++ library
-#include"../../utils/includes.h"
+#include"../../common/includes.h"
 
 // Data Objects
-#include"../../utils/types.h"
+#include"../../common/types.h"
 
 // Constants
-#include"../../utils/Constants/MarchingCubesTables.h"
+#include"../../common/Constants/MarchingCubesTables.h"
 
 static void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx,
 		const float_t *buffer, const unsigned dims[3], const float_t spacing[3],

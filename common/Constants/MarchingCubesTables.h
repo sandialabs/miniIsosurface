@@ -10,7 +10,7 @@
 
 // Common utility headers -------------
 // Standard C/C++ library
-#include"../../utils/includes.h"
+#include"../../common/includes.h"
 
 class MarchingCubesTables {
 public:

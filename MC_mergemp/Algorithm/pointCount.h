@@ -10,10 +10,10 @@
 
 // Common utility headers -------------
 // Standard C/C++ library
-#include"../../utils/includes.h"
+#include"../../common/includes.h"
 
 // Data Objects
-#include"../../utils/types.h"
+#include"../../common/types.h"
 
 typedef Triplet<unsigned> Point3dIdx;
 

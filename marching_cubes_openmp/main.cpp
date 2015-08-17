@@ -7,20 +7,20 @@
 
 // Common utility headers -------------
 // Standard C/C++ library
-#include"../utils/includes.h"
+#include"../common/includes.h"
 
 // File i/o
-#include"../utils/IO/LoadImage3D.h"
-#include"../utils/IO/SaveTriangleMesh.h"
+#include"../common/IO/LoadImage3D.h"
+#include"../common/IO/SaveTriangleMesh.h"
 
 // Reporting
-#include"../utils/Reporting/YAML_Element.hpp"
-#include"../utils/Reporting/YAML_Doc.hpp"
-#include"../utils/Reporting/Log.h"
-#include"../utils/Reporting/Timer.h"
+#include"../common/Reporting/YAML_Element.hpp"
+#include"../common/Reporting/YAML_Doc.hpp"
+#include"../common/Reporting/Log.h"
+#include"../common/Reporting/Timer.h"
 
 // Data Objects
-#include"../utils/types.h"
+#include"../common/types.h"
 
 // Local implementation headers -------
 // User interface

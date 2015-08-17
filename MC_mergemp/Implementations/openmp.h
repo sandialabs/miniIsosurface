@@ -10,16 +10,16 @@
 
 // Common utility headers -------------
 // Standard C/C++ library
-#include"../../utils/includes.h"
+#include"../../common/includes.h"
 
 // Data Objects
-#include"../../utils/types.h"
+#include"../../common/types.h"
 
 // Reporting Headers
-#include"../../utils/Reporting/YAML_Element.hpp"
-#include"../../utils/Reporting/YAML_Doc.hpp"
-#include"../../utils/Reporting/Log.h"
-#include"../../utils/Reporting/Timer.h"
+#include"../../common/Reporting/YAML_Element.hpp"
+#include"../../common/Reporting/YAML_Doc.hpp"
+#include"../../common/Reporting/Log.h"
+#include"../../common/Reporting/Timer.h"
 
 // Local implementation headers -------
 // Algorithm objects/functions
