@@ -32,11 +32,22 @@
 // Local Includes
 #include"../RuntimeData/RuntimeData.h"
 
+#include"../Constants/MarchingCubesTables.h"
+
+
 template<typename U> class SerialData;
 
 template<typename T>
 class MarchAlgorithm {
 	typedef SerialData<T> SerialData_type;
+
+	typedef Image3D<T> Image3D_type;
+	typedef TriangleMesh<T> TriangleMesh_type;
+	typedef EdgeIndexer<T> EdgeIndexer_type;
+	typedef std::unordered_map<unsigned,unsigned> PointMap_type;
+
+	typedef Triplet<float_t> PositionVector_type;
+	typedef Triplet<unsigned> IndexTriplet_type;
 public:
 	MarchAlgorithm();
 	virtual ~MarchAlgorithm();
@@ -49,6 +60,12 @@ public:
 			T grad[3]);
 	void computeAllGradients (unsigned &xidx, unsigned &yidx, unsigned &zidx, const T *buffer, const unsigned * dims,
 			const T spacing[3], T (& grad)[8][3]);
+
+	static T lerp(T a, T b, T w);
+
+	void extractIsosurfaceFromBlock(const Image3D_type &vol, const unsigned ext[6],
+			T isoval, PointMap_type &pointMap, EdgeIndexer_type *edgeIndices,
+			TriangleMesh_type *mesh);
 };
 
 #endif /* MARCHALGORITHM_H_ */

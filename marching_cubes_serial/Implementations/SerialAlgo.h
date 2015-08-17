@@ -27,10 +27,17 @@
 #include"../../common/includes.h"
 
 // Reporting Headers
+#include"../../common/Reporting/YAML_Element.hpp"
+#include"../../common/Reporting/YAML_Doc.hpp"
 #include"../../common/Reporting/Log.h"
+#include"../../common/Reporting/Timer.h"
+
 
 // Local Includes
 #include"./SerialData.h"
+#include"../Algorithm/Ranges.h"
+
+static const unsigned grainDim = 4;
 
 template<typename T>
 class SerialAlgo : public MarchAlgorithm<T>  {

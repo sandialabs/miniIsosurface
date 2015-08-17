@@ -27,7 +27,7 @@ const char * UI<T>::outFile(void) const {
 }
 
 template<typename T>
-float_t UI<T>::getIsoVal(void) const {
+T UI<T>::getIsoVal(void) const {
 	return isoval;
 }
 

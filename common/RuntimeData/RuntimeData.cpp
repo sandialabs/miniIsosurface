@@ -8,7 +8,7 @@
 #include "RuntimeData.h"
 
 template<typename T>
-RuntimeData<T>::RuntimeData() {
+RuntimeData<T>::RuntimeData() : doc("Marching Cubes", "0.1", ".", "yaml_out.yaml") {
 	// TODO Auto-generated constructor stub
 	edgeIndices=0;
 }

@@ -9,8 +9,6 @@
 #define USER_INTERFACE_SERIALINTERFACE_H_
 
 // Common utility headers -------------
-// Data Objects
-#include"../../common/types.h"
 
 // User Interface
 #include"../../common/User_Interface/UI.h"

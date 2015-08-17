@@ -50,6 +50,8 @@ public:
 public:
 	// General/minimal marching cubes runtime data
 	Image3D<T> imageIn;
+	// Initialize console log and YAML
+	YAML_Doc doc;
 	unsigned ext[6];
 	T isoval;
 

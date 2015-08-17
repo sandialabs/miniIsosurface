@@ -19,9 +19,6 @@
 #include"../common/Reporting/Log.h"
 #include"../common/Reporting/Timer.h"
 
-// Data Objects
-#include"../common/types.h"
-
 // Local implementation headers -------
 // User interface
 #include"./User_Interface/SerialInterface.h"
@@ -38,17 +35,14 @@ int main(int argc, char* argv[]) {
 	// Initialize the user interface
 	SerialInterface<float_t> mainUI(argc,argv);
 
-	// Initialize console log and YAML
-	YAML_Doc doc("Marching Cubes", "0.1", ".", "yaml_out.yaml");
-
 	// Create runtime object
 	SerialData_t runData;
 	loadImage3D(mainUI.getFile(), &(runData.imageIn));
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();
-	doc.add("Volume image data file path", mainUI.getFile());
-	runData.imageIn.report(doc);
+	runData.doc.add("Volume image data file path", mainUI.getFile());
+	runData.imageIn.report(runData.doc);
 
 	// Start the clock
 	Timer RunTime;
@@ -58,8 +52,8 @@ int main(int argc, char* argv[]) {
 	// Stop Clock
 	RunTime.stop();
 	//Report and save YAML file
-	RunTime.reportTime(doc);
-	doc.generateYAML();
+	RunTime.reportTime(runData.doc);
+	runData.doc.generateYAML();
 
 	// Save the result
 	saveTriangleMesh(&(runData.mesh), mainUI.outFile());

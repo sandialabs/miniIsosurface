@@ -9,6 +9,7 @@
 
 template<typename T>
 void SerialInterface<T>::marchImplemtation(SerialData<T> &data) {
+	data.isoval=UI<T>::getIsoVal();
 	SerialAlgo<T> algorithm;
 	algorithm.visit(data);
 }

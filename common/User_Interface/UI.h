@@ -28,7 +28,7 @@ public:
 	//void marchImplemtation(const Image3D_t &, TriangleMesh_t *&, YAML_Doc&);
 	const char * getFile(void) const;
 	const char * outFile(void) const;
-	float_t getIsoVal(void) const;
+	T getIsoVal(void) const;
 
 private:
 	static void checkArgs(int);
