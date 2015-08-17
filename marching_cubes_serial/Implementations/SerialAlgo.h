@@ -5,6 +5,21 @@
  *      Author: sjmunn
  */
 
+/*
+ * Visitor design pattern ---
+ * Visited:
+ * MCdata		  [parent]			general marching cubes data objects
+ * SerialData     [child]			data objects specific to the serial implementation
+ * OpenMPData	  [child]			data objects specific to the openMP implementation
+ * MergeMPData	  [child]			data objects specific to the openMP with mesh merging implementation
+ *
+ * Visitors:
+ * MarchAlgorithm [parent]			general marching cubes methods
+ * SerialAlgo	  [child]			marching cubes methods specific to serial implementation
+ * OpenMPAlgo	  [child]			marching cubes methods specific to openMP implementation
+ * MergeMPAlgo	  [child]			marching cubes methods specific to openMP with mesh merging implementation
+ */
+
 #ifndef IMPLEMENTATIONS_SERIALALGO_H_
 #define IMPLEMENTATIONS_SERIALALGO_H_
 
@@ -15,7 +30,7 @@
 #include"../../common/Reporting/Log.h"
 
 // Local Includes
-#include"SerialData.h"
+#include"./SerialData.h"
 
 template<typename T>
 class SerialAlgo : public MarchAlgorithm<T>  {
@@ -23,7 +38,7 @@ public:
 	SerialAlgo();
 	virtual ~SerialAlgo();
 
-	virtual void visit(MCdata<T> *);
+	void visit(SerialData<T> &);
 };
 
 #endif /* IMPLEMENTATIONS_SERIALALGO_H_ */

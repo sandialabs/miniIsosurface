@@ -8,18 +8,21 @@
 #include "SerialAlgo.h"
 
 template<typename T>
-serial<T>::SerialAlgo() {
+SerialAlgo<T>::SerialAlgo() {
 	// TODO Auto-generated constructor stub
 
 }
 
 template<typename T>
-serial<T>::~SerialAlgo() {
+SerialAlgo<T>::~SerialAlgo() {
 	// TODO Auto-generated destructor stub
 }
 
 template<typename T>
-void serial<T>::visit(MCdata<T> *mcDat){
+void SerialAlgo<T>::visit(SerialData<T> &data){
 	std::cout << "Hello World" << std::endl;
-	MarchAlgorithm<T>::generalMethod();
 }
+
+
+// Must instantiate class for separate compilation
+template class SerialAlgo<float_t> ;

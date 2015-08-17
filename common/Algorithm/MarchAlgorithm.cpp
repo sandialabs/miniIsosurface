@@ -90,3 +90,7 @@ void MarchAlgorithm<T>::computeAllGradients (unsigned &xidx, unsigned &yidx, uns
 	computeGradient(xidx, yidx + 1, zidx + 1, buffer,
 			dims, spacing, grad[7]);
 }
+
+
+// Must instantiate class for separate compilation
+template class MarchAlgorithm<float_t> ;

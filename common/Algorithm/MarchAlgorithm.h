@@ -32,16 +32,16 @@
 // Local Includes
 #include"../RuntimeData/RuntimeData.h"
 
-template<typename U> class MCdata;
+template<typename U> class SerialData;
 
 template<typename T>
 class MarchAlgorithm {
-	typedef MCdata<T> MCdata_type;
+	typedef SerialData<T> SerialData_type;
 public:
 	MarchAlgorithm();
 	virtual ~MarchAlgorithm();
 
-	virtual void visit(MCdata<T> *) = 0;
+	virtual void visit(SerialData<T> &data) = 0;
 
 	// General Marching Cubes methods
 	void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx,

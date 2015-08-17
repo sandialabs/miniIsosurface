@@ -20,5 +20,8 @@ SerialData<T>::~SerialData() {
 
 template<typename T>
 void SerialData<T>::accept(MarchAlgorithm<T> &ma) {
-	ma.visit(this);
+	ma.visit(*this);
 }
+
+// Must instantiate class for separate compilation
+template class SerialData<float_t> ;

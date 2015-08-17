@@ -43,14 +43,23 @@ public:
 	// Visitor Design Pattern
 	virtual void accept(MarchAlgorithm<T> &iVisitor) = 0;
 
-private:
+	// Data writing methods
+	Image3D<T> * imgAdr(void) { return &imageIn;};
+	void initEdgeIndices(void);
+
+public:
 	// General/minimal marching cubes runtime data
 	Image3D<T> imageIn;
 	unsigned ext[6];
 	T isoval;
+
 	std::unordered_map<unsigned,unsigned> pointMap;
-	EdgeIndexer<T> edgeIndices;
+	EdgeIndexer<T> *edgeIndices;
 	TriangleMesh<T> mesh;
+private:
+	// Prevent object copying
+	RuntimeData(const RuntimeData&); // no implementation
+	RuntimeData& operator=(const RuntimeData&); // no implementation
 };
 
 #endif /* RUNTIMEDATA_H_ */

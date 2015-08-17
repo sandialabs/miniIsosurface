@@ -19,6 +19,7 @@
 // Data Objects
 #include"../types.h"
 
+template<typename T>
 class UI {
 public:
 	UI(int argc, char* argv[]);
@@ -33,7 +34,7 @@ private:
 	static void checkArgs(int);
 	void checkDebugLevel(void) const;
 
-	float_t isoval;
+	T isoval;
 	char * filePath;
 	char * outFilePath;
 };

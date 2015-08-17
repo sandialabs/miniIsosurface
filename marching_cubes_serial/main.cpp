@@ -26,41 +26,42 @@
 // User interface
 #include"./User_Interface/SerialInterface.h"
 
+// Implementation Data
+#include"./Implementations/SerialAlgo.h"
+
+typedef SerialData<float_t> SerialData_t;
+
 int main(int argc, char* argv[]) {
 
 	LOG::ReportingLevel() = logDEBUG; // Debug level is hard coded
 
 	// Initialize the user interface
-	SerialInterface mainUI(argc,argv);
+	SerialInterface<float_t> mainUI(argc,argv);
 
 	// Initialize console log and YAML
 	YAML_Doc doc("Marching Cubes", "0.1", ".", "yaml_out.yaml");
 
-	// Load the image data
-	Image3D_t volume;
-	loadImage3D(mainUI.getFile(), &volume);
+	// Create runtime object
+	SerialData_t runData;
+	loadImage3D(mainUI.getFile(), &(runData.imageIn));
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();
 	doc.add("Volume image data file path", mainUI.getFile());
-	volume.report(doc);
+	runData.imageIn.report(doc);
 
 	// Start the clock
 	Timer RunTime;
 
-	// Commence Marching cubes
-	TriangleMesh_t * mesh = 0;
-	mainUI.marchImplemtation(volume, mesh, doc);
+	mainUI.marchImplemtation(runData);
 
 	// Stop Clock
 	RunTime.stop();
-
 	//Report and save YAML file
 	RunTime.reportTime(doc);
 	doc.generateYAML();
 
 	// Save the result
-	saveTriangleMesh(mesh, mainUI.outFile());
-	delete mesh;
+	saveTriangleMesh(&(runData.mesh), mainUI.outFile());
 	return 0;
 }

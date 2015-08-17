@@ -28,7 +28,7 @@ public:
 	virtual ~TriangleMesh();
 
 	// Data member interface: write
-	void buildMesh(TriangleMesh&,MapReverse&);
+	//void buildMesh(TriangleMesh&,MapReverse&);
 
 	void addPoint(T *);
 	void addPoint(T,T,T);

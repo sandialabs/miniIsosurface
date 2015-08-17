@@ -7,7 +7,8 @@
 
 #include "UI.h"
 
-UI::UI(int argc, char* argv[]) {
+template<typename T>
+UI<T>::UI(int argc, char* argv[]) {
 
 	filePath = argv[1];
 	outFilePath = argv[2];
@@ -15,19 +16,24 @@ UI::UI(int argc, char* argv[]) {
 	this->checkDebugLevel();
 }
 
-const char * UI::getFile(void) const {
+template<typename T>
+const char * UI<T>::getFile(void) const {
 	return filePath;
 }
 
-const char * UI::outFile(void) const {
+template<typename T>
+const char * UI<T>::outFile(void) const {
 	return outFilePath;
 }
 
-float_t UI::getIsoVal(void) const {
+template<typename T>
+float_t UI<T>::getIsoVal(void) const {
 	return isoval;
 }
 
-void UI::checkDebugLevel(void) const {
+
+template<typename T>
+void UI<T>::checkDebugLevel(void) const {
 	if (LOG::ReportingLevel() == logDEBUG_Step) {
 		CLOG(logWARNING) << "Step by step debugging output is active";
 		CLOG(logWARNING)
@@ -35,11 +41,15 @@ void UI::checkDebugLevel(void) const {
 	}
 }
 
-void UI::checkArgs(int argc) {
+template<typename T>
+void UI<T>::checkArgs(int argc) {
 	if (argc != 4) {
 		throw wrong_arguments(argc);
 	}
 }
+
+// Must instantiate class for separate compilation
+template class UI<float_t> ;
 
 //void UI::marchImplemtation(const Image3D_t & vol, TriangleMesh_t *&mesh,
 //		YAML_Doc &doc) {

@@ -7,7 +7,11 @@
 
 #include "SerialInterface.h"
 
-void SerialInterface::marchImplemtation(const Image3D_t & vol, TriangleMesh_t *&mesh,
-		YAML_Doc &doc) {
-	serial::extractIsosurface(vol, UI::getIsoVal(), mesh, doc);
+template<typename T>
+void SerialInterface<T>::marchImplemtation(SerialData<T> &data) {
+	SerialAlgo<T> algorithm;
+	algorithm.visit(data);
 }
+
+// Must instantiate class for separate compilation
+template class SerialInterface<float_t> ;

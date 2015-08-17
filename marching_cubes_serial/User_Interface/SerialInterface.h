@@ -17,14 +17,15 @@
 
 // Local implementation headers -------
 // Marching Cubes Implementation
-#include"../Implementations/serial.h"
+#include"../Implementations/SerialAlgo.h"
 
-class SerialInterface: public UI {
+template<typename T>
+class SerialInterface: public UI<T> {
 public:
-	SerialInterface(int argc, char* argv[]) : UI(argc, argv) {};
+	SerialInterface(int argc, char* argv[]) : UI<T>(argc, argv) {};
 	virtual ~SerialInterface() {};
 
-	void marchImplemtation(const Image3D_t &, TriangleMesh_t *&, YAML_Doc&);
+	void marchImplemtation(SerialData<T> &);
 };
 
 #endif /* USER_INTERFACE_SERIALINTERFACE_H_ */
