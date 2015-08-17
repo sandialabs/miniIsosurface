@@ -58,10 +58,6 @@ public:
 	static T lerp(T a, T b, T w);
 
 	void extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]);
-
-//	void extractIsosurfaceFromBlock(const Image3D_type &vol, const unsigned ext[6],
-//			T isoval, PointMap_type &pointMap, EdgeIndexer_type *edgeIndices,
-//			TriangleMesh_type *mesh);
 };
 
 #endif /* MARCHALGORITHM_H_ */

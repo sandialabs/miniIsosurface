@@ -50,8 +50,3 @@ void UI<T>::checkArgs(int argc) {
 
 // Must instantiate class for separate compilation
 template class UI<float_t> ;
-
-//void UI::marchImplemtation(const Image3D_t & vol, TriangleMesh_t *&mesh,
-//		YAML_Doc &doc) {
-//	mergemp::extractIsosurface(vol, isoval, mesh, doc);
-//}

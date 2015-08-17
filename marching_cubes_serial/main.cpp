@@ -35,27 +35,28 @@ int main(int argc, char* argv[]) {
 	// Initialize the user interface
 	SerialInterface<float_t> mainUI(argc,argv);
 
-	// Create runtime object
-	SerialData_t runData;
-	loadImage3D(mainUI.getFile(), &(runData.imageIn));
+	// Create data object
+	SerialData_t data;
+
+	loadImage3D(mainUI.getFile(), &(data.imageIn));
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();
-	runData.doc.add("Volume image data file path", mainUI.getFile());
-	runData.imageIn.report(runData.doc);
+	data.doc.add("Volume image data file path", mainUI.getFile());
+	data.imageIn.report(data.doc);
 
 	// Start the clock
 	Timer RunTime;
-
-	mainUI.marchImplemtation(runData);
-
+	// Execute the marching cubes implementation
+	mainUI.marchImplemtation(data);
 	// Stop Clock
 	RunTime.stop();
+
 	//Report and save YAML file
-	RunTime.reportTime(runData.doc);
-	runData.doc.generateYAML();
+	RunTime.reportTime(data.doc);
+	data.doc.generateYAML();
 
 	// Save the result
-	saveTriangleMesh(&(runData.mesh), mainUI.outFile());
+	saveTriangleMesh(&(data.mesh), mainUI.outFile());
 	return 0;
 }

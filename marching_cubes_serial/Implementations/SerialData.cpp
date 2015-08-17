@@ -15,7 +15,7 @@ SerialData<T>::SerialData() {
 
 template<typename T>
 SerialData<T>::~SerialData() {
-	// TODO Auto-generated destructor stub
+	// not necessary
 }
 
 template<typename T>

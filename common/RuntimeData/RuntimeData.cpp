@@ -9,13 +9,12 @@
 
 template<typename T>
 RuntimeData<T>::RuntimeData() : doc("Marching Cubes", "0.1", ".", "yaml_out.yaml") {
-	// TODO Auto-generated constructor stub
 	edgeIndices=0;
 }
 
 template<typename T>
 RuntimeData<T>::~RuntimeData() {
-	// TODO Auto-generated destructor stub
+	delete [] edgeIndices;
 }
 
 template<typename T>

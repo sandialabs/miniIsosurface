@@ -16,9 +16,6 @@
 #include"../Reporting/YAML_Doc.hpp"
 #include"../Reporting/Log.h"
 
-// Data Objects
-#include"../types.h"
-
 template<typename T>
 class UI {
 public:

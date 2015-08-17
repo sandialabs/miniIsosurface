@@ -8,7 +8,7 @@
 /*
  * Visitor design pattern ---
  * Visited:
- * MCdata		  [parent]			general marching cubes data objects
+ * RuntimeData	  [parent]			general marching cubes data objects
  * SerialData     [child]			data objects specific to the serial implementation
  * OpenMPData	  [child]			data objects specific to the openMP implementation
  * MergeMPData	  [child]			data objects specific to the openMP with mesh merging implementation
@@ -30,8 +30,6 @@
 #include"../../common/Reporting/YAML_Element.hpp"
 #include"../../common/Reporting/YAML_Doc.hpp"
 #include"../../common/Reporting/Log.h"
-#include"../../common/Reporting/Timer.h"
-
 
 // Local Includes
 #include"./SerialData.h"
