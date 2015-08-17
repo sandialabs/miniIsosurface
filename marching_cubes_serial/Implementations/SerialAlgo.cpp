@@ -45,7 +45,8 @@ void SerialAlgo<T>::visit(SerialData<T> &data){
 	unsigned mapSize = data.edgeIndices->nAllEdges / 8; // Very approximate hack..
 	data.pointMap.rehash(mapSize);
 
-	MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, data.ext, data.isoval, data.pointMap, data.edgeIndices, &data.mesh);
+	// The block is simply the full data extent
+	MarchAlgorithm<T>::extractIsosurfaceFromBlock(&data,data.ext);
 }
 
 

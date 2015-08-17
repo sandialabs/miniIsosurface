@@ -29,11 +29,12 @@
 // Reporting Headers
 #include"../Reporting/Log.h"
 
-// Local Includes
+// Design Pattern includes
 #include"../RuntimeData/RuntimeData.h"
 
+// Core Algorithm includes
 #include"../Constants/MarchingCubesTables.h"
-
+#include"./gradients.h"
 
 template<typename U> class SerialData;
 
@@ -54,18 +55,13 @@ public:
 
 	virtual void visit(SerialData<T> &data) = 0;
 
-	// General Marching Cubes methods
-	void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx,
-			const T *buffer, const unsigned dims[3], const T spacing[3],
-			T grad[3]);
-	void computeAllGradients (unsigned &xidx, unsigned &yidx, unsigned &zidx, const T *buffer, const unsigned * dims,
-			const T spacing[3], T (& grad)[8][3]);
-
 	static T lerp(T a, T b, T w);
 
-	void extractIsosurfaceFromBlock(const Image3D_type &vol, const unsigned ext[6],
-			T isoval, PointMap_type &pointMap, EdgeIndexer_type *edgeIndices,
-			TriangleMesh_type *mesh);
+	void extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]);
+
+//	void extractIsosurfaceFromBlock(const Image3D_type &vol, const unsigned ext[6],
+//			T isoval, PointMap_type &pointMap, EdgeIndexer_type *edgeIndices,
+//			TriangleMesh_type *mesh);
 };
 
 #endif /* MARCHALGORITHM_H_ */

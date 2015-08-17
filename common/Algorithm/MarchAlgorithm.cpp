@@ -19,78 +19,6 @@ MarchAlgorithm<T>::~MarchAlgorithm() {
 	// TODO Auto-generated destructor stub
 }
 
-// General Marching Cubes members,
-template<typename T>
-void MarchAlgorithm<T>::computeGradient(unsigned xidx, unsigned yidx, unsigned zidx,
-		const T *buffer, const unsigned dims[3], const T spacing[3],
-		T grad[3]) {
-	unsigned xysize = dims[0] * dims[1];
-	unsigned ptidx = xidx + yidx * dims[0] + zidx * xysize;
-
-	if (xidx == 0) {
-		T x1 = buffer[ptidx + 1];
-		T x2 = buffer[ptidx];
-		grad[0] = (x2 - x1) / spacing[0];
-	} else if (xidx == (dims[0] - 1)) {
-		T x1 = buffer[ptidx];
-		T x2 = buffer[ptidx - 1];
-		grad[0] = (x2 - x1) / spacing[0];
-	} else {
-		T x1 = buffer[ptidx + 1];
-		T x2 = buffer[ptidx - 1];
-		grad[0] = (0.5 * (x2 - x1)) / spacing[0];
-	}
-
-	if (yidx == 0) {
-		T y1 = buffer[ptidx + dims[0]];
-		T y2 = buffer[ptidx];
-		grad[1] = (y2 - y1) / spacing[1];
-	} else if (yidx == (dims[1] - 1)) {
-		T y1 = buffer[ptidx];
-		T y2 = buffer[ptidx - dims[0]];
-		grad[1] = (y2 - y1) / spacing[1];
-	} else {
-		T y1 = buffer[ptidx + dims[0]];
-		T y2 = buffer[ptidx - dims[0]];
-		grad[1] = (0.5 * (y2 - y1)) / spacing[1];
-	}
-
-	if (zidx == 0) {
-		T z1 = buffer[ptidx + xysize];
-		T z2 = buffer[ptidx];
-		grad[2] = (z2 - z1) / spacing[2];
-	} else if (zidx == (dims[2] - 1)) {
-		T z1 = buffer[ptidx];
-		T z2 = buffer[ptidx - xysize];
-		grad[2] = (z2 - z1) / spacing[2];
-	} else {
-		T z1 = buffer[ptidx + xysize];
-		T z2 = buffer[ptidx - xysize];
-		grad[2] = (0.5 * (z2 - z1)) / spacing[2];
-	}
-}
-
-template<typename T>
-void MarchAlgorithm<T>::computeAllGradients (unsigned &xidx, unsigned &yidx, unsigned &zidx, const T *buffer, const unsigned * dims,
-		const T spacing[3], T (& grad)[8][3]) {
-	computeGradient(xidx, yidx, zidx, buffer, dims,
-			spacing, grad[0]);
-	computeGradient(xidx + 1, yidx, zidx, buffer, dims,
-			spacing, grad[1]);
-	computeGradient(xidx + 1, yidx + 1, zidx, buffer,
-			dims, spacing, grad[2]);
-	computeGradient(xidx, yidx + 1, zidx, buffer, dims,
-			spacing, grad[3]);
-	computeGradient(xidx, yidx, zidx + 1, buffer, dims,
-			spacing, grad[4]);
-	computeGradient(xidx + 1, yidx, zidx + 1, buffer,
-			dims, spacing, grad[5]);
-	computeGradient(xidx + 1, yidx + 1, zidx + 1,
-			buffer, dims, spacing, grad[6]);
-	computeGradient(xidx, yidx + 1, zidx + 1, buffer,
-			dims, spacing, grad[7]);
-}
-
 template<typename T>
 T MarchAlgorithm<T>::lerp(T a, T b, T w) {
 	//return ((1.0 - w) * a) + (w * b);
@@ -98,19 +26,17 @@ T MarchAlgorithm<T>::lerp(T a, T b, T w) {
 }
 
 template<typename T>
-void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, const unsigned ext[6],
-		T isoval, PointMap_type &pointMap, EdgeIndexer_type *edgeIndices,
-		TriangleMesh_type *mesh) {
+void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]) {
 
 	static const int caseMask[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 
-	const unsigned *dims = vol.getDimension();
-	const T *origin = vol.getOrigin();
-	const T *spacing = vol.getSpacing();
-	const T *buffer = vol.getData();
+	const unsigned *dims = inData->imageIn.getDimension();
+	const T *origin = inData->imageIn.getOrigin();
+	const T *spacing = inData->imageIn.getSpacing();
+	const T *buffer = inData->imageIn.getData();
 
-	CLOG(logDEBUG1) << "Extent: " << ext[0] << " " << ext[1] << " "
-			<< ext[2] << " " << ext[3] << " " << ext[4] << " " << ext[5];
+	CLOG(logDEBUG1) << "Extent: " << blockExt[0] << " " << blockExt[1] << " "
+			<< blockExt[2] << " " << blockExt[3] << " " << blockExt[4] << " " << blockExt[5];
 
 	unsigned sliceSize = dims[0] * dims[1];
 
@@ -119,14 +45,14 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 	unsigned bufferIdx;
 
 	// march through each cell
-	T zpos = origin[2] + (T(ext[4]) * spacing[2]);
-	for (unsigned zidx = ext[4]; zidx <= ext[5]; ++zidx, zpos += spacing[2]) {
+	T zpos = origin[2] + (T(blockExt[4]) * spacing[2]);
+	for (unsigned zidx = blockExt[4]; zidx <= blockExt[5]; ++zidx, zpos += spacing[2]) {
 
-		T ypos = origin[1] + (T(ext[2]) * spacing[1]);
-		for (unsigned yidx = ext[2]; yidx <= ext[3];
+		T ypos = origin[1] + (T(blockExt[2]) * spacing[1]);
+		for (unsigned yidx = blockExt[2]; yidx <= blockExt[3];
 				++yidx, ypos += spacing[1]) {
 
-			bufferIdx=ext[0]+ (yidx * dims[0]) + (zidx * sliceSize);
+			bufferIdx=blockExt[0]+ (yidx * dims[0]) + (zidx * sliceSize);
 
 			/*
 			 * 4 buffers are created to improve cache efficiency
@@ -137,8 +63,8 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 			const T *X3buffer = &buffer[bufferIdx + sliceSize];
 			const T *X4buffer = &buffer[bufferIdx + dims[0] + sliceSize];
 
-			T xpos = origin[0] + (T(ext[0]) * spacing[0]);
-			for (unsigned xidx = ext[0]; xidx <= ext[1]; ++xidx, xpos +=
+			T xpos = origin[0] + (T(blockExt[0]) * spacing[0]);
+			for (unsigned xidx = blockExt[0]; xidx <= blockExt[1]; ++xidx, xpos +=
 					spacing[0]) {
 
 				T pos[8][3], grad[8][3];
@@ -159,7 +85,7 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 
 				int cellId = 0;
 				for (int i = 0; i < 8; ++i) {
-					cellId |= (val[i] >= isoval) ? caseMask[i] : 0;
+					cellId |= (val[i] >= inData->isoval) ? caseMask[i] : 0;
 				}
 
 				// no intersections
@@ -211,7 +137,7 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 								MarchingCubesTables::getEdgeVertices(edges[i])[0];
 						int v2 =
 								MarchingCubesTables::getEdgeVertices(edges[i])[1];
-						T w = (isoval - val[v1]) / (val[v2] - val[v1]);
+						T w = (inData->isoval - val[v1]) / (val[v2] - val[v1]);
 
 						// interpolate vertex position
 						T  newPtCoordinates[3];
@@ -220,11 +146,11 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 						bool exists = false;
 						unsigned pointId;
 
-						unsigned edgeIndex = edgeIndices->getEdgeIndex(xidx, yidx,
+						unsigned edgeIndex = inData->edgeIndices->getEdgeIndex(xidx, yidx,
 								zidx, edges[i]);
-						if (pointMap.find(edgeIndex) == pointMap.end()) {
+						if (inData->pointMap.find(edgeIndex) == inData->pointMap.end()) {
 							// not found -- this is a new point
-							pointMap[edgeIndex] = ptIdx;
+							inData->pointMap[edgeIndex] = ptIdx;
 							for (int iAxis = 0; iAxis < 3; iAxis++) {
 								newPtCoordinates[iAxis] = lerp(pos[v1][iAxis],
 										pos[v2][iAxis], w);
@@ -233,11 +159,11 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 						} else {
 							// found -- we already have this point
 							exists=true;
-							pointId = pointMap[edgeIndex];
+							pointId = inData->pointMap[edgeIndex];
 						}
 
 						if (!exists) {
-							mesh->addPoint(newPt);
+							inData->mesh.addPoint(newPt);
 
 							computeAllGradients(xidx, yidx, zidx, buffer, dims,spacing,grad);
 
@@ -246,7 +172,7 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 								norm[iAxis] = lerp(grad[v1][iAxis],
 										grad[v2][iAxis], w);
 							}
-							mesh->addNormal(norm);
+							inData->mesh.addNormal(norm);
 
 							tri[i] = ptIdx++;
 						} else {
@@ -257,8 +183,8 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 					if (tri[0] == tri[1] || tri[1] == tri[2]
 							|| tri[2] == tri[0]) {
 					} else {
-						mesh->addTriangle(tri);
-						CLOG(logDEBUG_Step) << "Num tri " << mesh->numberOfTriangles();
+						inData->mesh.addTriangle(tri);
+						CLOG(logDEBUG_Step) << "Num tri " << inData->mesh.numberOfTriangles();
 					}
 				}
 			}
