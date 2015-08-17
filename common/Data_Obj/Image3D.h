@@ -16,7 +16,7 @@
 #include"../Reporting/Log.h"
 
 template<typename T>
-class Image3D {
+class Image3D  {
 public:
 	Image3D();
 	~Image3D();

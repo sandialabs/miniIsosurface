@@ -46,6 +46,8 @@ public:
 	void setNormal(unsigned,const T *);
 	void resetTheMesh(void);
 
+	// Marching Cubes
+
 	// Combine 2 meshes
 	TriangleMesh& operator+=(TriangleMesh&);
 
