@@ -21,6 +21,8 @@ RuntimeData<T>::~RuntimeData() {
 template<typename T>
 void RuntimeData<T>::initEdgeIndices(void) {
 	edgeIndices = new EdgeIndexer<T>(ext);
+	unsigned mapSize = edgeIndices->nAllEdges / 8; // Very approximate hack..
+	pointMap.rehash(mapSize);
 }
 
 

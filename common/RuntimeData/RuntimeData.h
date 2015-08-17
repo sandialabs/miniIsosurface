@@ -30,7 +30,9 @@
 #include"../Data_Obj/TriangleMesh.h"
 #include"../Data_Obj/Triplet.h"
 #include"../Data_Obj/MapReverse.h"
-#include"../Data_Obj/EdgeIndexer.h"
+
+// Edge indexer
+#include "../Algorithm/EdgeIndexer.h"
 
 template<typename U> class MarchAlgorithm;
 

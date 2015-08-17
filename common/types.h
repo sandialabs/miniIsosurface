@@ -16,8 +16,8 @@
 #include"./Data_Obj/TriangleMesh.h"
 #include"./Data_Obj/Triplet.h"
 #include"./Data_Obj/MapReverse.h"
-#include"./Data_Obj/EdgeIndexer.h"
 #include"./Algorithm/MarchAlgorithm.h"
+#include "Algorithm/EdgeIndexer.h"
 
 
 // Data Object names

@@ -5,7 +5,7 @@
  *      Author: sjmunn
  */
 
-#include "EdgeIndexer.h"
+#include "../Algorithm/EdgeIndexer.h"
 
 template<typename T>
 EdgeIndexer<T>::EdgeIndexer(unsigned * extentOfMarch) {

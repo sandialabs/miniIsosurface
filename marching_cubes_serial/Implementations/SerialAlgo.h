@@ -37,8 +37,6 @@
 #include"./SerialData.h"
 #include"../Algorithm/Ranges.h"
 
-static const unsigned grainDim = 4;
-
 template<typename T>
 class SerialAlgo : public MarchAlgorithm<T>  {
 public:

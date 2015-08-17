@@ -5,15 +5,12 @@
  *      Author: sjmunn
  */
 
-#ifndef DATA_OBJ_EDGEINDEXER_H_
-#define DATA_OBJ_EDGEINDEXER_H_
+#ifndef EDGEINDEXER_H_
+#define EDGEINDEXER_H_
 
 #include"../includes.h"
 
-#include "TriangleMesh.h"
-
-
-
+#include"../Data_Obj/Triplet.h"
 // Reporting Headers
 #include"../Reporting/Log.h"
 #include"../Reporting/RunTime_errors.h"
@@ -47,4 +44,4 @@ private:
 	const unsigned edgeIndexZaxis(unsigned, unsigned, unsigned, int) const;
 };
 
-#endif /* DATA_OBJ_EDGEINDEXER_H_ */
+#endif /* EDGEINDEXER_H_ */
