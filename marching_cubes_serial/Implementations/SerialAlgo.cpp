@@ -19,14 +19,14 @@ SerialAlgo<T>::~SerialAlgo() {
 }
 
 template<typename T>
-void SerialAlgo<T>::march(GeneralContext<T> &data){
+void SerialAlgo<T>::march(GeneralContext<T> &data) {
 
 	const unsigned *dims = data.imageIn.getDimension();
 
 	CLOG(logYAML) << "Marching cubes algorithm: SERIAL";
 	data.doc.add("Marching cubes algorithm", "SERIAL");
 
-	unsigned grainDim=dims[0]; // This doesn't matter
+	unsigned grainDim = dims[0]; // This doesn't matter
 
 	Range3D cellRange(0, dims[2] - 1, grainDim, 0, dims[1] - 1, grainDim, 0,
 			dims[0] - 1, grainDim);
@@ -35,9 +35,9 @@ void SerialAlgo<T>::march(GeneralContext<T> &data){
 	setGlobalVariables(data);
 
 	// The block is simply the full data extent
-	MarchAlgorithm<T>::extractIsosurfaceFromBlock(&data,data.ext);
+	MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, data.ext,
+			data.isoval, this->globalPointMap, *(this->globalEdgeIndices), data.mesh);
 }
-
 
 // Must instantiate class for separate compilation
 template class SerialAlgo<float_t> ;

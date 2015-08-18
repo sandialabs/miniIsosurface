@@ -38,26 +38,28 @@ public:
 
 	void setGlobalVariables(GeneralContext<T> &);
 
-	void extractIsosurfaceFromBlock(GeneralContext<T> *inData, const unsigned blockExt[6]);
+	void extractIsosurfaceFromBlock(const Image3D_type &, const unsigned [6],
+			T, PointMap_type &, EdgeIndexer_type &,
+			TriangleMesh_type &);
 	void updateBuffers(const T *, unsigned, unsigned);
 	void getPointValues(T * val);
+
+	EdgeIndexer_type *globalEdgeIndices;
+	PointMap_type globalPointMap;
 private:
 	static T lerp(T a, T b, T w);
 private:
 	// Algorithm iteration position
-	unsigned xidx, yidx, zidx;
-	unsigned bufferIdx;
+//	unsigned xidx, yidx, zidx;
+//	unsigned bufferIdx;
 	/*
 	 * 4 buffers improve cache efficiency
 	 * this speeds up run time by about .1 seconds
 	 */
-	const T *X1buffer;
-	const T *X2buffer;
-	const T *X3buffer;
-	const T *X4buffer;
-
-	EdgeIndexer_type *globalEdgeIndices;
-	PointMap_type globalPointMap;
+//	const T *X1buffer;
+//	const T *X2buffer;
+//	const T *X3buffer;
+//	const T *X4buffer;
 };
 
 #endif /* MARCHALGORITHM_H_ */
