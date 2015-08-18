@@ -36,8 +36,11 @@ public:
 
 	virtual void march(GeneralContext<T>&) = 0;
 
-	void setGlobalVariables(GeneralContext<T> &inData);
+	void setGlobalVariables(GeneralContext<T> &);
+
 	void extractIsosurfaceFromBlock(GeneralContext<T> *inData, const unsigned blockExt[6]);
+	void updateBuffers(const T *, unsigned, unsigned);
+	void getPointValues(T * val);
 private:
 	static T lerp(T a, T b, T w);
 private:

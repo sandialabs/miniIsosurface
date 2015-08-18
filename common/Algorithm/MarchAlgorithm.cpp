@@ -20,7 +20,6 @@ MarchAlgorithm<T>::MarchAlgorithm() {
 	globalEdgeIndices=0;
 }
 
-
 template<typename T>
 MarchAlgorithm<T>::~MarchAlgorithm() {
 	// TODO Auto-generated destructor stub
@@ -32,13 +31,29 @@ T MarchAlgorithm<T>::lerp(T a, T b, T w) {
 	return a + (w * (b - a));
 }
 
-//template<typename T>
-//void MarchAlgorithm<T>::updateBuffers(const T *inBuffer) {
-//	X1buffer = &inBuffer[bufferIdx];
-//	X2buffer = &inBuffer[bufferIdx + dims[0]];
-//	X3buffer = &inBuffer[bufferIdx + sliceSize];
-//	X4buffer = &inBuffer[bufferIdx + dims[0] + sliceSize];
-//}
+template<typename T>
+void MarchAlgorithm<T>::updateBuffers(const T *inBuffer, unsigned dimZero, unsigned sliceSize) {
+	X1buffer = &inBuffer[bufferIdx];
+	X2buffer = &inBuffer[bufferIdx + dimZero];
+	X3buffer = &inBuffer[bufferIdx + sliceSize];
+	X4buffer = &inBuffer[bufferIdx + dimZero + sliceSize];
+}
+
+template<typename T>
+void MarchAlgorithm<T>::getPointValues(T * val) {
+	// get cell-points values
+	val[0] = X1buffer[xidx];
+	val[1] = X1buffer[xidx+1];
+
+	val[2] = X2buffer[xidx+1];
+	val[3] = X2buffer[xidx];
+
+	val[4] = X3buffer[xidx];
+	val[5] = X3buffer[xidx+1];
+
+	val[6] = X4buffer[xidx+1];
+	val[7] = X4buffer[xidx];
+}
 
 template<typename T>
 void MarchAlgorithm<T>::setGlobalVariables(GeneralContext<T> &inData) {
@@ -78,30 +93,16 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(GeneralContext<T> * inData, c
 			 * 4 buffers are created to improve cache efficiency
 			 * this improves run time by about .1 seconds
 			 */
-			X1buffer = &buffer[bufferIdx];
-			X2buffer = &buffer[bufferIdx + dims[0]];
-			X3buffer = &buffer[bufferIdx + sliceSize];
-			X4buffer = &buffer[bufferIdx + dims[0] + sliceSize];
+			this->updateBuffers(buffer,dims[0],sliceSize);
 
 			T xpos = origin[0] + (T(blockExt[0]) * spacing[0]);
 			for (xidx = blockExt[0]; xidx <= blockExt[1]; ++xidx, xpos +=
 					spacing[0]) {
 
 				T pos[8][3], grad[8][3];
+
 				T val[8];
-
-				// get cell-points values
-				val[0] = X1buffer[xidx];
-				val[1] = X1buffer[xidx+1];
-
-				val[2] = X2buffer[xidx+1];
-				val[3] = X2buffer[xidx];
-
-				val[4] = X3buffer[xidx];
-				val[5] = X3buffer[xidx+1];
-
-				val[6] = X4buffer[xidx+1];
-				val[7] = X4buffer[xidx];
+				getPointValues(val);
 
 				int cellId = 0;
 				for (int i = 0; i < 8; ++i) {
