@@ -17,7 +17,7 @@ CXXFLAGS		= -O2 -fopenmp -lprofiler -std=c++0x
 #CXXFLAGS = -O0 -g -lrt -std=c++0x
 
 # Source and build directories
-SRCDIRS         = Data_Obj IO Reporting Constants User_Interface Algorithm RuntimeData
+SRCDIRS         = Data_Obj IO Reporting Constants User_Interface Algorithm GeneralContext
 BUILD_DIRECTORY = build
 BUILDDIR        = $(BUILD_DIRECTORY)
 

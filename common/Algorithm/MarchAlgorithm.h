@@ -5,21 +5,6 @@
  *      Author: sjmunn
  */
 
-/*
- * Visitor design pattern ---
- * Visited:
- * MCdata		  [parent]			general marching cubes data objects
- * SerialData     [child]			data objects specific to the serial implementation
- * OpenMPData	  [child]			data objects specific to the openMP implementation
- * MergeMPData	  [child]			data objects specific to the openMP with mesh merging implementation
- *
- * Visitors:
- * MarchAlgorithm [parent]			general marching cubes methods
- * SerialAlgo	  [child]			marching cubes methods specific to serial implementation
- * OpenMPAlgo	  [child]			marching cubes methods specific to openMP implementation
- * MergeMPAlgo	  [child]			marching cubes methods specific to openMP with mesh merging implementation
- */
-
 #ifndef MARCHALGORITHM_H_
 #define MARCHALGORITHM_H_
 
@@ -29,18 +14,15 @@
 // Reporting Headers
 #include"../Reporting/Log.h"
 
-// Design Pattern includes
-#include"../RuntimeData/RuntimeData.h"
-
-// Core Algorithm includes
 #include"../Constants/MarchingCubesTables.h"
 #include"./gradients.h"
+//#include"../GeneralContext/GeneralContext.h"
+#include"./EdgeIndexer.h"
 
-template<typename U> class SerialData;
+template<typename U> class GeneralContext;
 
 template<typename T>
 class MarchAlgorithm {
-	typedef SerialData<T> SerialData_type;
 
 	typedef Image3D<T> Image3D_type;
 	typedef TriangleMesh<T> TriangleMesh_type;
@@ -53,12 +35,12 @@ public:
 	MarchAlgorithm();
 	virtual ~MarchAlgorithm();
 
-	virtual void visit(SerialData<T> &data) = 0;
+	virtual void march(GeneralContext<T>&) = 0;
 
-	void extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]);
+	void setGlobalVariables(GeneralContext<T> &inData);
+	void extractIsosurfaceFromBlock(GeneralContext<T> *inData, const unsigned blockExt[6]);
 private:
 	static T lerp(T a, T b, T w);
-//	static void updateBuffers(const T *);
 private:
 	// Algorithm iteration position
 	unsigned xidx, yidx, zidx;
@@ -71,6 +53,9 @@ private:
 	const T *X2buffer;
 	const T *X3buffer;
 	const T *X4buffer;
+
+	EdgeIndexer_type *globalEdgeIndices;
+	PointMap_type globalPointMap;
 };
 
 #endif /* MARCHALGORITHM_H_ */

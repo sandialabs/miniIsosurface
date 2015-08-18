@@ -19,24 +19,24 @@
 #include"../common/Reporting/Log.h"
 #include"../common/Reporting/Timer.h"
 
+#include"../common/User_Interface/UI.h"
+
+// Context data
+#include"../common/GeneralContext/GeneralContext.h"
+
 // Local implementation headers -------
-// User interface
-#include"./User_Interface/SerialInterface.h"
-
-// Implementation Data
+// Algorithm
 #include"./Implementations/SerialAlgo.h"
-
-typedef SerialData<float_t> SerialData_t;
 
 int main(int argc, char* argv[]) {
 
-	LOG::ReportingLevel() = logDEBUG; // Debug level is hard coded
+	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
 	// Initialize the user interface
-	SerialInterface<float_t> mainUI(argc,argv);
+	UI<float_t> mainUI(argc,argv);
 
 	// Create data object
-	SerialData_t data;
+	GeneralContext<float_t> data;
 
 	loadImage3D(mainUI.getFile(), &(data.imageIn));
 
@@ -48,7 +48,10 @@ int main(int argc, char* argv[]) {
 	// Start the clock
 	Timer RunTime;
 	// Execute the marching cubes implementation
-	mainUI.marchImplemtation(data);
+	data.isoval=mainUI.getIsoVal();
+	SerialAlgo<float_t> algorithm;
+	data.setAlgorithm(&algorithm);
+	data.march();
 	// Stop Clock
 	RunTime.stop();
 

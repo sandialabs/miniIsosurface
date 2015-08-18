@@ -6,6 +6,7 @@
  */
 
 #include "MarchAlgorithm.h"
+#include"../GeneralContext/GeneralContext.h"
 
 template<typename T>
 MarchAlgorithm<T>::MarchAlgorithm() {
@@ -17,6 +18,7 @@ MarchAlgorithm<T>::MarchAlgorithm() {
 	X3buffer=0;
 	X4buffer=0;
 	bufferIdx=0;
+	globalEdgeIndices=0;
 }
 
 
@@ -40,7 +42,14 @@ T MarchAlgorithm<T>::lerp(T a, T b, T w) {
 //}
 
 template<typename T>
-void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]) {
+void MarchAlgorithm<T>::setGlobalVariables(GeneralContext<T> &inData) {
+	globalEdgeIndices = new EdgeIndexer<T>(inData.ext);
+	unsigned mapSize = globalEdgeIndices->nAllEdges / 8; // Very approximate hack..
+	globalPointMap.rehash(mapSize);
+}
+
+template<typename T>
+void MarchAlgorithm<T>::extractIsosurfaceFromBlock(GeneralContext<T> * inData, const unsigned blockExt[6]) {
 
 	static const int caseMask[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 
@@ -158,11 +167,11 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, cons
 						bool exists = false;
 						unsigned pointId;
 
-						unsigned edgeIndex = inData->edgeIndices->getEdgeIndex(xidx, yidx,
+						unsigned edgeIndex = globalEdgeIndices->getEdgeIndex(xidx, yidx,
 								zidx, edges[i]);
-						if (inData->pointMap.find(edgeIndex) == inData->pointMap.end()) {
+						if (globalPointMap.find(edgeIndex) == globalPointMap.end()) {
 							// not found -- this is a new point
-							inData->pointMap[edgeIndex] = ptIdx;
+							globalPointMap[edgeIndex] = ptIdx;
 							for (int iAxis = 0; iAxis < 3; iAxis++) {
 								newPtCoordinates[iAxis] = lerp(pos[v1][iAxis],
 										pos[v2][iAxis], w);
@@ -171,7 +180,7 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, cons
 						} else {
 							// found -- we already have this point
 							exists=true;
-							pointId = inData->pointMap[edgeIndex];
+							pointId = globalPointMap[edgeIndex];
 						}
 
 						if (!exists) {

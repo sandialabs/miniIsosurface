@@ -17,7 +17,7 @@
 #include"./Data_Obj/Triplet.h"
 #include"./Data_Obj/MapReverse.h"
 #include"./Algorithm/MarchAlgorithm.h"
-#include "Algorithm/EdgeIndexer.h"
+#include"./Algorithm/EdgeIndexer.h"
 
 
 // Data Object names
@@ -30,7 +30,7 @@ typedef Triplet<unsigned> IndexTriplet_t;
 
 typedef std::unordered_map<unsigned,unsigned> PointMap_t;
 
-typedef MarchAlgorithm<float_t> MarchAlgorithm_t;
-typedef RuntimeData<float_t> RuntimeData_t;
+//typedef MarchAlgorithm<float_t> MarchAlgorithm_t;
+//typedef GeneralContext<float_t> GeneralContext_t;
 
 #endif /* TYPES_H_ */

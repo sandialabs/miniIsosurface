@@ -19,7 +19,7 @@ SerialAlgo<T>::~SerialAlgo() {
 }
 
 template<typename T>
-void SerialAlgo<T>::visit(SerialData<T> &data){
+void SerialAlgo<T>::march(GeneralContext<T> &data){
 
 	const unsigned *dims = data.imageIn.getDimension();
 
@@ -32,7 +32,7 @@ void SerialAlgo<T>::visit(SerialData<T> &data){
 			dims[0] - 1, grainDim);
 	cellRange.extent(data.ext);
 
-	data.initEdgeIndices();
+	setGlobalVariables(data);
 
 	// The block is simply the full data extent
 	MarchAlgorithm<T>::extractIsosurfaceFromBlock(&data,data.ext);
