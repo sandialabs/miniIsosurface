@@ -14,7 +14,7 @@ RuntimeData<T>::RuntimeData() : doc("Marching Cubes", "0.1", ".", "yaml_out.yaml
 
 template<typename T>
 RuntimeData<T>::~RuntimeData() {
-	delete [] edgeIndices;
+	delete edgeIndices;
 }
 
 template<typename T>
@@ -24,6 +24,5 @@ void RuntimeData<T>::initEdgeIndices(void) {
 	pointMap.rehash(mapSize);
 }
 
-
 // Must instantiate class for separate compilation
-template class RuntimeData<float_t> ;
+template class RuntimeData<float_t>;

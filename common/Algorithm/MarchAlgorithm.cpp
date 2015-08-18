@@ -9,8 +9,14 @@
 
 template<typename T>
 MarchAlgorithm<T>::MarchAlgorithm() {
-	// TODO Auto-generated constructor stub
-
+	xidx=0;
+	yidx=0;
+	zidx=0;
+	X1buffer=0;
+	X2buffer=0;
+	X3buffer=0;
+	X4buffer=0;
+	bufferIdx=0;
 }
 
 
@@ -24,6 +30,14 @@ T MarchAlgorithm<T>::lerp(T a, T b, T w) {
 	//return ((1.0 - w) * a) + (w * b);
 	return a + (w * (b - a));
 }
+
+//template<typename T>
+//void MarchAlgorithm<T>::updateBuffers(const T *inBuffer) {
+//	X1buffer = &inBuffer[bufferIdx];
+//	X2buffer = &inBuffer[bufferIdx + dims[0]];
+//	X3buffer = &inBuffer[bufferIdx + sliceSize];
+//	X4buffer = &inBuffer[bufferIdx + dims[0] + sliceSize];
+//}
 
 template<typename T>
 void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]) {
@@ -40,16 +54,14 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, cons
 
 	unsigned sliceSize = dims[0] * dims[1];
 
-	unsigned ptIdx = 0;
-
-	unsigned bufferIdx;
+	unsigned ptIdx = inData->mesh.numberOfVertices();
 
 	// march through each cell
 	T zpos = origin[2] + (T(blockExt[4]) * spacing[2]);
-	for (unsigned zidx = blockExt[4]; zidx <= blockExt[5]; ++zidx, zpos += spacing[2]) {
+	for (zidx = blockExt[4]; zidx <= blockExt[5]; ++zidx, zpos += spacing[2]) {
 
 		T ypos = origin[1] + (T(blockExt[2]) * spacing[1]);
-		for (unsigned yidx = blockExt[2]; yidx <= blockExt[3];
+		for (yidx = blockExt[2]; yidx <= blockExt[3];
 				++yidx, ypos += spacing[1]) {
 
 			bufferIdx=blockExt[0]+ (yidx * dims[0]) + (zidx * sliceSize);
@@ -58,13 +70,13 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(RuntimeData<T> * inData, cons
 			 * 4 buffers are created to improve cache efficiency
 			 * this improves run time by about .1 seconds
 			 */
-			const T *X1buffer = &buffer[bufferIdx];
-			const T *X2buffer = &buffer[bufferIdx + dims[0]];
-			const T *X3buffer = &buffer[bufferIdx + sliceSize];
-			const T *X4buffer = &buffer[bufferIdx + dims[0] + sliceSize];
+			X1buffer = &buffer[bufferIdx];
+			X2buffer = &buffer[bufferIdx + dims[0]];
+			X3buffer = &buffer[bufferIdx + sliceSize];
+			X4buffer = &buffer[bufferIdx + dims[0] + sliceSize];
 
 			T xpos = origin[0] + (T(blockExt[0]) * spacing[0]);
-			for (unsigned xidx = blockExt[0]; xidx <= blockExt[1]; ++xidx, xpos +=
+			for (xidx = blockExt[0]; xidx <= blockExt[1]; ++xidx, xpos +=
 					spacing[0]) {
 
 				T pos[8][3], grad[8][3];

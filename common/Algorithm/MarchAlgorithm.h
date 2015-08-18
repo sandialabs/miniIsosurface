@@ -55,9 +55,22 @@ public:
 
 	virtual void visit(SerialData<T> &data) = 0;
 
-	static T lerp(T a, T b, T w);
-
 	void extractIsosurfaceFromBlock(RuntimeData<T> * inData, const unsigned blockExt[6]);
+private:
+	static T lerp(T a, T b, T w);
+//	static void updateBuffers(const T *);
+private:
+	// Algorithm iteration position
+	unsigned xidx, yidx, zidx;
+	unsigned bufferIdx;
+	/*
+	 * 4 buffers improve cache efficiency
+	 * this speeds up run time by about .1 seconds
+	 */
+	const T *X1buffer;
+	const T *X2buffer;
+	const T *X3buffer;
+	const T *X4buffer;
 };
 
 #endif /* MARCHALGORITHM_H_ */
