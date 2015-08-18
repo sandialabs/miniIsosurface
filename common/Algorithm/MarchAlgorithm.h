@@ -16,7 +16,6 @@
 
 #include"../Constants/MarchingCubesTables.h"
 #include"./gradients.h"
-//#include"../GeneralContext/GeneralContext.h"
 #include"./EdgeIndexer.h"
 
 template<typename U> class GeneralContext;

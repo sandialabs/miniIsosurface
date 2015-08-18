@@ -6,7 +6,6 @@
  */
 
 #include "MarchAlgorithm.h"
-#include"../GeneralContext/GeneralContext.h"
 
 template<typename T>
 MarchAlgorithm<T>::MarchAlgorithm() {
@@ -213,6 +212,6 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(GeneralContext<T> * inData, c
 	}
 }
 
-
+#include"../GeneralContext/GeneralContext.h"
 // Must instantiate class for separate compilation
 template class MarchAlgorithm<float_t> ;
