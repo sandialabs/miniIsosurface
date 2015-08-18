@@ -17,7 +17,7 @@ TARGET          = MCMerge.exe
 # Compiler and flags
 CC              = g++
 CXXFLAGS        = -O2 -fopenmp -std=c++0x
-GPERF_FLAG 		= -lprofiler
+#GPERF_FLAG 		= -lprofiler
 #CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
 
 # Source and build directories

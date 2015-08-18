@@ -1,44 +1,46 @@
 /*
- * openmp.cpp
+ * MergeMPAlgo.cpp
  *
- *  Created on: Jul 10, 2015
+ *  Created on: Aug 17, 2015
  *      Author: sjmunn
  */
 
-#include"openmp.h"
+#include "MergeMPAlgo.h"
 
-static const unsigned grainDim = 256;
+template<typename T>
+MergeMPAlgo<T>::MergeMPAlgo() {
+	// TODO Auto-generated constructor stub
 
-namespace openmp {
+}
 
-void extractIsosurface(const Image3D_t &vol, float_t isoval,
-		TriangleMesh_t *&mesh, YAML_Doc& doc) {
+template<typename T>
+MergeMPAlgo<T>::~MergeMPAlgo() {
+	// TODO Auto-generated destructor stub
+}
 
-	mesh = new TriangleMesh_t();
+template<typename T>
+unsigned MergeMPAlgo<T>::numBlocks(const Range oneDRange) {
+	unsigned numberOfBlocks = (oneDRange.end() - oneDRange.begin() + oneDRange.grain() - 1)
+			/ oneDRange.grain();
+	return numberOfBlocks;
+}
 
-	const unsigned *dims = vol.getDimension();
-	const float_t *origin = vol.getOrigin();
-	const float_t *spacing = vol.getSpacing();
+template<typename T>
+void MergeMPAlgo<T>::march(GeneralContext<T> &data){
+
+	const unsigned *dims = data.imageIn.getDimension();
 
 	CLOG(logYAML) << "Marching cubes algorithm: OpenMP";
-	doc.add("Marching cubes algorithm", "OpenMP");
+	data.doc.add("Marching cubes algorithm", "OpenMP");
 
-	float_t range[6];
-	for (int i = 0; i < 3; ++i) {
-		range[i * 2] = origin[i];
-		range[(i * 2) + 1] = origin[i]
-				+ (static_cast<float_t>(dims[i] - 1) * spacing[i]);
-	}
+	unsigned grainDim=256;
 
 	/*
 	 * fullRange is the entire image volume
 	 */
 	Range3D fullRange(0, dims[2] - 1, grainDim, 0, dims[1] - 1, grainDim, 0,
 			dims[0] - 1, grainDim);
-
-	unsigned fullExtent[6];
-	fullRange.extent(fullExtent);
-	EdgeIndexer_t edgeIndices(fullExtent);
+	fullRange.extent(data.ext);
 
 	unsigned numBlockPages = numBlocks(fullRange.pages());
 	unsigned numBlockRows = numBlocks(fullRange.rows());
@@ -47,11 +49,15 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 	unsigned nblocks = numBlockPages * numBlockRows * numBlockCols;
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
+	setGlobalVariables(data);
+	MapReverse mapReverse;
+	TriangleMesh_t meshBeforeMerge;
 
 	#pragma omp parallel
 	{
 		TriangleMesh_t threadMesh;
 		PointMap_t threadPointMap;
+		MapReverse threadMapReverse;
 
 		#pragma omp for nowait
 		for (unsigned i = 0; i < nblocks; ++i) {
@@ -79,8 +85,10 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
 			threadPointMap.rehash(mapSize);
 
-			extractIsosurfaceFromBlock(vol, blockExtent, isoval, threadPointMap,edgeIndices,
-					&threadMesh);
+			MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
+					data.isoval, threadPointMap, *(this->globalEdgeIndices), threadMesh);
+
+			threadMapReverse.setArrays(threadPointMap);
 		}
 
 		/*
@@ -89,18 +97,24 @@ void extractIsosurface(const Image3D_t &vol, float_t isoval,
 		 */
 		#pragma omp critical
 		{
+			const unsigned nPoints=mapReverse.getSize();
+			threadMapReverse += nPoints;
+			mapReverse+=threadMapReverse;
 			// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
-			*mesh += threadMesh;
+			meshBeforeMerge += threadMesh;
 		}
 	}
-	CLOG(logDEBUG1) << "Mesh verts: " << mesh->numberOfVertices();
-	CLOG(logDEBUG1) << "Mesh tris: " << mesh->numberOfTriangles();
+
+	mapReverse.sortYourSelf();
+	mapReverse.getNewIndices();
+
+	CLOG(logDEBUG) << "final";
+	data.mesh->buildMesh(beforeMergeMesh,mapReverse);
+
+	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
+	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();
 }
 
-unsigned numBlocks(const Range oneDRange) {
-	unsigned numberOfBlocks = (oneDRange.end() - oneDRange.begin() + oneDRange.grain() - 1)
-			/ oneDRange.grain();
-	return numberOfBlocks;
-}
 
-}
+// Must instantiate class for separate compilation
+template class MergeMPAlgo<float_t> ;

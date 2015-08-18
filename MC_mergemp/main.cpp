@@ -19,48 +19,47 @@
 #include"../common/Reporting/Log.h"
 #include"../common/Reporting/Timer.h"
 
+#include"../common/User_Interface/UI.h"
+
 // Data Objects
 #include"../common/types.h"
 
 // Local implementation headers -------
-// User interface
-#include"./User_Interface/MPterface.h"
+// Algorithm
+#include"./Implementations/MergeMPAlgo.h"
 
 int main(int argc, char* argv[]) {
 
 	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
 	// Initialize the user interface
-	MPterface mainUI(argc,argv);
+	UI<float_t> mainUI(argc,argv);
 
-	// Initialize console log and YAML
-	YAML_Doc doc("Marching Cubes", "0.1", ".", "yaml_out.yaml");
+	// Create data object
+	GeneralContext<float_t> data;
 
-	// Load the image data
-	Image3D_t volume;
-	loadImage3D(mainUI.getFile(), &volume);
+	loadImage3D(mainUI.getFile(), &(data.imageIn));
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();
-	doc.add("Volume image data file path", mainUI.getFile());
-	volume.report(doc);
+	data.doc.add("Volume image data file path", mainUI.getFile());
+	data.imageIn.report(data.doc);
 
 	// Start the clock
 	Timer RunTime;
-
-	// Commence Marching cubes
-	TriangleMesh_t * mesh = 0;
-	mainUI.marchImplemtation(volume, mesh, doc);
-
+	// Execute the marching cubes implementation
+	data.isoval=mainUI.getIsoVal();
+	MergeMPAlgo<float_t> algorithm;
+	data.setAlgorithm(&algorithm);
+	data.march();
 	// Stop Clock
 	RunTime.stop();
 
 	//Report and save YAML file
-	RunTime.reportTime(doc);
-	doc.generateYAML();
+	RunTime.reportTime(data.doc);
+	data.doc.generateYAML();
 
 	// Save the result
-	saveTriangleMesh(mesh, mainUI.outFile());
-	delete mesh;
+	saveTriangleMesh(&(data.mesh), mainUI.outFile());
 	return 0;
 }
