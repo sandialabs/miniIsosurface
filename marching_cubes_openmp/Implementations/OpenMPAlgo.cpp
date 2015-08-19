@@ -10,7 +10,13 @@
 template<typename T>
 OpenMPAlgo<T>::OpenMPAlgo() {
 	// TODO Auto-generated constructor stub
+	grainDim=256;
+}
 
+template<typename T>
+OpenMPAlgo<T>::OpenMPAlgo(unsigned grain) {
+	// TODO Auto-generated constructor stub
+	grainDim=grain;
 }
 
 template<typename T>

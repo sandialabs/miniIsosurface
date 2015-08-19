@@ -27,10 +27,13 @@ template<typename T>
 class OpenMPAlgo : public MarchAlgorithm<T>  {
 public:
 	OpenMPAlgo();
+	OpenMPAlgo(unsigned);
 	virtual ~OpenMPAlgo();
 
 	unsigned numBlocks(const Range oneDRange);
 	void march(GeneralContext<T> &);
+private:
+	unsigned grainDim;
 };
 
 #endif /* IMPLEMENTATIONS_OPENMPALGO_H_ */

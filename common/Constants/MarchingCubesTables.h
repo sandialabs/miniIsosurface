@@ -12,6 +12,8 @@
 // Standard C/C++ library
 #include"../../common/includes.h"
 
+static const int caseMask[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
+
 class MarchingCubesTables {
 public:
 	static const int* getEdgeVertices(int edgeId);
