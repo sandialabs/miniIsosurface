@@ -50,14 +50,12 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 	setGlobalVariables(data);
-	MapReverse mapReverse;
-	TriangleMesh_t meshBeforeMerge;
 
 	#pragma omp parallel
 	{
 		TriangleMesh_t threadMesh;
 		PointMap_t threadPointMap;
-		MapReverse threadMapReverse;
+		DuplicateRemover threadDuplicateRemover;
 
 		#pragma omp for nowait
 		for (unsigned i = 0; i < nblocks; ++i) {
@@ -83,12 +81,12 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
 
 			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
-			threadPointMap.rehash(mapSize);
+			//threadPointMap.reserve(mapSize);
 
 			MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
 					data.isoval, threadPointMap, *(this->globalEdgeIndices), threadMesh);
 
-			threadMapReverse.setArrays(threadPointMap);
+			threadDuplicateRemover.setArrays(threadPointMap);
 		}
 
 		/*
@@ -97,19 +95,19 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 		 */
 		#pragma omp critical
 		{
-			const unsigned nPoints=mapReverse.getSize();
-			threadMapReverse += nPoints;
-			mapReverse+=threadMapReverse;
+			const unsigned nPoints=duplicateRemover.getSize();
+			threadDuplicateRemover += nPoints;
+			duplicateRemover+=threadDuplicateRemover;
 			// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
 			meshBeforeMerge += threadMesh;
 		}
 	}
 
-	mapReverse.sortYourSelf();
-	mapReverse.getNewIndices();
+	duplicateRemover.sortYourSelf();
+	duplicateRemover.getNewIndices();
 
 	CLOG(logDEBUG) << "final";
-	data.mesh->buildMesh(beforeMergeMesh,mapReverse);
+	buildMesh(data.mesh,meshBeforeMerge,duplicateRemover);
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();

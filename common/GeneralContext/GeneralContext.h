@@ -14,7 +14,6 @@
 #include"../Data_Obj/Image3D.h"
 #include"../Data_Obj/TriangleMesh.h"
 #include"../Data_Obj/Triplet.h"
-#include"../Data_Obj/MapReverse.h"
 
 #include"../Algorithm/MarchAlgorithm.h"
 

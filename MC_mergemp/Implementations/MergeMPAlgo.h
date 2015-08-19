@@ -20,8 +20,14 @@
 #include"../../common/Algorithm/MarchAlgorithm.h"
 #include"../../common/GeneralContext/GeneralContext.h"
 
+#include"../../common/Data_Obj/TriangleMesh.h"
+
 // Algorithm objects
 #include"../../common/Algorithm/Ranges.h"
+
+#include"../Algorithm/DuplicateRemover.h"
+#include"../Algorithm/buildMesh.h"
+
 
 template<typename T>
 class MergeMPAlgo : public MarchAlgorithm<T>  {
@@ -31,6 +37,11 @@ public:
 
 	unsigned numBlocks(const Range oneDRange);
 	void march(GeneralContext<T> &);
+private:
+	// These are intermediate data structures before the final
+	// results are sent to GeneralContext
+	DuplicateRemover duplicateRemover;
+	TriangleMesh<T> meshBeforeMerge;
 };
 
 #endif /* IMPLEMENTATIONS_MERGEMPALGO_H_ */

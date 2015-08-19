@@ -74,8 +74,8 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, cons
 	const T *spacing = vol.getSpacing();
 	const T *buffer = vol.getData();
 
-	CLOG(logDEBUG1) << "Extent: " << blockExt[0] << " " << blockExt[1] << " "
-			<< blockExt[2] << " " << blockExt[3] << " " << blockExt[4] << " " << blockExt[5];
+	//CLOG(logDEBUG1) << "Extent: " << blockExt[0] << " " << blockExt[1] << " "
+	//		<< blockExt[2] << " " << blockExt[3] << " " << blockExt[4] << " " << blockExt[5];
 
 	unsigned sliceSize = dims[0] * dims[1];
 

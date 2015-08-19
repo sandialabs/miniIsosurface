@@ -1,23 +1,23 @@
 /*
- * MapReverse.cpp
+ * DuplicateRemover.cpp
  *
  *  Created on: Aug 12, 2015
  *      Author: sjmunn
  */
 
-#include "MapReverse.h"
+#include "DuplicateRemover.h"
 
-MapReverse::MapReverse(void) {
+DuplicateRemover::DuplicateRemover(void) {
 	// not necessary
 	edge_sorted=false;
 	//oldIdx_sorted=false;
 }
 
-void MapReverse::preAllocate(unsigned nPoints) {
+void DuplicateRemover::preAllocate(unsigned nPoints) {
 	dataArray.resize(nPoints);
 }
 
-void MapReverse::setArrays(PointMap_type &pointMap) {
+void DuplicateRemover::setArrays(const PointMap_type &pointMap) {
 	/*
 	 * This object reverses the point map
 	 * pointMap: edges pointing to point indices
@@ -25,35 +25,28 @@ void MapReverse::setArrays(PointMap_type &pointMap) {
 	 */
 	unsigned nEdges = pointMap.size();
 	this->preAllocate(nEdges);
-
 	// Start the clock
-	Timer RunTime;
+	//Timer RunTime;
 	//#pragma omp parallel for
-	for (unsigned iEdge=0;iEdge<nEdges;++iEdge) {
-		unsigned iPoint = pointMap[iEdge];
-		dataArray[iPoint].edgeIdx=iEdge;
-		dataArray[iPoint].pointIdx=iPoint;
+	for (PointMap_type::const_iterator it = pointMap.begin(); it != pointMap.end(); ++it) {
+		dataArray[it->second].edgeIdx=it->first;
+		dataArray[it->second].pointIdx=it->second;
 	}
-
 	// Stop Clock
-	RunTime.stop();
+	//RunTime.stop();
 
 	//Report and save YAML file
-	RunTime.reportTime();
-//	for (PointMap_type::const_iterator it=pointMap.begin(); it != pointMap.end(); ++it) {
-//		dataArray[it->second].edgeIdx=it->first;
-//		dataArray[it->second].pointIdx=it->second;
-//	}
+	//RunTime.reportTime();
 }
 
-void MapReverse::sortYourSelf(void) {
+void DuplicateRemover::sortYourSelf(void) {
 
 	std::sort(dataArray.begin(), dataArray.end(), ByEdgeIdx());
 	edge_sorted=true;
 	//oldIdx_sorted=false;
 }
 
-std::vector<unsigned> MapReverse::oldToNewIdxMap(void) {
+std::vector<unsigned> DuplicateRemover::oldToNewIdxMap(void) {
 
 	unsigned nPoints=getSize();
 	std::vector<unsigned> oldToNewMap;
@@ -68,9 +61,9 @@ std::vector<unsigned> MapReverse::oldToNewIdxMap(void) {
 	return oldToNewMap;
 }
 
-void MapReverse::getNewIndices(void) {
+void DuplicateRemover::getNewIndices(void) {
 	if (!edge_sorted) {
-		throw object_not_sorted("MapReverse");
+		throw object_not_sorted("DuplicateRemover");
 	}
 	/*
 	 * Going through the dataArray and creating new point indices for the data
@@ -91,7 +84,7 @@ void MapReverse::getNewIndices(void) {
 	}
 }
 
-MapReverse& MapReverse::operator+=(const unsigned increment) {
+DuplicateRemover& DuplicateRemover::operator+=(const unsigned increment) {
 
 	# pragma omp parallel for
 	for (unsigned iPoint=0; iPoint<this->getSize(); iPoint++) {
@@ -101,19 +94,19 @@ MapReverse& MapReverse::operator+=(const unsigned increment) {
 	return *this;
 }
 
-MapReverse& MapReverse::operator+=(const MapReverse&threadMap) {
+DuplicateRemover& DuplicateRemover::operator+=(const DuplicateRemover&threadMap) {
 
 	dataArray.insert(dataArray.end(), threadMap.dataArray.begin(), threadMap.dataArray.end());
 
 	return *this;
 }
 
-const unsigned MapReverse::getSize(void) const {
+const unsigned DuplicateRemover::getSize(void) const {
 
 	return dataArray.size();
 }
 
-MapReverse::~MapReverse() {
+DuplicateRemover::~DuplicateRemover() {
 	// TODO Auto-generated destructor stub
 }
 

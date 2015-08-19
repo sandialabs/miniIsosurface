@@ -1,5 +1,5 @@
 /*
- * MapReverse.h
+ * DuplicateRemover.h
  *
  *  Created on: Aug 12, 2015
  *      Author: sjmunn
@@ -8,12 +8,12 @@
 #ifndef IMPLEMENTATIONS_MAPREVERSE_H_
 #define IMPLEMENTATIONS_MAPREVERSE_H_
 
-#include"../includes.h"
+#include"../../common/includes.h"
 
 // Reporting Headers
-#include"../Reporting/Log.h"
-#include"../Reporting/IO_errors.h"
-#include"../Reporting/Timer.h"
+#include"../../common/Reporting/Log.h"
+#include"../../common/Reporting/IO_errors.h"
+#include"../../common/Reporting/Timer.h"
 
 typedef std::unordered_map<unsigned,unsigned> PointMap_type;
 
@@ -35,18 +35,18 @@ struct ByPointIdx {
     }
 };
 
-class MapReverse {
+class DuplicateRemover {
 public:
-	MapReverse();
-	virtual ~MapReverse();
+	DuplicateRemover();
+	virtual ~DuplicateRemover();
 
 	// write
 	void preAllocate(const unsigned);
-	void setArrays(PointMap_type &);
+	void setArrays(const PointMap_type &);
 	void sortYourSelf(void);
 	std::vector<unsigned> oldToNewIdxMap(void);
-	MapReverse& operator+=(const unsigned);
-	MapReverse& operator+=(const MapReverse&);
+	DuplicateRemover& operator+=(const unsigned);
+	DuplicateRemover& operator+=(const DuplicateRemover&);
 	void getNewIndices(void);
 
 	//read

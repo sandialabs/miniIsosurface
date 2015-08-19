@@ -14,51 +14,11 @@ TriangleMesh<T>::TriangleMesh() {
 	// Not needed
 }
 
-//template<typename T>
-//void TriangleMesh<T>::buildMesh(TriangleMesh& ogMesh,MapReverse& newPtMap) {
-//	/*
-//	 * Iterates through the entire dataArray in newPtMap and creates
-//	 * a new mesh from the new point indices in newPointIdx
-//	 */
-//	unsigned nOgPoints=newPtMap.getSize();
-//	// As many new points as last index in the dataArray
-//	unsigned nNewPoints=newPtMap.dataArray.end()->newPointIdx;
-//	// Allocate space in the new mesh
-//	this->points.resize(nNewPoints);
-//	this->normals.resize(nNewPoints);
-//
-//	/*
-//	 * Assign all the new points and normals correctly
-//	 */
-//	for (unsigned iPoint=0; iPoint < nOgPoints; iPoint++) {
-//
-//		unsigned newPtIndex=newPtMap.dataArray[iPoint].newPointIdx;
-//		unsigned ogPtIndex=newPtMap.dataArray[iPoint].pointIdx;
-//		const float_t * ogCoords = ogMesh.getPointPosition(ogPtIndex);
-//		const float_t * ogNormal = ogMesh.getNormalVector(ogPtIndex);
-//
-//		this->setPoint(newPtIndex,ogCoords);
-//		this->setNormal(newPtIndex,ogNormal);
-//	}
-//
-//	/*
-//	 * Get the triangles
-//	 */
-//	unsigned nTriangles = ogMesh.numberOfTriangles();
-//	std::vector<unsigned> oldToNewMap = newPtMap.oldToNewIdxMap();
-//
-//	//# pragma omp parallel for
-//	for (unsigned iTriangle=0; iTriangle < nTriangles;++iTriangle) {
-//		const unsigned *ogTriangleIdxs=ogMesh.getTriangleIndices(iTriangle);
-//		unsigned newTriangleIdxs[3];
-//		newTriangleIdxs[0]=oldToNewMap[ogTriangleIdxs[0]];
-//		newTriangleIdxs[1]=oldToNewMap[ogTriangleIdxs[1]];
-//		newTriangleIdxs[2]=oldToNewMap[ogTriangleIdxs[2]];
-//
-//		this->addTriangle(newTriangleIdxs);
-//	}
-//
-//}
+template<typename T>
+void TriangleMesh<T>::allocate(unsigned nNewPoints) {
+	points.resize(nNewPoints);
+	normals.resize(nNewPoints);
+}
 
 template<typename T>
 TriangleMesh<T>::~TriangleMesh() {
