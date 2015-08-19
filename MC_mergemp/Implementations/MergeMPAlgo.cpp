@@ -9,8 +9,12 @@
 
 template<typename T>
 MergeMPAlgo<T>::MergeMPAlgo() {
-	// TODO Auto-generated constructor stub
+	grainDim=256;
+}
 
+template<typename T>
+MergeMPAlgo<T>::MergeMPAlgo(unsigned grain) {
+	grainDim=grain;
 }
 
 template<typename T>
@@ -32,8 +36,6 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 
 	CLOG(logYAML) << "Marching cubes algorithm: OpenMP";
 	data.doc.add("Marching cubes algorithm", "OpenMP");
-
-	unsigned grainDim=256;
 
 	/*
 	 * fullRange is the entire image volume

@@ -33,6 +33,7 @@ template<typename T>
 class MergeMPAlgo : public MarchAlgorithm<T>  {
 public:
 	MergeMPAlgo();
+	MergeMPAlgo(unsigned);
 	virtual ~MergeMPAlgo();
 
 	unsigned numBlocks(const Range oneDRange);
@@ -42,6 +43,7 @@ private:
 	// results are sent to GeneralContext
 	DuplicateRemover duplicateRemover;
 	TriangleMesh<T> meshBeforeMerge;
+	unsigned grainDim;
 };
 
 #endif /* IMPLEMENTATIONS_MERGEMPALGO_H_ */
