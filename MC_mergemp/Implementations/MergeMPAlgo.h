@@ -20,8 +20,8 @@
 #include"../../common/Algorithm/MarchAlgorithm.h"
 #include"../../common/GeneralContext/GeneralContext.h"
 
-// Local Includes
-#include"../Algorithm/Ranges.h"
+// Algorithm objects
+#include"../../common/Algorithm/Ranges.h"
 
 template<typename T>
 class MergeMPAlgo : public MarchAlgorithm<T>  {
