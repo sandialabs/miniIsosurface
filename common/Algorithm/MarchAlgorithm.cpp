@@ -25,7 +25,7 @@ void MarchAlgorithm<T>::setGlobalVariables(GeneralContext<T> &inData) {
 }
 
 template<typename T>
-void MarchAlgorithm<T>::extractIsosurfaceFromBlock(const Image3D_type &vol, const unsigned blockExt[6],
+void MarchAlgorithm<T>::extractIsosurfaceFromBlock(Image3D_type &vol, const unsigned blockExt[6],
 		T isoval, PointMap_type &pointMap, EdgeIndexer_type &edgeIndices,
 		TriangleMesh_type &mesh) {
 

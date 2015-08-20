@@ -29,7 +29,4 @@ typedef Triplet<unsigned> IndexTriplet_t;
 
 typedef std::unordered_map<unsigned,unsigned> PointMap_t;
 
-//typedef MarchAlgorithm<float_t> MarchAlgorithm_t;
-//typedef GeneralContext<float_t> GeneralContext_t;
-
 #endif /* TYPES_H_ */

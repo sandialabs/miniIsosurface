@@ -40,7 +40,7 @@ public:
 
 	void setGlobalVariables(GeneralContext<T> &);
 
-	void extractIsosurfaceFromBlock(const Image3D_type &, const unsigned [6],
+	void extractIsosurfaceFromBlock(Image3D_type &, const unsigned [6],
 			T, PointMap_type &, EdgeIndexer_type &,
 			TriangleMesh_type &);
 

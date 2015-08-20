@@ -32,7 +32,7 @@ class BlockMarchFunctor {
 	typedef Triplet<float_t> PositionVector_type;
 	typedef Triplet<unsigned> IndexTriplet_type;
 public:
-	BlockMarchFunctor(const Image3D_type &vol, const unsigned blockExt[6],
+	BlockMarchFunctor(Image3D_type &vol, const unsigned blockExt[6],
 			T isoval, PointMap_type &pointMap, EdgeIndexer_type &edgeIndices,
 			TriangleMesh_type &mesh);
 	virtual ~BlockMarchFunctor();

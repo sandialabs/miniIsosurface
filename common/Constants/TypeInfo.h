@@ -113,4 +113,3 @@ TypeInfo createTypeInfo<double>()
 }
 
 #endif
-

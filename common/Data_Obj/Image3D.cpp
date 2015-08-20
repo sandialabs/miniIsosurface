@@ -10,9 +10,13 @@
 template<typename T>
 Image3D<T>::Image3D() :
 		npoints(0), data(0) {
+
 	dim[0] = dim[1] = dim[2] = 0;
 	spacing[0] = spacing[1] = spacing[2] = 0.0;
 	origin[0] = origin[1] = origin[2] = 0.0;
+	isMPIdataBlock=false;
+	bufferIdx=0;
+	X1buffer=X2buffer=X3buffer=X4buffer=0;
 }
 
 template<typename T>
@@ -39,6 +43,11 @@ void Image3D<T>::setOrigin(T x, T y, T z) {
 	this->origin[0] = x;
 	this->origin[1] = y;
 	this->origin[2] = z;
+}
+
+template<typename T>
+void Image3D<T>::setToMPIdataBlock(void) {
+	isMPIdataBlock=true;
 }
 
 template<typename T>
@@ -75,6 +84,8 @@ const T* Image3D<T>::getOrigin() const {
 
 template<typename T>
 const T* Image3D<T>::getData() const {
+	CLOG(logWARNING) << "Image3D<T>::getData() call";
+	CLOG(logWARNING) << "Will be deleting this function soon";
 	return this->data;
 }
 
@@ -101,14 +112,33 @@ void Image3D<T>::report(YAML_Doc &doc) const {
 	doc.add("File z-dimension",static_cast<long long int>(dim[2]));
 
 	doc.add("Number of points in image volume", static_cast<long long int>(npoints));
+}
 
-	//doc.add("File x-spacing",static_cast<long long int>(spacing[0]));
-	//doc.add("File y-spacing",static_cast<long long int>(spacing[1]));
-	//doc.add("File z-spacing",static_cast<long long int>(spacing[2]));
+template<typename T>
+void Image3D<T>::setImage3DOutputBuffers(const unsigned xIdx, const unsigned yIdx, const unsigned zIdx) {
+	unsigned sliceSize = dim[0]*dim[1];
+	bufferIdx=xIdx+ (yIdx * dim[0]) + (zIdx * sliceSize);
 
-	//doc.add("File x-origin",static_cast<long long int>(origin[0]));
-	//doc.add("File y-origin",static_cast<long long int>(origin[1]));
-	//doc.add("File z-origin",static_cast<long long int>(origin[2]));
+	X1buffer = &data[bufferIdx];
+	X2buffer = &data[bufferIdx + dim[0]];
+	X3buffer = &data[bufferIdx + sliceSize];
+	X4buffer = &data[bufferIdx + dim[0] + sliceSize];
+}
+
+template<typename T>
+void Image3D<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xExtent) {
+
+	vertexVals[0] = X1buffer[xIdx-xExtent];
+	vertexVals[1] = X1buffer[xIdx-xExtent+1];
+
+	vertexVals[2] = X2buffer[xIdx-xExtent+1];
+	vertexVals[3] = X2buffer[xIdx-xExtent];
+
+	vertexVals[4] = X3buffer[xIdx-xExtent];
+	vertexVals[5] = X3buffer[xIdx-xExtent+1];
+
+	vertexVals[6] = X4buffer[xIdx-xExtent+1];
+	vertexVals[7] = X4buffer[xIdx-xExtent];
 }
 
 // Must instantiate class for separate compilation

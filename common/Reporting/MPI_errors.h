@@ -42,6 +42,19 @@ private:
 	const char* const message;
 };
 
+class impossible_extent: public std::exception {
+public:
+	impossible_extent(const char* const message) :
+		message(message) {
+
+		CLOG(logERROR) << "In LoadImage3D setBlockExtent() member function,";
+		CLOG(logERROR) << message;
+	}
+
+private:
+	const char* const message;
+};
+
 
 
 #endif /* REPORTING_MPI_ERRORS_H_ */

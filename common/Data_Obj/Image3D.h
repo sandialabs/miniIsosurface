@@ -24,28 +24,55 @@ public:
 	void setDimension(unsigned, unsigned, unsigned);
 	void setSpacing(T, T, T);
 	void setOrigin(T, T, T);
+	void setToMPIdataBlock(void);
 
-	virtual void allocate();
+	void allocate();
 	T *getData();
 
 	const unsigned* getDimension() const;
 	unsigned getNumberOfPoints() const;
 	const T* getSpacing() const;
 	const T* getOrigin() const;
+	// Should phase this function out
 	const T* getData() const;
 
 	void report(YAML_Doc &) const;
 
+	void setImage3DOutputBuffers(const unsigned, const unsigned,const unsigned);
+	void getVertexValues(T *,unsigned,unsigned);
+
 private:
-	// Prevent object copying
+	// Prevent object copying (would cost too much memory
 	Image3D(const Image3D&); // no implementation
 	Image3D& operator=(const Image3D&); // no implementation
 
+	// ===== Image data =========================
 	unsigned dim[3];
 	unsigned npoints;
 	T spacing[3];
 	T origin[3];
 	T *data;
+	bool isMPIdataBlock;
+
+	/* ===== Reading image object ===============
+	 * Collection of buffers to allow the Image3D
+	 * object to read itself efficiently.
+	 ==========================================*/
+	unsigned bufferIdx;
+	/*
+	 * 4 buffers improve cache efficiency
+	 * this speeds up run time significantly
+	 */
+	const T *X1buffer;
+	const T *X2buffer;
+	const T *X3buffer;
+	const T *X4buffer;
+
+	/* ===== Reading image object ===============
+	 * Collection of functions to allow the Image3D
+	 * object to read itself efficiently.
+	 ==========================================*/
+
 };
 
 #endif /* DATA_OBJ_IMAGE3D_H_ */

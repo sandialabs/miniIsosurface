@@ -34,6 +34,7 @@ public:
 	void loadHeader(const char *);
 	// MPI process specific
 	void setBlockExtent(const unsigned *);
+	void readEntireVolumeData(Image3D<T>&);
 	void readBlockData(Image3D<T>&);
 	// Object member read
 	const unsigned* getVolumeDimensions(void) const;

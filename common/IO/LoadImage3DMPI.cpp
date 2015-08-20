@@ -34,17 +34,14 @@ LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
 	nPointsInBlock=0;
 	typeInfo=new TypeInfo(loaderObject.typeInfo->getId());
 
-	BOOST_TEST_CHECKPOINT("Copied type info");
 	// Copy the line reader locally for this object
 	vtkFile=loaderObject.whichFile();
 	stream.open(vtkFile);
 
-	BOOST_TEST_CHECKPOINT("Opened file, skipping hear data");
 	// Skip all the header lines
 	for(int iLine=0; iLine<N_HEADER_LINES;++iLine) {
-		stream.ignore ( std::numeric_limits<std::streamsize>::max(), '\n' );
+		stream.ignore ( 256, '\n' );
 	}
-	BOOST_TEST_CHECKPOINT("Initializing line stream at binary data");
 	reader = new LineStream(stream);
 	blockExtentSet=false;
 	imageDataIdx=0;
@@ -158,6 +155,10 @@ void LoadImage3DMPI<T>::loadHeader(const char *vtkFileName) {
 
 template<typename T>
 void LoadImage3DMPI<T>::setBlockExtent(const unsigned * blkExt) {
+	if (blkExt[0] > xdimFile || blkExt[1] > xdimFile) throw impossible_extent("x-axis extent doesn't make sense");
+	if (blkExt[2] > ydimFile || blkExt[3] > ydimFile) throw impossible_extent("y-axis extent doesn't make sense");
+	if (blkExt[4] > zdimFile || blkExt[5] > zdimFile) throw impossible_extent("z-axis extent doesn't make sense");
+
 	for (int iExt=0;iExt<6;++iExt) {
 		blockExtent[iExt]=blkExt[iExt];
 	}
@@ -166,6 +167,17 @@ void LoadImage3DMPI<T>::setBlockExtent(const unsigned * blkExt) {
 	nPointsInBlock*=blockExtent[3]-blockExtent[2]+2;
 	nPointsInBlock*=blockExtent[5]-blockExtent[4]+2;
 	blockExtentSet=true;
+}
+
+template<typename T>
+void LoadImage3DMPI<T>::readEntireVolumeData(Image3D<T>& image) {
+	unsigned blkExt[6];
+	blkExt[0]=blkExt[2]=blkExt[4]=0;
+	blkExt[1]=xdimFile-1;
+	blkExt[3]=ydimFile-1;
+	blkExt[5]=zdimFile-1;
+	this->setBlockExtent(blkExt);
+	this->readBlockData(image);
 }
 
 template<typename T>
@@ -212,7 +224,6 @@ void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
 	image.setOrigin(origin[0], origin[1], origin[2]);
 	image.allocate();
 
-	BOOST_TEST_CHECKPOINT("Converting buffer");
 	convertBufferWithTypeInfo(&rbufRead[0], *typeInfo, nPointsInBlock, image.getData());
 }
 
@@ -237,4 +248,5 @@ const unsigned LoadImage3DMPI<T>::getnVolumePoints(void) const {
 	return fileNpoints;
 }
 
-
+// Must instantiate class for separate compilation
+template class LoadImage3DMPI<float_t> ;
