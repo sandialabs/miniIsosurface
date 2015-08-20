@@ -15,19 +15,31 @@
 /*
  * LoadImage3DMPI errors
  */
-class file_not_found: public std::exception {
+class zero_dimensions: public std::exception {
 public:
-	file_not_found(const char* const fileName) :
-		fileName(fileName) {
+	zero_dimensions(const char* const message) :
+		message(message) {
 
-		CLOG(logERROR) << "File not found error";
-		CLOG(logERROR) << "Given Path: " << fileName;
-		CLOG(logERROR) << "In linux, type pwd [Enter] to get your current directory";
-		CLOG(logERROR) << "The path should be specified relative to the current directory";
+		CLOG(logERROR) << "When initializing LoadImage3DMPI object A from another LoadImage3DMPI object B,";
+		CLOG(logERROR) << "argument B was found to have zero dimensions.";
+		CLOG(logERROR) << "Either B did not yet read its file's header";
+		CLOG(logERROR) << "or the file has not actual image volume data.";
 	}
 
 private:
-	const char* const fileName;
+	const char* const message;
+};
+
+class block_extent_not_set: public std::exception {
+public:
+	block_extent_not_set(const char* const message) :
+		message(message) {
+
+		CLOG(logERROR) << "Cannot call readBlockData() before setting the block extent via setBlockExtent()";
+	}
+
+private:
+	const char* const message;
 };
 
 

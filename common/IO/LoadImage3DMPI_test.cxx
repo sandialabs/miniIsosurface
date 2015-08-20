@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(readingHeader) {
 
 }
 
-BOOST_AUTO_TEST_CASE(readingFirstPoint) {
+BOOST_AUTO_TEST_CASE(readingFirstBlock) {
 	BOOST_TEST_CHECKPOINT("Getting header info");
 	LoadImage3DMPI<float_t> headerInfo;
 	headerInfo.loadHeader("../../Data/ctmini.vtk");
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(readingFirstPoint) {
 	BOOST_TEST_CHECKPOINT("Initializing new reader object");
 	LoadImage3DMPI<float_t> firstBlock(headerInfo);
 	BOOST_TEST_CHECKPOINT("firstBlock is initialized to binary data in the file");
-	unsigned extent[6] = { 0, 0, 2, 2, 0, 0 };
+	unsigned extent[6] = { 0, 0, 0, 0, 0, 0 };
 	firstBlock.setBlockExtent(extent);
 	Image3D<float_t> imageVol;
 	BOOST_TEST_CHECKPOINT("Read the image block");
@@ -62,5 +62,30 @@ BOOST_AUTO_TEST_CASE(readingFirstPoint) {
 	// get the point from imageVol
 	const float_t *buffer;
 	buffer = imageVol.getData();
-	std::cout << "buffer val is: " << buffer[0] << std::endl;
+	for (int iPoint=0;iPoint<8;++iPoint) {
+		std::cout << "buffer val is: " << buffer[iPoint] << std::endl;
+	}
+}
+
+BOOST_AUTO_TEST_CASE(readingAnotherBlock) {
+	BOOST_TEST_CHECKPOINT("Getting header info");
+	LoadImage3DMPI<float_t> headerInfo;
+	headerInfo.loadHeader("../../Data/ctmini.vtk");
+	const unsigned *dims = headerInfo.getVolumeDimensions();
+
+	BOOST_TEST_CHECKPOINT("Initializing new reader object");
+	LoadImage3DMPI<float_t> firstBlock(headerInfo);
+	BOOST_TEST_CHECKPOINT("firstBlock is initialized to binary data in the file");
+	unsigned extent[6] = { 1, 1, 1, 1, 1, 1 };
+	firstBlock.setBlockExtent(extent);
+	Image3D<float_t> imageVol;
+	BOOST_TEST_CHECKPOINT("Read the image block");
+	firstBlock.readBlockData(imageVol);
+
+	// get the point from imageVol
+	const float_t *buffer;
+	buffer = imageVol.getData();
+	for (int iPoint=0;iPoint<8;++iPoint) {
+		std::cout << "buffer val is: " << buffer[iPoint] << std::endl;
+	}
 }

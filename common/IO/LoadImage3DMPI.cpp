@@ -17,17 +17,21 @@ LoadImage3DMPI<T>::LoadImage3DMPI() {
 	vtkFile=0;
 	nPointsInBlock=0;
 	typeInfo=0;
+	blockExtentSet=false;
+	imageDataIdx=0;
 }
 
 template<typename T>
 LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
 	const unsigned * dims=loaderObject.getVolumeDimensions();
+
+	if (dims[0]==0) throw zero_dimensions("Zero dimension error");
+
 	xdimFile=dims[0];
 	ydimFile=dims[1];
 	zdimFile=dims[2];
 	fileNpoints=loaderObject.getnVolumePoints();
 	nPointsInBlock=0;
-	BOOST_TEST_CHECKPOINT("Copied header info");
 	typeInfo=new TypeInfo(loaderObject.typeInfo->getId());
 
 	BOOST_TEST_CHECKPOINT("Copied type info");
@@ -42,6 +46,8 @@ LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
 	}
 	BOOST_TEST_CHECKPOINT("Initializing line stream at binary data");
 	reader = new LineStream(stream);
+	blockExtentSet=false;
+	imageDataIdx=0;
 }
 
 template<typename T>
@@ -156,37 +162,65 @@ void LoadImage3DMPI<T>::setBlockExtent(const unsigned * blkExt) {
 		blockExtent[iExt]=blkExt[iExt];
 	}
 	// add one because the march extent stops 1 unit before the end
-	nPointsInBlock=blockExtent[1]-blockExtent[0]+1;
-	nPointsInBlock+=blockExtent[3]-blockExtent[2]+1;
-	nPointsInBlock+=blockExtent[5]-blockExtent[4]+1;
+	nPointsInBlock=blockExtent[1]-blockExtent[0]+2;
+	nPointsInBlock*=blockExtent[3]-blockExtent[2]+2;
+	nPointsInBlock*=blockExtent[5]-blockExtent[4]+2;
+	blockExtentSet=true;
 }
 
 template<typename T>
 void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
-//	size_t bufsize = nPointsInBlock * typeInfo.size();
-//	std::vector<char> rbuf(bufsize);
-//	stream.read(&rbuf[0], bufsize);
+	if (!blockExtentSet) throw block_extent_not_set("Set block extent first");
+
 	// Get to initial position
 	unsigned npointsIgnore = blockExtent[0]+ (blockExtent[2] * xdimFile) + (blockExtent[4] * xdimFile*ydimFile);
-	size_t ignoreSize = npointsIgnore * typeInfo->size();
-	std::vector<char> rbufIgnore(ignoreSize);
-	BOOST_TEST_CHECKPOINT("Skip data file to origin, npointsIgnore " << npointsIgnore );
-	stream.read(&rbufIgnore[0], ignoreSize);
+	this->streamIgnore(npointsIgnore);
 
-	// DEBUG just read one point
-	unsigned npointsRead = 1;
-	size_t readSize = npointsRead * typeInfo->size();
-	std::vector<char> rbufRead(readSize);
-	BOOST_TEST_CHECKPOINT("Get actual data, nPoints " << npointsRead);
-	stream.read(&rbufRead[0], readSize);
+	unsigned nXpoints = blockExtent[1]-blockExtent[0]+2; // + 2 for first and last pts
+	unsigned nYpoints = blockExtent[3]-blockExtent[2]+2;
+	unsigned nZpoints = blockExtent[5]-blockExtent[4]+2;
 
-	image.setDimension(1, 1, 1);
+	unsigned nXpointsIgnore = xdimFile - nXpoints;
+	unsigned nYpointsIgnore = xdimFile*(ydimFile-nYpoints);
+
+	size_t readXlineSize = nXpoints * typeInfo->size();
+	size_t totalReadSize = nPointsInBlock * typeInfo->size();
+	std::vector<char> rbufRead(totalReadSize);
+
+	unsigned iYline;
+	unsigned iZline;
+
+	std::cout << "npointsIgnore " << npointsIgnore << std::endl;
+
+	for (iZline=0;iZline < nZpoints;++iZline) {
+		for (iYline=0;iYline < nYpoints;++iYline) {
+			// Read a line along the x-dimension
+			stream.read(&rbufRead[imageDataIdx], readXlineSize);
+
+			// Ignore the rest of the line
+			this->streamIgnore(nXpointsIgnore);
+			// Update rbufRead location
+			imageDataIdx+=readXlineSize;
+		}
+		// Ignore the x-axis lines outside the extent
+		this->streamIgnore(nYpointsIgnore);
+		std::cout << "Total y-ignore: " << nYpointsIgnore << std::endl;
+	}
+
+	image.setDimension(nXpoints, nYpoints, nZpoints);
 	image.setSpacing(spacing[0], spacing[1], spacing[2]);
 	image.setOrigin(origin[0], origin[1], origin[2]);
 	image.allocate();
 
 	BOOST_TEST_CHECKPOINT("Converting buffer");
-	convertBufferWithTypeInfo(&rbufRead[0], *typeInfo, npointsRead, image.getData());
+	convertBufferWithTypeInfo(&rbufRead[0], *typeInfo, nPointsInBlock, image.getData());
+}
+
+template<typename T>
+void LoadImage3DMPI<T>::streamIgnore(unsigned nPointsIgnore) {
+	size_t ignoreSize = nPointsIgnore * typeInfo->size();
+	std::vector<char> rbufIgnore(ignoreSize);
+	stream.read(&rbufIgnore[0], ignoreSize);
 }
 
 template<typename T>

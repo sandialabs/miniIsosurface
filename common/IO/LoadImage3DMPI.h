@@ -17,7 +17,7 @@
 
 // Reporting Headers
 #include"../Reporting/IO_errors.h"
-#include:../Reporting/MPI_errors.h"
+#include"../Reporting/MPI_errors.h"
 #include"../Reporting/Log.h"
 
 static const int N_HEADER_LINES=10;
@@ -41,6 +41,7 @@ public:
 	const char* whichFile(void) const { return vtkFile; }
 private:
 	// Private member functions
+	void streamIgnore(unsigned);
 	// File reader objects
 	std::ifstream stream;
 	LineStream *reader;
@@ -54,8 +55,10 @@ private:
 	TypeInfo* typeInfo;
 
 	// MPI process specific
+	bool blockExtentSet;
 	unsigned blockExtent[6];
 	unsigned nPointsInBlock;
+	unsigned imageDataIdx;
 };
 
 #endif /* IO_LOADIMAGE3DMPI_H_ */
