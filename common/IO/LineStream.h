@@ -8,36 +8,32 @@
 #ifndef LINESTREAM_H_
 #define LINESTREAM_H_
 
-class LineStream
-{
+class LineStream {
 public:
-  LineStream(std::istream &in);
-  std::istream& stream();
+	LineStream(std::istream &in);
+	std::istream& stream();
 
-  void readline();
+	void readline();
 
 private:
-  std::istream &in;
-  std::stringstream sstream;
-  std::string line;
+	std::istream &in;
+	std::stringstream sstream;
+	std::string line;
 };
 
-inline LineStream::LineStream(std::istream &in)
-  : in(in)
-{
+inline LineStream::LineStream(std::istream &in) :
+		in(in) {
 }
 
-inline std::istream& LineStream::stream()
-{
-  return this->sstream;
+inline std::istream& LineStream::stream() {
+	return this->sstream;
 }
 
-inline void LineStream::readline()
-{
-  std::getline(this->in, this->line);
-  this->sstream.clear();
-  this->sstream.str(this->line);
-  this->sstream.seekg(0);
+inline void LineStream::readline() {
+	std::getline(this->in, this->line);
+	this->sstream.clear();
+	this->sstream.str(this->line);
+	this->sstream.seekg(0);
 }
 
 #endif /* LINESTREAM_H_ */

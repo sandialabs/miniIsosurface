@@ -19,13 +19,13 @@ template<typename T>
 class Image3D  {
 public:
 	Image3D();
-	~Image3D();
+	virtual ~Image3D();
 
 	void setDimension(unsigned, unsigned, unsigned);
 	void setSpacing(T, T, T);
 	void setOrigin(T, T, T);
 
-	void allocate();
+	virtual void allocate();
 	T *getData();
 
 	const unsigned* getDimension() const;
