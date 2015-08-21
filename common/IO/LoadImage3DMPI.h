@@ -38,8 +38,10 @@ public:
 	void readBlockData(Image3D<T>&);
 	// Object member read
 	const unsigned* getVolumeDimensions(void) const;
-	const unsigned& getnVolumePoints(void) const;
-	const char* whichFile(void) const { return vtkFile; }
+	unsigned getnVolumePoints(void) const;
+	const T* getSpacing(void) const;
+	const T* getOrigin(void) const;
+ 	const char* whichFile(void) const { return vtkFile; }
 private:
 	// Private member functions
 	void streamIgnore(unsigned);

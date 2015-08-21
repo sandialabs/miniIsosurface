@@ -13,8 +13,8 @@ public:
 	Range() :
 			from(0), to(0), gsize(1) {
 	}
-	Range(unsigned from, unsigned to, unsigned gsize = 1) :
-			from(from), to(to), gsize(gsize) {
+	Range(unsigned inFrom, unsigned inTo, unsigned inGsize = 1) :
+			from(inFrom), to(inTo), gsize(inGsize) {
 	}
 
 	unsigned begin() const {
@@ -85,13 +85,13 @@ public:
 		return c;
 	}
 
-	void extent(unsigned * extent) const {
-		extent[0] = this->c.begin();
-		extent[1] = this->c.end() - 1;
-		extent[2] = this->r.begin();
-		extent[3] = this->r.end() - 1;
-		extent[4] = this->p.begin();
-		extent[5] = this->p.end() - 1;
+	void extent(unsigned * inExtent) const {
+		inExtent[0] = this->c.begin();
+		inExtent[1] = this->c.end() - 1;
+		inExtent[2] = this->r.begin();
+		inExtent[3] = this->r.end() - 1;
+		inExtent[4] = this->p.begin();
+		inExtent[5] = this->p.end() - 1;
 	}
 
 private:

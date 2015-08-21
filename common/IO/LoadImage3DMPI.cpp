@@ -23,13 +23,21 @@ LoadImage3DMPI<T>::LoadImage3DMPI() {
 
 template<typename T>
 LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
-	const unsigned * dims=loaderObject.getVolumeDimensions();
+	const unsigned * loaderObjectDim=loaderObject.getVolumeDimensions();
+	const T * loaderObjectSpacing=loaderObject.getSpacing();
+	const T * loaderObjectOrigin=loaderObject.getOrigin();
 
-	if (dims[0]==0) throw zero_dimensions("Zero dimension error");
+	if (loaderObjectDim[0]==0) throw zero_dimensions("Zero dimension error");
 
-	xdimFile=dims[0];
-	ydimFile=dims[1];
-	zdimFile=dims[2];
+	xdimFile=loaderObjectDim[0];
+	ydimFile=loaderObjectDim[1];
+	zdimFile=loaderObjectDim[2];
+	for (int iAxis=0;iAxis<3;++iAxis) {
+		spacing[iAxis]=loaderObjectSpacing[iAxis];
+		origin[iAxis]=loaderObjectOrigin[iAxis];
+		CLOG(logDEBUG) << "spacing " << iAxis << " " << spacing[iAxis];
+	}
+
 	fileNpoints=loaderObject.getnVolumePoints();
 	nPointsInBlock=0;
 	typeInfo=new TypeInfo(loaderObject.typeInfo->getId());
@@ -136,7 +144,7 @@ void LoadImage3DMPI<T>::loadHeader(const char *vtkFileName) {
 		throw bad_format("Expecting SCALARS <name> <type>");
 	}
 
-	TypeInfo newTypeInfo = createTypeInfo(typeName.c_str());
+	TypeInfo newTypeInfo(typeName.c_str());
 	typeInfo = new TypeInfo(newTypeInfo.getId()); // newTypeInfo has limited scope
 	if (typeInfo->getId() == TypeInfo::ID_UNKNOWN) {
 		throw bad_format("Unsupported data type");
@@ -173,9 +181,9 @@ template<typename T>
 void LoadImage3DMPI<T>::readEntireVolumeData(Image3D<T>& image) {
 	unsigned blkExt[6];
 	blkExt[0]=blkExt[2]=blkExt[4]=0;
-	blkExt[1]=xdimFile-1;
-	blkExt[3]=ydimFile-1;
-	blkExt[5]=zdimFile-1;
+	blkExt[1]=xdimFile-2; // Because of the block extent definition
+	blkExt[3]=ydimFile-2; // we remove first and last points, so -2
+	blkExt[5]=zdimFile-2;
 	this->setBlockExtent(blkExt);
 	this->readBlockData(image);
 }
@@ -202,8 +210,6 @@ void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
 	unsigned iYline;
 	unsigned iZline;
 
-	std::cout << "npointsIgnore " << npointsIgnore << std::endl;
-
 	for (iZline=0;iZline < nZpoints;++iZline) {
 		for (iYline=0;iYline < nYpoints;++iYline) {
 			// Read a line along the x-dimension
@@ -216,7 +222,6 @@ void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
 		}
 		// Ignore the x-axis lines outside the extent
 		this->streamIgnore(nYpointsIgnore);
-		std::cout << "Total y-ignore: " << nYpointsIgnore << std::endl;
 	}
 
 	image.setDimension(nXpoints, nYpoints, nZpoints);
@@ -244,8 +249,18 @@ const unsigned* LoadImage3DMPI<T>::getVolumeDimensions(void) const {
 }
 
 template<typename T>
-const unsigned& LoadImage3DMPI<T>::getnVolumePoints(void) const {
+unsigned LoadImage3DMPI<T>::getnVolumePoints(void) const {
 	return fileNpoints;
+}
+
+template<typename T>
+const T* LoadImage3DMPI<T>::getSpacing(void) const {
+	return spacing;
+}
+
+template<typename T>
+const T* LoadImage3DMPI<T>::getOrigin(void) const {
+	return origin;
 }
 
 // Must instantiate class for separate compilation

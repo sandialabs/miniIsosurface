@@ -24,7 +24,7 @@ void saveTriangleMesh(const TriangleMesh<T> *mesh, const char *vtkFileName) {
 
 	unsigned nverts = mesh->numberOfVertices();
 	unsigned ntriangles = mesh->numberOfTriangles();
-	TypeInfo ti = createTypeInfo<T>();
+	TypeInfo ti = createTemplateTypeInfo<T>();
 
 	size_t bufsize = 0;
 	std::vector<char> wbuff;

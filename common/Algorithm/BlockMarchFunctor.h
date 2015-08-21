@@ -27,7 +27,7 @@ class BlockMarchFunctor {
 	typedef EdgeIndexer<T> EdgeIndexer_type;
 	typedef std::unordered_map<unsigned,unsigned> PointMap_type;
 
-	typedef Triplet<float_t> PositionVector_type;
+	typedef Triplet<T> PositionVector_type;
 	typedef Triplet<unsigned> IndexTriplet_type;
 public:
 	BlockMarchFunctor(Image3D_type &vol, const unsigned blockExt[6],
