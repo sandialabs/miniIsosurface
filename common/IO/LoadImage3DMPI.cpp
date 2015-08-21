@@ -35,7 +35,6 @@ LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
 	for (int iAxis=0;iAxis<3;++iAxis) {
 		spacing[iAxis]=loaderObjectSpacing[iAxis];
 		origin[iAxis]=loaderObjectOrigin[iAxis];
-		CLOG(logDEBUG) << "spacing " << iAxis << " " << spacing[iAxis];
 	}
 
 	fileNpoints=loaderObject.getnVolumePoints();

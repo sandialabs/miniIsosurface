@@ -10,7 +10,7 @@
 #include"../common/includes.h"
 
 // File i/o
-#include"../common/IO/LoadImage3D.h"
+#include"../common/IO/LoadImage3DMPI.h"
 #include"../common/IO/SaveTriangleMesh.h"
 
 // Reporting
@@ -38,7 +38,11 @@ int main(int argc, char* argv[]) {
 	// Create data object
 	GeneralContext<float_t> data;
 
-	loadImage3D(mainUI.getFile(), &(data.imageIn));
+	LoadImage3DMPI<float_t> fileHeader;
+	fileHeader.loadHeader(mainUI.getFile());
+
+	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
+	fileData.readEntireVolumeData(data.imageIn);
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();

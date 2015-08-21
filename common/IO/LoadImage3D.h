@@ -102,7 +102,7 @@ void loadImage3D(const char *vtkFileName, Image3D<T> *image) {
 	if (tag != "SCALARS" || reader.stream().bad()) {
 		throw bad_format("Expecting SCALARS <name> <type>");
 	}
-	TypeInfo ti = createTypeInfo(typeName.c_str());
+	TypeInfo ti = createTemplateTypeInfo(typeName.c_str());
 	if (ti.getId() == TypeInfo::ID_UNKNOWN) {
 		throw bad_format("Unsupported data type");
 	}

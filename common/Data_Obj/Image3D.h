@@ -41,6 +41,8 @@ public:
 	void setImage3DOutputBuffers(const unsigned, const unsigned,const unsigned);
 	void getVertexValues(T *,unsigned,unsigned);
 
+	void getValsForGradient(T (& x)[3][2], const unsigned, const unsigned, const unsigned) const;
+
 private:
 	// Prevent object copying (would cost too much memory
 	Image3D(const Image3D&); // no implementation
@@ -48,6 +50,7 @@ private:
 
 	// ===== Image data =========================
 	unsigned dim[3];
+	unsigned sliceSize;
 	unsigned npoints;
 	T spacing[3];
 	T origin[3];
@@ -72,7 +75,6 @@ private:
 	 * Collection of functions to allow the Image3D
 	 * object to read itself efficiently.
 	 ==========================================*/
-
 };
 
 #endif /* DATA_OBJ_IMAGE3D_H_ */

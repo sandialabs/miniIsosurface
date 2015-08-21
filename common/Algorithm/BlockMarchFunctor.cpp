@@ -143,7 +143,7 @@ BlockMarchFunctor<T>::BlockMarchFunctor(Image3D_type &vol, const unsigned blockE
 						if (!exists) {
 							mesh.addPoint(newPt);
 
-							computeAllGradients(xidx, yidx, zidx, buffer, dims,spacing,grad);
+							computeAllGradients(xidx, yidx, zidx, &vol, grad);
 
 							T norm[3];
 							for (int iAxis = 0; iAxis < 3; iAxis++) {
@@ -189,13 +189,13 @@ int BlockMarchFunctor<T>::findCaseId(T* cubeVertexVals, T isoval) {
 	return caseId;
 }
 
-template<typename T>
-void BlockMarchFunctor<T>::updateBuffers() {
-	X1buffer = &buffer[bufferIdx];
-	X2buffer = &buffer[bufferIdx + dims[0]];
-	X3buffer = &buffer[bufferIdx + sliceSize];
-	X4buffer = &buffer[bufferIdx + dims[0] + sliceSize];
-}
+//template<typename T>
+//void BlockMarchFunctor<T>::updateBuffers() {
+//	X1buffer = &buffer[bufferIdx];
+//	X2buffer = &buffer[bufferIdx + dims[0]];
+//	X3buffer = &buffer[bufferIdx + sliceSize];
+//	X4buffer = &buffer[bufferIdx + dims[0] + sliceSize];
+//}
 
 // Must instantiate class for separate compilation
 template class BlockMarchFunctor<float_t> ;

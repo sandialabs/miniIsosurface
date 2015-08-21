@@ -17,6 +17,7 @@ Image3D<T>::Image3D() :
 	isMPIdataBlock=false;
 	bufferIdx=0;
 	X1buffer=X2buffer=X3buffer=X4buffer=0;
+	sliceSize=0;
 }
 
 template<typename T>
@@ -29,6 +30,7 @@ void Image3D<T>::setDimension(unsigned xdim, unsigned ydim, unsigned zdim) {
 	this->dim[0] = xdim;
 	this->dim[1] = ydim;
 	this->dim[2] = zdim;
+	sliceSize=dim[0]*dim[1];
 }
 
 template<typename T>
@@ -116,8 +118,7 @@ void Image3D<T>::report(YAML_Doc &doc) const {
 
 template<typename T>
 void Image3D<T>::setImage3DOutputBuffers(const unsigned xIdx, const unsigned yIdx, const unsigned zIdx) {
-	unsigned sliceSize = dim[0]*dim[1];
-	bufferIdx=xIdx+ (yIdx * dim[0]) + (zIdx * sliceSize);
+	bufferIdx= xIdx + (yIdx * dim[0]) + (zIdx * sliceSize);
 
 	X1buffer = &data[bufferIdx];
 	X2buffer = &data[bufferIdx + dim[0]];
@@ -140,6 +141,49 @@ void Image3D<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xExtent)
 	vertexVals[6] = X4buffer[xIdx-xExtent+1];
 	vertexVals[7] = X4buffer[xIdx-xExtent];
 }
+
+template<typename T>
+void Image3D<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlobal, const unsigned yIdxGlobal, const unsigned zIdxGlobal) const {
+	/*
+	 * Gradient computation is only done on a per need basis
+	 * Setting up cache buffers for this would not improve performance enough
+	 */
+	// Assuming bufferIdx is updated with the marching, we just need to add distance along the x-axis
+	unsigned ptIdxOnBuffer=xIdxGlobal + yIdxGlobal * dim[0] + zIdxGlobal * sliceSize;
+	if (xIdxGlobal == 0) {
+		x[0][0] = data[ptIdxOnBuffer + 1];
+		x[0][1] = data[ptIdxOnBuffer];
+	} else if (xIdxGlobal == (dim[0] - 1)) {
+		x[0][0] = data[ptIdxOnBuffer];
+		x[0][1] = data[ptIdxOnBuffer - 1];
+	} else {
+		x[0][0] = data[ptIdxOnBuffer + 1];
+		x[0][1] = data[ptIdxOnBuffer - 1];
+	}
+
+	if (yIdxGlobal == 0) {
+		x[1][0] = data[ptIdxOnBuffer + dim[0]];
+		x[1][1] = data[ptIdxOnBuffer];
+	} else if (yIdxGlobal == (dim[1] - 1)) {
+		x[1][0] = data[ptIdxOnBuffer];
+		x[1][1] = data[ptIdxOnBuffer - dim[0]];
+	} else {
+		x[1][0] = data[ptIdxOnBuffer + dim[0]];
+		x[1][1] = data[ptIdxOnBuffer - dim[0]];
+	}
+
+	if (zIdxGlobal == 0) {
+		x[2][0] = data[ptIdxOnBuffer + sliceSize];
+		x[2][1] = data[ptIdxOnBuffer];
+	} else if (zIdxGlobal == (dim[2] - 1)) {
+		x[2][0] = data[ptIdxOnBuffer];
+		x[2][1] = data[ptIdxOnBuffer - sliceSize];
+	} else {
+		x[2][0] = data[ptIdxOnBuffer + sliceSize];
+		x[2][1] = data[ptIdxOnBuffer - sliceSize];
+	}
+}
+
 
 // Must instantiate class for separate compilation
 template class Image3D<float_t> ;

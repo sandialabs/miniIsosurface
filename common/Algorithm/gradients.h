@@ -18,11 +18,10 @@
 // Constants
 #include"../../common/Constants/MarchingCubesTables.h"
 
-static void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx,
-		const float_t *buffer, const unsigned dims[3], const float_t spacing[3],
-		float_t grad[3]);
+template<typename T>
+static void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx, const Image3D<T>*,	T grad[3]);
 
-void computeAllGradients (unsigned &xidx, unsigned &yidx, unsigned &zidx, const float_t *buffer, const unsigned * dims,
-		const float_t spacing[3], float_t (& grad)[8][3]);
+template<typename T>
+void computeAllGradients(unsigned &xidx, unsigned &yidx, unsigned &zidx, const Image3D<T>*, T (& grad)[8][3]);
 
 #endif /* ALGORITHM_GRADIENTS_H_ */

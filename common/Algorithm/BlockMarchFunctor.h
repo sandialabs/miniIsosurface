@@ -36,27 +36,27 @@ public:
 	virtual ~BlockMarchFunctor();
 private:
 	static T lerp(T a, T b, T w);
-	void updateBuffers(void);
+//	void updateBuffers(void);
 	static int findCaseId(T*,T);
 
 	// ===== Block parameters ===================
 	const unsigned *dims;
 	const T *origin;
 	const T *spacing;
-	const T *buffer;
+//	const T *buffer;
 	unsigned sliceSize;
 
 	// ===== Iteration position identifiers =====
 	unsigned xidx, yidx, zidx;
-	unsigned bufferIdx;
-	/*
-	 * 4 buffers improve cache efficiency
-	 * this speeds up run time by about .1 seconds
-	 */
-	const T *X1buffer;
-	const T *X2buffer;
-	const T *X3buffer;
-	const T *X4buffer;
+//	unsigned bufferIdx;
+//	/*
+//	 * 4 buffers improve cache efficiency
+//	 * this speeds up run time by about .1 seconds
+//	 */
+//	const T *X1buffer;
+//	const T *X2buffer;
+//	const T *X3buffer;
+//	const T *X4buffer;
 
 	// ===== Cell processing variable ===========
 	int cellCaseId;
