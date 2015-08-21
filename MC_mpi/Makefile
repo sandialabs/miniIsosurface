@@ -12,12 +12,11 @@
 # ========== Macros =============================
 
 # project name (generate executable with this name)
-TARGET          = MCMerge.exe
+TARGET          = MCMpi.exe
 
 # Compiler and flags
-CC              = g++
+CC              = mpic++
 CXXFLAGS        = -O2 -fopenmp -std=c++0x
-#GPERF_FLAG 		= -lprofiler
 #CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
 
 # Source and build directories

@@ -30,11 +30,11 @@
 
 
 template<typename T>
-class MergeMPAlgo : public MarchAlgorithm<T>  {
+class MpiAlgo : public MarchAlgorithm<T>  {
 public:
-	MergeMPAlgo();
-	MergeMPAlgo(unsigned);
-	virtual ~MergeMPAlgo();
+	MpiAlgo();
+	MpiAlgo(unsigned);
+	virtual ~MpiAlgo();
 
 	unsigned numBlocks(const Range oneDRange);
 	void march(GeneralContext<T> &);

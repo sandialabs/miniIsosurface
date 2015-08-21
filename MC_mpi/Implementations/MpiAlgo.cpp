@@ -1,36 +1,36 @@
 /*
- * MergeMPAlgo.cpp
+ * MpiAlgo.cpp
  *
  *  Created on: Aug 17, 2015
  *      Author: sjmunn
  */
 
-#include "MergeMPAlgo.h"
+#include "MpiAlgo.h"
 
 template<typename T>
-MergeMPAlgo<T>::MergeMPAlgo() {
+MpiAlgo<T>::MpiAlgo() {
 	grainDim=256;
 }
 
 template<typename T>
-MergeMPAlgo<T>::MergeMPAlgo(unsigned grain) {
+MpiAlgo<T>::MpiAlgo(unsigned grain) {
 	grainDim=grain;
 }
 
 template<typename T>
-MergeMPAlgo<T>::~MergeMPAlgo() {
+MpiAlgo<T>::~MpiAlgo() {
 	// TODO Auto-generated destructor stub
 }
 
 template<typename T>
-unsigned MergeMPAlgo<T>::numBlocks(const Range oneDRange) {
+unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
 	unsigned numberOfBlocks = (oneDRange.end() - oneDRange.begin() + oneDRange.grain() - 1)
 			/ oneDRange.grain();
 	return numberOfBlocks;
 }
 
 template<typename T>
-void MergeMPAlgo<T>::march(GeneralContext<T> &data){
+void MpiAlgo<T>::march(GeneralContext<T> &data){
 
 	const unsigned *dims = data.imageIn.getDimension();
 
@@ -117,4 +117,4 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 
 
 // Must instantiate class for separate compilation
-template class MergeMPAlgo<float_t> ;
+template class MpiAlgo<float_t> ;
