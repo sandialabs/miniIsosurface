@@ -28,8 +28,8 @@ public:
 	virtual ~EdgeIndexer() {};
 
 	// Adding to points to the edge index
-	const unsigned getEdgeIndex(unsigned, unsigned, unsigned, int) const;
-	const void getPointCoordinates(unsigned,Point3dIdx&,Point3dIdx&) const;
+	unsigned getEdgeIndex(unsigned, unsigned, unsigned, int) const;
+	void getPointCoordinates(unsigned,Point3dIdx&,Point3dIdx&) const;
 
 	// This function is not a member b/c we keep I/O separate
 	template <typename Anything> friend void saveTriangleMesh(const EdgeIndexer<Anything> *, const char *);
@@ -39,9 +39,9 @@ public:
 	unsigned nXedges, nXYedges;
 private:
 	// Set of 3 edge index calculators
-	const unsigned edgeIndexXaxis(unsigned, unsigned, unsigned, int) const;
-	const unsigned edgeIndexYaxis(unsigned, unsigned, unsigned, int) const;
-	const unsigned edgeIndexZaxis(unsigned, unsigned, unsigned, int) const;
+	unsigned edgeIndexXaxis(unsigned, unsigned, unsigned, int) const;
+	unsigned edgeIndexYaxis(unsigned, unsigned, unsigned, int) const;
+	unsigned edgeIndexZaxis(unsigned, unsigned, unsigned, int) const;
 };
 
 #endif /* EDGEINDEXER_H_ */

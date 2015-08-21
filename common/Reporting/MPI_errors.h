@@ -17,8 +17,8 @@
  */
 class zero_dimensions: public std::exception {
 public:
-	zero_dimensions(const char* const message) :
-		message(message) {
+	zero_dimensions(const char* const inMessage) :
+		message(inMessage) {
 
 		CLOG(logERROR) << "When initializing LoadImage3DMPI object A from another LoadImage3DMPI object B,";
 		CLOG(logERROR) << "argument B was found to have zero dimensions.";
@@ -32,8 +32,8 @@ private:
 
 class block_extent_not_set: public std::exception {
 public:
-	block_extent_not_set(const char* const message) :
-		message(message) {
+	block_extent_not_set(const char* const inMessage) :
+		message(inMessage) {
 
 		CLOG(logERROR) << "Cannot call readBlockData() before setting the block extent via setBlockExtent()";
 	}
@@ -44,8 +44,8 @@ private:
 
 class impossible_extent: public std::exception {
 public:
-	impossible_extent(const char* const message) :
-		message(message) {
+	impossible_extent(const char* const inMessage) :
+		message(inMessage) {
 
 		CLOG(logERROR) << "In LoadImage3D setBlockExtent() member function,";
 		CLOG(logERROR) << message;

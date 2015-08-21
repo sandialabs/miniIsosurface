@@ -35,8 +35,6 @@ int main(int argc, char* argv[]) {
 	// Initialize the user interface
 	UI<float_t> mainUI(argc,argv);
 
-	TypeInfo hahaha;
-
 	// Create data object
 	GeneralContext<float_t> data;
 

@@ -21,8 +21,8 @@ private:
 	std::string line;
 };
 
-inline LineStream::LineStream(std::istream &in) :
-		in(in) {
+inline LineStream::LineStream(std::istream &input) :
+		in(input) {
 }
 
 inline std::istream& LineStream::stream() {

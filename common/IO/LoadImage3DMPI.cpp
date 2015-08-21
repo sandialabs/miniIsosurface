@@ -244,7 +244,7 @@ const unsigned* LoadImage3DMPI<T>::getVolumeDimensions(void) const {
 }
 
 template<typename T>
-const unsigned LoadImage3DMPI<T>::getnVolumePoints(void) const {
+const unsigned& LoadImage3DMPI<T>::getnVolumePoints(void) const {
 	return fileNpoints;
 }
 

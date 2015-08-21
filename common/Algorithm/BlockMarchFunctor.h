@@ -18,8 +18,6 @@
 #include"./gradients.h"
 #include"./EdgeIndexer.h"
 
-#include"./BlockMarchFunctor.h"
-
 #include"./gradients.h"
 
 template<typename T>

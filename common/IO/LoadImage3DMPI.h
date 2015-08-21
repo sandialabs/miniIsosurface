@@ -38,7 +38,7 @@ public:
 	void readBlockData(Image3D<T>&);
 	// Object member read
 	const unsigned* getVolumeDimensions(void) const;
-	const unsigned getnVolumePoints(void) const;
+	const unsigned& getnVolumePoints(void) const;
 	const char* whichFile(void) const { return vtkFile; }
 private:
 	// Private member functions

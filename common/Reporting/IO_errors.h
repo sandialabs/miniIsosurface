@@ -14,8 +14,8 @@
 
 class file_not_found: public std::exception {
 public:
-	file_not_found(const char* const fileName) :
-		fileName(fileName) {
+	file_not_found(const char* const inFileName) :
+		fileName(inFileName) {
 
 		CLOG(logERROR) << "File not found error";
 		CLOG(logERROR) << "Given Path: " << fileName;
@@ -29,8 +29,8 @@ private:
 
 class object_not_sorted: public std::exception {
 public:
-	object_not_sorted(const char* const objectName) :
-		objectName(objectName) {
+	object_not_sorted(const char* const inObjectName) :
+		objectName(inObjectName) {
 
 		CLOG(logERROR) << "The MapReverse object is not sorted";
 		CLOG(logERROR) << "Do not call MapReverse::getNewIndices if the object is not sorted";
@@ -42,8 +42,8 @@ private:
 
 class bad_format: public std::exception {
 public:
-	bad_format(const char* const message) :
-			message(message) {
+	bad_format(const char* const inMessage) :
+			message(inMessage) {
 		CLOG(logERROR) << "Bad format error with message: ";
 		CLOG(logERROR) << message;
 	}
@@ -54,8 +54,8 @@ private:
 
 class no_type: public std::exception {
 public:
-	no_type(const char* const message) :
-			message(message) {
+	no_type(const char* const inMessage) :
+			message(inMessage) {
 		CLOG(logERROR) << "Type not defined error with message: ";
 		CLOG(logERROR) << message;
 	}
@@ -66,8 +66,8 @@ private:
 
 class file_too_large: public std::exception {
 public:
-	file_too_large(const unsigned message) :
-		message(message) {
+	file_too_large(const unsigned inMessage) :
+		message(inMessage) {
 
 		CLOG(logERROR) << "Step by Step debugging is active";
 		CLOG(logERROR) << "Only image files up to 1000 points are accepted";

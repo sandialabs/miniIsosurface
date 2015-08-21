@@ -14,8 +14,8 @@
 
 class wrong_arguments: public std::exception {
 public:
-	wrong_arguments(const int argc) :
-		argc(argc) {
+	wrong_arguments(const int inArgc) :
+		argc(inArgc) {
 
 		CLOG(logERROR) << "Wrong number of arguments";
 		CLOG(logERROR) << "Usage:";
@@ -28,8 +28,8 @@ private:
 
 class implementation_not_supported: public std::exception {
 public:
-	implementation_not_supported(const char* const implementationID) :
-		implementationID(implementationID) {
+	implementation_not_supported(const char* const inImplementationID) :
+		implementationID(inImplementationID) {
 
 		CLOG(logERROR) << "This implementation is not supported";
 		CLOG(logERROR) << "Given implementation ID: " << implementationID;
@@ -42,8 +42,8 @@ private:
 
 class too_many_edges: public std::exception {
 public:
-	too_many_edges(const unsigned nEdges, const unsigned nEdgesAllowed) :
-		nEdges(nEdges), nEdgesAllowed(nEdgesAllowed) {
+	too_many_edges(const unsigned inNedges, const unsigned inNedgesAllowed) :
+		nEdges(inNedges), nEdgesAllowed(inNedgesAllowed) {
 
 		CLOG(logERROR) << "There are too many edges in this mesh for display";
 		CLOG(logERROR) << "Number of edges in mesh: " << nEdges;

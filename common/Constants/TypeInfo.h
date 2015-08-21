@@ -22,7 +22,7 @@ public:
     NUM_TYPES
   };
 
-  explicit TypeInfo(TypeId id);
+  explicit TypeInfo(TypeId);
 
   TypeId getId() const;
   const char* name() const;
@@ -32,8 +32,8 @@ private:
   TypeId id;
 };
 
-inline TypeInfo::TypeInfo(TypeId id)
-  : id(id)
+inline TypeInfo::TypeInfo(TypeId inId)
+  : id(inId)
 {
 }
 

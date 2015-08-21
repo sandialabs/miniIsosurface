@@ -16,7 +16,7 @@ Timer::Timer() {
 
 void Timer::stop(void) {
 	tCPU = clock()-tCPU;
-	totalCPUtime=((double)tCPU)/CLOCKS_PER_SEC;
+	totalCPUtime=(static_cast<double>(tCPU))/CLOCKS_PER_SEC;
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 

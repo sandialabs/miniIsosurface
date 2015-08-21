@@ -19,7 +19,7 @@ enum TLogLevel {
 	logINFO,			// Info (progress info for impatient users mostly)
 	logDEBUG,			// If you want to add debug info of your own
 	logDEBUG1,			// Built-in debugging messages
-	logDEBUG_Step, 		// Step by Step debugging, only activate for very small files
+	logDEBUG_Step 		// Step by Step debugging, only activate for very small files
 };
 
 class Log {
@@ -105,7 +105,7 @@ inline std::string NowTime()
 
 	char result[100] = {0};
 	static DWORD first = GetTickCount();
-	std::sprintf(result, "%s.%03ld", buffer, (long)(GetTickCount() - first) % 1000);
+	std::sprintf(result, "%s.%03ld", buffer, static_cast<long>(GetTickCount() - first) % 1000);
 	return result;
 }
 
@@ -122,7 +122,7 @@ inline std::string NowTime() {
 	struct timeval tv;
 	gettimeofday(&tv, 0);
 	char result[100] = { 0 };
-	std::sprintf(result, "%s.%03ld", buffer, (long) tv.tv_usec / 1000);
+	std::sprintf(result, "%s.%03ld", buffer, static_cast<long>(tv.tv_usec) / 1000);
 	return result;
 }
 

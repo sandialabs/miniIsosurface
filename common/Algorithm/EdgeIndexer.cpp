@@ -24,7 +24,7 @@ EdgeIndexer<T>::EdgeIndexer(unsigned * extentOfMarch) {
 }
 
 template<typename T>
-const unsigned EdgeIndexer<T>::getEdgeIndex(unsigned x, unsigned y,
+unsigned EdgeIndexer<T>::getEdgeIndex(unsigned x, unsigned y,
 		unsigned z, int iEdge) const {
 	unsigned edgeIndex;
 	switch (iEdge) {
@@ -72,25 +72,28 @@ const unsigned EdgeIndexer<T>::getEdgeIndex(unsigned x, unsigned y,
 }
 
 template<typename T>
-const unsigned EdgeIndexer<T>::edgeIndexXaxis(unsigned x, unsigned y,
+unsigned EdgeIndexer<T>::edgeIndexXaxis(unsigned x, unsigned y,
 		unsigned z, int iEdge) const {
-	return x + rangeX * y + (rangeY + 1) * rangeX * z;
+	unsigned index=x + rangeX * y + (rangeY + 1) * rangeX * z;
+	return index;
 }
 
 template<typename T>
-const unsigned EdgeIndexer<T>::edgeIndexYaxis(unsigned x, unsigned y,
+unsigned EdgeIndexer<T>::edgeIndexYaxis(unsigned x, unsigned y,
 		unsigned z, int iEdge) const {
-	return nXedges + x + (rangeX + 1) * y + (rangeX + 1) * rangeY * z;
+	unsigned index= nXedges + x + (rangeX + 1) * y + (rangeX + 1) * rangeY * z;
+	return index;
 }
 
 template<typename T>
-const unsigned EdgeIndexer<T>::edgeIndexZaxis(unsigned x, unsigned y,
+unsigned EdgeIndexer<T>::edgeIndexZaxis(unsigned x, unsigned y,
 		unsigned z, int iEdge) const {
-	return nXYedges + x + (rangeX + 1) * y + (rangeX + 1) * (rangeY + 1) * z;
+	unsigned index= nXYedges + x + (rangeX + 1) * y + (rangeX + 1) * (rangeY + 1) * z;
+	return index;
 }
 
 template<typename T>
-const void EdgeIndexer<T>::getPointCoordinates(unsigned edgeIndex,Point3dIdx& r1,Point3dIdx& r2) const {
+void EdgeIndexer<T>::getPointCoordinates(unsigned edgeIndex,Point3dIdx& r1,Point3dIdx& r2) const {
 	unsigned x,y,z;
 	unsigned x1,y1,z1;
 	if (edgeIndex < nXedges) {
