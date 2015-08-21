@@ -28,9 +28,6 @@
 // Algorithm
 #include"./Implementations/MpiAlgo.h"
 
-// MPI
-# include "mpi.h"
-
 int main(int argc, char* argv[]) {
 
 	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded

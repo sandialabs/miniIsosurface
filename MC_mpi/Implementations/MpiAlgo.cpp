@@ -32,6 +32,31 @@ unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
 template<typename T>
 void MpiAlgo<T>::march(GeneralContext<T> &data){
 
+	int id;
+	int p;
+	double wtime;
+
+//
+//  Get the number of processes.
+//
+	p = MPI::COMM_WORLD.Get_size();
+//
+//  Get the individual process ID.
+//
+	id = MPI::COMM_WORLD.Get_rank();
+//
+//  Process 0 prints an introductory message.
+//
+	if (id == 0) {
+		timestamp();
+		cout << "\n";
+		cout << "HELLO_MPI - Master process:\n";
+		cout << "  C++/MPI version\n";
+		cout << "  An MPI example program.\n";
+		cout << "\n";
+		cout << "  The number of processes is " << p << "\n";
+		cout << "\n";
+
 	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 	fileData.readEntireVolumeData(data.imageIn);
 
@@ -116,6 +141,11 @@ void MpiAlgo<T>::march(GeneralContext<T> &data){
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();
+	}
+	//
+	//  Terminate MPI.
+	//
+	MPI::Finalize();
 }
 
 
