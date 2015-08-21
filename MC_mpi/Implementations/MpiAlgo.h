@@ -28,11 +28,14 @@
 #include"../Algorithm/DuplicateRemover.h"
 #include"../Algorithm/buildMesh.h"
 
+// IO Object
+#include"../../common/IO/LoadImage3DMPI.h"
+
 
 template<typename T>
 class MpiAlgo : public MarchAlgorithm<T>  {
 public:
-	MpiAlgo();
+	MpiAlgo(LoadImage3DMPI<T> &);
 	MpiAlgo(unsigned);
 	virtual ~MpiAlgo();
 
@@ -44,6 +47,9 @@ private:
 	DuplicateRemover duplicateRemover;
 	TriangleMesh<T> meshBeforeMerge;
 	unsigned grainDim;
+
+	// MPI specific
+	LoadImage3DMPI<T> fileHeader;
 };
 
 #endif /* IMPLEMENTATIONS_MERGEMPALGO_H_ */

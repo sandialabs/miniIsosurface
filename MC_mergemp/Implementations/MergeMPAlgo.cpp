@@ -34,8 +34,8 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 
 	const unsigned *dims = data.imageIn.getDimension();
 
-	CLOG(logYAML) << "Marching cubes algorithm: OpenMP";
-	data.doc.add("Marching cubes algorithm", "OpenMP");
+	CLOG(logYAML) << "Marching cubes algorithm: MergeMP";
+	data.doc.add("Marching cubes algorithm", "MergeMP");
 
 	/*
 	 * fullRange is the entire image volume

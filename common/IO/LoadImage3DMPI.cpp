@@ -161,6 +161,31 @@ void LoadImage3DMPI<T>::loadHeader(const char *vtkFileName) {
 }
 
 template<typename T>
+void LoadImage3DMPI<T>::report(YAML_Doc &doc) const {
+	// Console output,
+	CLOG(logYAML) << "File x-dimension: " << static_cast<long long int>(xdimFile);
+	CLOG(logYAML) << "File y-dimension: " << static_cast<long long int>(ydimFile);
+	CLOG(logYAML) << "File z-dimension: " << static_cast<long long int>(zdimFile);
+
+	CLOG(logYAML) << "Number of points in image volume: " << static_cast<long long int>(fileNpoints);
+
+	CLOG(logINFO) << "File x-spacing: " << static_cast<long long int>(spacing[0]);
+	CLOG(logINFO) << "File y-spacing: " << static_cast<long long int>(spacing[1]);
+	CLOG(logINFO) << "File z-spacing: " << static_cast<long long int>(spacing[2]);
+
+	CLOG(logINFO) << "File x-origin: " << static_cast<long long int>(origin[0]);
+	CLOG(logINFO) << "File y-origin: " << static_cast<long long int>(origin[1]);
+	CLOG(logINFO) << "File z-origin: " << static_cast<long long int>(origin[2]);
+
+	// YAML output,
+	doc.add("File x-dimension",static_cast<long long int>(xdimFile));
+	doc.add("File y-dimension",static_cast<long long int>(ydimFile));
+	doc.add("File z-dimension",static_cast<long long int>(zdimFile));
+
+	doc.add("Number of points in image volume", static_cast<long long int>(fileNpoints));
+}
+
+template<typename T>
 void LoadImage3DMPI<T>::setBlockExtent(const unsigned * blkExt) {
 	if (blkExt[0] > xdimFile || blkExt[1] > xdimFile) throw impossible_extent("x-axis extent doesn't make sense");
 	if (blkExt[2] > ydimFile || blkExt[3] > ydimFile) throw impossible_extent("y-axis extent doesn't make sense");

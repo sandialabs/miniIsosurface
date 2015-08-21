@@ -8,7 +8,7 @@
 #include "MpiAlgo.h"
 
 template<typename T>
-MpiAlgo<T>::MpiAlgo() {
+MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader) : fileHeader(inFileHeader) {
 	grainDim=256;
 }
 
@@ -32,10 +32,13 @@ unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
 template<typename T>
 void MpiAlgo<T>::march(GeneralContext<T> &data){
 
+	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
+	fileData.readEntireVolumeData(data.imageIn);
+
 	const unsigned *dims = data.imageIn.getDimension();
 
-	CLOG(logYAML) << "Marching cubes algorithm: OpenMP";
-	data.doc.add("Marching cubes algorithm", "OpenMP");
+	CLOG(logYAML) << "Marching cubes algorithm: MPI";
+	data.doc.add("Marching cubes algorithm", "MPI");
 
 	/*
 	 * fullRange is the entire image volume

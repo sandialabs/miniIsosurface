@@ -32,6 +32,7 @@ public:
 	// File loading members
 	// General file
 	void loadHeader(const char *);
+	void report(YAML_Doc &) const;
 	// MPI process specific
 	void setBlockExtent(const unsigned *);
 	void readEntireVolumeData(Image3D<T>&);

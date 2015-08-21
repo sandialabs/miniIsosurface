@@ -38,7 +38,7 @@ public:
 	// Should phase this function out
 	const T* getData() const;
 
-	void report(YAML_Doc &) const;
+//	void report(YAML_Doc &) const;
 
 	template<typename anything> friend class Image3DReader;
 //	void setImage3DOutputBuffers(const unsigned, const unsigned,const unsigned);

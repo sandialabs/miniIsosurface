@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();
 	data.doc.add("Volume image data file path", mainUI.getFile());
-	data.imageIn.report(data.doc);
+	fileHeader.report(data.doc);
 
 	// Start the clock
 	Timer RunTime;

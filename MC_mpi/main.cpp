@@ -41,22 +41,20 @@ int main(int argc, char* argv[]) {
 	// Create data object
 	GeneralContext<float_t> data;
 
+	// Only load the header file, MpiAlgo will read the rest
 	LoadImage3DMPI<float_t> fileHeader;
 	fileHeader.loadHeader(mainUI.getFile());
-
-	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
-	fileData.readEntireVolumeData(data.imageIn);
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();
 	data.doc.add("Volume image data file path", mainUI.getFile());
-	data.imageIn.report(data.doc);
+	fileHeader.report(data.doc);
 
 	// Start the clock
 	Timer RunTime;
 	// Execute the marching cubes implementation
 	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm;
+	MpiAlgo<float_t> algorithm(fileHeader); // Specific to MPI
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock
