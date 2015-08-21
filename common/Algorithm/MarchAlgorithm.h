@@ -18,6 +18,7 @@
 #include"./gradients.h"
 #include"./EdgeIndexer.h"
 
+#include"./Image3DReader.h"
 #include"./BlockMarchFunctor.h"
 
 template<typename U> class GeneralContext;

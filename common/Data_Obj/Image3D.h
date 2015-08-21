@@ -15,6 +15,8 @@
 #include"../Reporting/YAML_Doc.hpp"
 #include"../Reporting/Log.h"
 
+template<typename U> class Image3DReader;
+
 template<typename T>
 class Image3D  {
 public:
@@ -38,10 +40,11 @@ public:
 
 	void report(YAML_Doc &) const;
 
-	void setImage3DOutputBuffers(const unsigned, const unsigned,const unsigned);
-	void getVertexValues(T *,unsigned,unsigned);
-
-	void getValsForGradient(T (& x)[3][2], const unsigned, const unsigned, const unsigned) const;
+	template<typename anything> friend class Image3DReader;
+//	void setImage3DOutputBuffers(const unsigned, const unsigned,const unsigned);
+//	void getVertexValues(T *,unsigned,unsigned);
+//
+//	void getValsForGradient(T (& x)[3][2], const unsigned, const unsigned, const unsigned) const;
 
 private:
 	// Prevent object copying (would cost too much memory
@@ -57,24 +60,24 @@ private:
 	T *data;
 	bool isMPIdataBlock;
 
-	/* ===== Reading image object ===============
-	 * Collection of buffers to allow the Image3D
-	 * object to read itself efficiently.
-	 ==========================================*/
-	unsigned bufferIdx;
-	/*
-	 * 4 buffers improve cache efficiency
-	 * this speeds up run time significantly
-	 */
-	const T *X1buffer;
-	const T *X2buffer;
-	const T *X3buffer;
-	const T *X4buffer;
-
-	/* ===== Reading image object ===============
-	 * Collection of functions to allow the Image3D
-	 * object to read itself efficiently.
-	 ==========================================*/
+//	/* ===== Reading image object ===============
+//	 * Collection of buffers to allow the Image3D
+//	 * object to read itself efficiently.
+//	 ==========================================*/
+//	unsigned bufferIdx;
+//	/*
+//	 * 4 buffers improve cache efficiency
+//	 * this speeds up run time significantly
+//	 */
+//	const T *X1buffer;
+//	const T *X2buffer;
+//	const T *X3buffer;
+//	const T *X4buffer;
+//
+//	/* ===== Reading image object ===============
+//	 * Collection of functions to allow the Image3D
+//	 * object to read itself efficiently.
+//	 ==========================================*/
 };
 
 #endif /* DATA_OBJ_IMAGE3D_H_ */

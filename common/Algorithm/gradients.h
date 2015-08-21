@@ -19,9 +19,9 @@
 #include"../../common/Constants/MarchingCubesTables.h"
 
 template<typename T>
-static void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx, const Image3D<T>*,	T grad[3]);
+static void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx, const Image3DReader<T>*,	T grad[3]);
 
 template<typename T>
-void computeAllGradients(unsigned &xidx, unsigned &yidx, unsigned &zidx, const Image3D<T>*, T (& grad)[8][3]);
+void computeAllGradients(unsigned &xidx, unsigned &yidx, unsigned &zidx, const Image3DReader<T>*, T (& grad)[8][3]);
 
 #endif /* ALGORITHM_GRADIENTS_H_ */

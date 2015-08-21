@@ -29,7 +29,8 @@ void MarchAlgorithm<T>::extractIsosurfaceFromBlock(Image3D_type &vol, const unsi
 		T isoval, PointMap_type &pointMap, EdgeIndexer_type &edgeIndices,
 		TriangleMesh_type &mesh) {
 
-	BlockMarchFunctor<T> marchingCubes(vol, blockExt, isoval, pointMap, edgeIndices, mesh);
+	Image3DReader<T> volReader(&vol);
+	BlockMarchFunctor<T> marchingCubes(volReader, blockExt, isoval, pointMap, edgeIndices, mesh);
 }
 
 #include"../GeneralContext/GeneralContext.h"

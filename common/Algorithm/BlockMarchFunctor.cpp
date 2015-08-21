@@ -8,14 +8,14 @@
 #include "BlockMarchFunctor.h"
 
 template<typename T>
-BlockMarchFunctor<T>::BlockMarchFunctor(Image3D_type &vol, const unsigned blockExt[6],
+BlockMarchFunctor<T>::BlockMarchFunctor(Image3DReader_type &volReader, const unsigned blockExt[6],
 		T isoval, PointMap_type &pointMap, EdgeIndexer_type &edgeIndices,
 		TriangleMesh_type &mesh) {
 
-	dims = vol.getDimension();
-	origin = vol.getOrigin();
-	spacing = vol.getSpacing();
-//	buffer = vol.getData();
+	dims = volReader.imageData->getDimension();
+	origin = volReader.imageData->getOrigin();
+	spacing = volReader.imageData->getSpacing();
+//	buffer = volReader.getData();
 	T val[8]; // Vertex values for each cube
 
 	//CLOG(logDEBUG1) << "Extent: " << blockExt[0] << " " << blockExt[1] << " "
@@ -40,14 +40,14 @@ BlockMarchFunctor<T>::BlockMarchFunctor(Image3D_type &vol, const unsigned blockE
 //			 * this improves run time by about .1 seconds
 //			 */
 //			this->updateBuffers();
-			vol.setImage3DOutputBuffers(blockExt[0],yidx,zidx);
+			volReader.setImage3DOutputBuffers(blockExt[0],yidx,zidx);
 
 			T xpos = origin[0] + (T(blockExt[0]) * spacing[0]);
 			for (xidx = blockExt[0]; xidx <= blockExt[1]; ++xidx, xpos +=
 					spacing[0]) {
 
 				T pos[8][3], grad[8][3];
-				vol.getVertexValues(val,xidx,blockExt[0]);
+				volReader.getVertexValues(val,xidx,blockExt[0]);
 
 //				T val[8];
 //				//getPointValues(val);
@@ -143,7 +143,7 @@ BlockMarchFunctor<T>::BlockMarchFunctor(Image3D_type &vol, const unsigned blockE
 						if (!exists) {
 							mesh.addPoint(newPt);
 
-							computeAllGradients(xidx, yidx, zidx, &vol, grad);
+							computeAllGradients(xidx, yidx, zidx, &volReader, grad);
 
 							T norm[3];
 							for (int iAxis = 0; iAxis < 3; iAxis++) {
