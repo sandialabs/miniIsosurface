@@ -15,8 +15,8 @@ TARGET          = MCSerial
 
 # Compiler and flags
 CC              = g++
-CXXFLAGS        = -O2 -lrt -std=c++0x
-#CXXFLAGS        = -O0 -g -lrt -std=c++0x
+#CXXFLAGS        = -O2 -lrt -std=c++0x
+CXXFLAGS        = -O0 -g -lrt -std=c++0x
 
 # Linker and flags
 LINKER			= g++

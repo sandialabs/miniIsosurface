@@ -30,31 +30,7 @@ unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
 }
 
 template<typename T>
-void MpiAlgo<T>::march(GeneralContext<T> &data){
-
-	int id;
-	int p;
-	double wtime;
-
-//
-//  Get the number of processes.
-//
-	p = MPI::COMM_WORLD.Get_size();
-//
-//  Get the individual process ID.
-//
-	id = MPI::COMM_WORLD.Get_rank();
-//
-//  Process 0 prints an introductory message.
-//
-	if (id == 0) {
-		CLOG(logDEBUG) << "\n";
-		CLOG(logDEBUG) << "HELLO_MPI - Master process:\n";
-		CLOG(logDEBUG) << "  C++/MPI version\n";
-		CLOG(logDEBUG) << "  An MPI example program.\n";
-		CLOG(logDEBUG) << "\n";
-		CLOG(logDEBUG) << "  The number of processes is " << p << "\n";
-		CLOG(logDEBUG) << "\n";
+void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 	fileData.readEntireVolumeData(data.imageIn);
@@ -135,16 +111,10 @@ void MpiAlgo<T>::march(GeneralContext<T> &data){
 	duplicateRemover.sortYourSelf();
 	duplicateRemover.getNewIndices();
 
-	CLOG(logDEBUG) << "final";
 	buildMesh(data.mesh,meshBeforeMerge,duplicateRemover);
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();
-	}
-	//
-	//  Terminate MPI.
-	//
-	MPI::Finalize();
 }
 
 

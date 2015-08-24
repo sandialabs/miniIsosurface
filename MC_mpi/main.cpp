@@ -8,7 +8,6 @@
 // Common utility headers -------------
 // Standard C/C++ library
 #include"../common/includes.h"
-#include"mpi.h"
 
 // File i/o
 #include"../common/IO/LoadImage3DMPI.h"
@@ -30,6 +29,23 @@
 #include"./Implementations/MpiAlgo.h"
 
 int main(int argc, char* argv[]) {
+	int id;
+	int p;
+	double wtime;
+	// Initialize MPI
+	MPI::Init();
+//
+//  Get the number of processes.
+//
+	p = MPI::COMM_WORLD.Get_size();
+//
+//  Get the individual process ID.
+//
+	id = MPI::COMM_WORLD.Get_rank();
+//
+//  Process 0 prints an introductory message.
+//
+	if (id == 0) {
 
 	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
@@ -48,8 +64,6 @@ int main(int argc, char* argv[]) {
 	data.doc.add("Volume image data file path", mainUI.getFile());
 	fileHeader.report(data.doc);
 
-	// Initialize MPI
-	MPI::Init(argc, argv);
 	// Start the clock
 	Timer RunTime;
 	// Execute the marching cubes implementation
@@ -66,5 +80,10 @@ int main(int argc, char* argv[]) {
 
 	// Save the result
 	saveTriangleMesh(&(data.mesh), mainUI.outFile());
+	}
+	//
+	//  Terminate MPI.
+	//
+	MPI::Finalize();
 	return 0;
 }

@@ -28,10 +28,8 @@ void buildMesh(TriangleMesh<T>& newMesh, TriangleMesh<T>& ogMesh,DuplicateRemove
 	 * a new mesh from the new point indices in newPointIdx
 	 */
 	unsigned nOgPoints=newPtMap.getSize();
-	CLOG(logDEBUG) << "nogpoints: " << nOgPoints;
 	// As many new points as last index in the dataArray
 	unsigned nNewPoints=newPtMap.dataArray.end()->newPointIdx;
-	CLOG(logDEBUG) << "newPoints: " << nNewPoints;
 	// Allocate space in the new mesh
 	newMesh.allocate(nNewPoints);
 
