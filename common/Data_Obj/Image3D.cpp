@@ -15,6 +15,7 @@ Image3D<T>::Image3D() :
 	spacing[0] = spacing[1] = spacing[2] = 0.0;
 	origin[0] = origin[1] = origin[2] = 0.0;
 	isMPIdataBlock=false;
+	MPIorigin[0]=MPIorigin[1]=MPIorigin[2]=0;
 	sliceSize=0;
 }
 
@@ -29,6 +30,13 @@ void Image3D<T>::setDimension(unsigned xdim, unsigned ydim, unsigned zdim) {
 	this->dim[1] = ydim;
 	this->dim[2] = zdim;
 	sliceSize=dim[0]*dim[1];
+}
+
+template<typename T>
+void Image3D<T>::setMPIorigin(unsigned xorg, unsigned yorg, unsigned zorg) {
+	this->MPIorigin[0]=xorg;
+	this->MPIorigin[1]=yorg;
+	this->MPIorigin[2]=zorg;
 }
 
 template<typename T>
@@ -89,31 +97,6 @@ const T* Image3D<T>::getData() const {
 	return this->data;
 }
 
-// Moving this responsibility to the LoadImage3DMPI
-//template<typename T>
-//void Image3D<T>::report(YAML_Doc &doc) const {
-//	// Console output,
-//	CLOG(logYAML) << "File x-dimension: " << static_cast<long long int>(dim[0]);
-//	CLOG(logYAML) << "File y-dimension: " << static_cast<long long int>(dim[1]);
-//	CLOG(logYAML) << "File z-dimension: " << static_cast<long long int>(dim[2]);
-//
-//	CLOG(logYAML) << "Number of points in image volume: " << static_cast<long long int>(npoints);
-//
-//	CLOG(logINFO) << "File x-spacing: " << static_cast<long long int>(spacing[0]);
-//	CLOG(logINFO) << "File y-spacing: " << static_cast<long long int>(spacing[1]);
-//	CLOG(logINFO) << "File z-spacing: " << static_cast<long long int>(spacing[2]);
-//
-//	CLOG(logINFO) << "File x-origin: " << static_cast<long long int>(origin[0]);
-//	CLOG(logINFO) << "File y-origin: " << static_cast<long long int>(origin[1]);
-//	CLOG(logINFO) << "File z-origin: " << static_cast<long long int>(origin[2]);
-//
-//	// YAML output,
-//	doc.add("File x-dimension",static_cast<long long int>(dim[0]));
-//	doc.add("File y-dimension",static_cast<long long int>(dim[1]));
-//	doc.add("File z-dimension",static_cast<long long int>(dim[2]));
-//
-//	doc.add("Number of points in image volume", static_cast<long long int>(npoints));
-//}
 #include"../Algorithm/Image3DReader.h"
 // Must instantiate class for separate compilation
 template class Image3D<float_t> ;

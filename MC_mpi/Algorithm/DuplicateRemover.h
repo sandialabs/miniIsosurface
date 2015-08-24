@@ -38,7 +38,7 @@ struct ByPointIdx {
 class DuplicateRemover {
 public:
 	DuplicateRemover();
-	virtual ~DuplicateRemover();
+//	virtual ~DuplicateRemover();
 
 	// write
 	void preAllocate(const unsigned);

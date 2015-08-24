@@ -37,7 +37,7 @@
 template<typename T>
 class MpiAlgo : public MarchAlgorithm<T>  {
 public:
-	MpiAlgo(LoadImage3DMPI<T> &);
+	MpiAlgo(LoadImage3DMPI<T> &, int, int);
 	MpiAlgo(unsigned);
 	virtual ~MpiAlgo();
 
@@ -47,11 +47,12 @@ private:
 	// These are intermediate data structures before the final
 	// results are sent to GeneralContext
 	DuplicateRemover duplicateRemover;
-	TriangleMesh<T> meshBeforeMerge;
+	TriangleMesh<T> * meshBeforeMerge;
 	unsigned grainDim;
 
 	// MPI specific
 	LoadImage3DMPI<T> fileHeader;
+	int pID,processes;
 };
 
 #endif /* IMPLEMENTATIONS_MERGEMPALGO_H_ */

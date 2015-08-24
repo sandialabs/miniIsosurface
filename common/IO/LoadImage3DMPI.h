@@ -39,6 +39,7 @@ public:
 	void readBlockData(Image3D<T>&);
 	// Object member read
 	const unsigned* getVolumeDimensions(void) const;
+	unsigned getMaxVoumeDimension(void) const;
 	unsigned getnVolumePoints(void) const;
 	const T* getSpacing(void) const;
 	const T* getOrigin(void) const;

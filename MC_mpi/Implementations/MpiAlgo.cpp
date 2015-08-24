@@ -8,13 +8,21 @@
 #include "MpiAlgo.h"
 
 template<typename T>
-MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader) : fileHeader(inFileHeader) {
-	grainDim=256;
+MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses) : fileHeader(inFileHeader) {
+	pID = inPid;
+	processes=inProcesses;
+	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
+
+	// Should be
+	//grainDim=maxDim/inProcesses;
+	grainDim=maxDim/2;
+	CLOG(logDEBUG) << "grainDim: " << grainDim;
 }
 
 template<typename T>
 MpiAlgo<T>::MpiAlgo(unsigned grain) {
 	grainDim=grain;
+	meshBeforeMerge=0;
 }
 
 template<typename T>
@@ -32,10 +40,33 @@ unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
 template<typename T>
 void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
-	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
-	fileData.readEntireVolumeData(data.imageIn);
+//	/*
+//	 * MPI stuff
+//	 */
+//	// Get the number of processes
+//	int world_size;
+//	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+//
+//	// Get the rank of the process
+//	int world_rank;
+//	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+//
+//	CLOG(logDEBUG) << "Process rank is " << world_rank;
 
-	const unsigned *dims = data.imageIn.getDimension();
+	// DEBUGGER
+	{
+	    int i = 0;
+	    char hostname[256];
+	    gethostname(hostname, sizeof(hostname));
+	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+	    fflush(stdout);
+	    while (0 == i)
+	        sleep(5);
+	}
+
+	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
+
+	const unsigned *dims = fileHeader.getVolumeDimensions();
 
 	CLOG(logYAML) << "Marching cubes algorithm: MPI";
 	data.doc.add("Marching cubes algorithm", "MPI");
@@ -56,62 +87,48 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 	setGlobalVariables(data);
 
-	#pragma omp parallel
-	{
-		TriangleMesh_t threadMesh;
-		PointMap_t threadPointMap;
-		DuplicateRemover threadDuplicateRemover;
+	TriangleMesh_t processMesh;
+	PointMap_t processPointMap;
+	DuplicateRemover * processDuplicateRemover=new DuplicateRemover;
 
-		#pragma omp for nowait
-		for (unsigned i = 0; i < nblocks; ++i) {
-			//CLOG(logDEBUG) << "Iteration " << i;
-			unsigned blockPageIdx = i / nblocksPerPage;
-			unsigned blockRowIdx = (i % nblocksPerPage) / numBlockCols;
-			unsigned blockColIdx = (i % nblocksPerPage) % numBlockCols;
+	//CLOG(logDEBUG) << "Iteration " << i;
+	unsigned blockPageIdx = pID / nblocksPerPage;
+	unsigned blockRowIdx = (pID % nblocksPerPage) / numBlockCols;
+	unsigned blockColIdx = (pID % nblocksPerPage) % numBlockCols;
 
-			unsigned pfrom = blockPageIdx * fullRange.pages().grain();
-			unsigned pto = std::min(pfrom + fullRange.pages().grain(),
-					fullRange.pages().end());
-			unsigned rfrom = blockRowIdx * fullRange.rows().grain();
-			unsigned rto = std::min(rfrom + fullRange.rows().grain(),
-					fullRange.rows().end());
-			unsigned cfrom = blockColIdx * fullRange.cols().grain();
-			unsigned cto = std::min(cfrom + fullRange.cols().grain(),
-					fullRange.cols().end());
+	unsigned pfrom = blockPageIdx * fullRange.pages().grain();
+	unsigned pto = std::min(pfrom + fullRange.pages().grain(),
+			fullRange.pages().end());
+	unsigned rfrom = blockRowIdx * fullRange.rows().grain();
+	unsigned rto = std::min(rfrom + fullRange.rows().grain(),
+			fullRange.rows().end());
+	unsigned cfrom = blockColIdx * fullRange.cols().grain();
+	unsigned cto = std::min(cfrom + fullRange.cols().grain(),
+			fullRange.cols().end());
 
-			Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
-			unsigned blockExtent[6];
-			blockRange.extent(blockExtent);
+	Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
+	unsigned blockExtent[6];
+	blockRange.extent(blockExtent);
+	fileData.setBlockExtent(blockExtent);
+	fileData.readBlockData(data.imageIn);
+	data.imageIn.setToMPIdataBlock();
+	data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);
 
-			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
 
-			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
-			//threadPointMap.reserve(mapSize);
+	unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
 
-			MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
-					data.isoval, threadPointMap, *(this->globalEdgeIndices), threadMesh);
+	unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
+	//processPointMap.reserve(mapSize);
 
-			threadDuplicateRemover.setArrays(threadPointMap);
-		}
+	MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
+			data.isoval, processPointMap, *(this->globalEdgeIndices), processMesh);
 
-		/*
-		 * The next sections merges all the meshes in each block.
-		 * It must be done in serial to construct an accurate mesh.
-		 */
-		#pragma omp critical
-		{
-			const unsigned nPoints=duplicateRemover.getSize();
-			threadDuplicateRemover += nPoints;
-			duplicateRemover+=threadDuplicateRemover;
-			// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
-			meshBeforeMerge += threadMesh;
-		}
-	}
+	processDuplicateRemover->setArrays(processPointMap);
 
-	duplicateRemover.sortYourSelf();
-	duplicateRemover.getNewIndices();
+	processDuplicateRemover->sortYourSelf();
+	processDuplicateRemover->getNewIndices();
 
-	buildMesh(data.mesh,meshBeforeMerge,duplicateRemover);
+	buildMesh(data.mesh,processMesh,*processDuplicateRemover);
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();

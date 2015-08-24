@@ -22,7 +22,7 @@
 #include"./DuplicateRemover.h"
 
 template<typename T>
-void buildMesh(TriangleMesh<T>& newMesh, TriangleMesh<T>& ogMesh,DuplicateRemover& newPtMap) {
+void buildMesh(TriangleMesh<T>& newMesh, const TriangleMesh<T>& ogMesh,DuplicateRemover& newPtMap) {
 	/*
 	 * Iterates through the entire dataArray in newPtMap and creates
 	 * a new mesh from the new point indices in newPointIdx

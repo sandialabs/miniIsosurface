@@ -249,6 +249,7 @@ void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
 	}
 
 	image.setDimension(nXpoints, nYpoints, nZpoints);
+	image.setMPIorigin(blockExtent[0],blockExtent[1],blockExtent[2]);
 	image.setSpacing(spacing[0], spacing[1], spacing[2]);
 	image.setOrigin(origin[0], origin[1], origin[2]);
 	image.allocate();
@@ -270,6 +271,13 @@ const unsigned* LoadImage3DMPI<T>::getVolumeDimensions(void) const {
 	dims[1]=ydimFile;
 	dims[2]=zdimFile;
 	return &dims[0];
+}
+
+template<typename T>
+unsigned LoadImage3DMPI<T>::getMaxVoumeDimension(void) const {
+	unsigned maxDimension;
+	maxDimension=std::max(xdimFile,std::max(ydimFile,zdimFile));
+	return maxDimension;
 }
 
 template<typename T>

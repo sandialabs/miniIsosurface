@@ -12,6 +12,7 @@ Image3DReader<T>::Image3DReader(Image3D<T> * inImageData) {
 	bufferIdx=0;
 	X1buffer=X2buffer=X3buffer=X4buffer=0;
 	imageData=inImageData;
+	isMPIimage=inImageData->isMPIdataBlock;
 }
 
 template<typename T>
@@ -20,7 +21,12 @@ Image3DReader<T>::~Image3DReader() {
 }
 
 template<typename T>
-void Image3DReader<T>::setImage3DOutputBuffers(const unsigned xIdx, const unsigned yIdx, const unsigned zIdx) {
+void Image3DReader<T>::setImage3DOutputBuffers(unsigned xIdx, unsigned yIdx, unsigned zIdx) {
+	if (isMPIimage) {
+		xIdx=xIdx-imageData->MPIorigin[0];
+		yIdx=yIdx-imageData->MPIorigin[1];
+		zIdx=zIdx-imageData->MPIorigin[2];
+	}
 	bufferIdx= xIdx + (yIdx * imageData->dim[0]) + (zIdx * imageData->sliceSize);
 
 	X1buffer = &imageData->data[bufferIdx];
@@ -32,7 +38,10 @@ void Image3DReader<T>::setImage3DOutputBuffers(const unsigned xIdx, const unsign
 
 template<typename T>
 void Image3DReader<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xExtent) {
-
+//	CLOG(logDEBUG) << "Global xIdx: " << xIdx;
+//	CLOG(logDEBUG) << "xExtent: " << xExtent;
+//	if (isMPIimage) xIdx=xIdx-imageData->MPIorigin[0];
+//	CLOG()
 	vertexVals[0] = X1buffer[xIdx-xExtent];
 	vertexVals[1] = X1buffer[xIdx-xExtent+1];
 
@@ -48,6 +57,18 @@ void Image3DReader<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xE
 
 template<typename T>
 void Image3DReader<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlobal, const unsigned yIdxGlobal, const unsigned zIdxGlobal) const {
+	if (isMPIimage) {
+		unsigned xIdx=xIdxGlobal-imageData->MPIorigin[0];
+		unsigned yIdx=yIdxGlobal-imageData->MPIorigin[1];
+		unsigned zIdx=zIdxGlobal-imageData->MPIorigin[2];
+		CLOG(logDEBUG) << "Cooridnate 2: " << yIdxGlobal << " " << imageData->MPIorigin[1];
+		CLOG(logDEBUG) << "Gradient coordinate: " << xIdx << " " << yIdx << " " << zIdx;
+	}
+	else {
+		unsigned xIdx=xIdxGlobal;
+		unsigned yIdx=xIdxGlobal;
+		unsigned zIdx=xIdxGlobal;
+	}
 	/*
 	 * Gradient computation is only done on a per need basis
 	 * Setting up cache buffers for this would not improve performance enough

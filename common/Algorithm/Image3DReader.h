@@ -25,7 +25,7 @@ public:
 	virtual ~Image3DReader();
 
 	// Read the Image3D object
-	void setImage3DOutputBuffers(const unsigned, const unsigned,const unsigned);
+	void setImage3DOutputBuffers(unsigned, unsigned,unsigned);
 	void getVertexValues(T *,unsigned,unsigned);
 
 	void getValsForGradient(T (& x)[3][2], const unsigned, const unsigned, const unsigned) const;
@@ -50,10 +50,7 @@ private:
 	const T *X3buffer;
 	const T *X4buffer;
 
-	/* ===== Reading image object ===============
-	 * Collection of functions to allow the Image3D
-	 * object to read itself efficiently.
-	 ==========================================*/
+	bool isMPIimage;
 };
 
 #endif /* IMAGE3DREADER_H_ */

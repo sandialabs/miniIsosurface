@@ -106,7 +106,7 @@ const unsigned DuplicateRemover::getSize(void) const {
 	return dataArray.size();
 }
 
-DuplicateRemover::~DuplicateRemover() {
-	// TODO Auto-generated destructor stub
-}
+//DuplicateRemover::~DuplicateRemover() {
+//	// TODO Auto-generated destructor stub
+//}
 

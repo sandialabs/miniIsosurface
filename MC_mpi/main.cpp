@@ -29,6 +29,7 @@
 #include"./Implementations/MpiAlgo.h"
 
 int main(int argc, char* argv[]) {
+
 	int id;
 	int p;
 	double wtime;
@@ -45,8 +46,6 @@ int main(int argc, char* argv[]) {
 //
 //  Process 0 prints an introductory message.
 //
-	if (id == 0) {
-
 	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
 	// Initialize the user interface
@@ -68,7 +67,7 @@ int main(int argc, char* argv[]) {
 	Timer RunTime;
 	// Execute the marching cubes implementation
 	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm(fileHeader); // Specific to MPI
+	MpiAlgo<float_t> algorithm(fileHeader,id,p); // Specific to MPI
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock
@@ -78,8 +77,9 @@ int main(int argc, char* argv[]) {
 	RunTime.reportTime(data.doc);
 	data.doc.generateYAML();
 
-	// Save the result
-	saveTriangleMesh(&(data.mesh), mainUI.outFile());
+	if (id == 0) {
+		// Save the result
+		saveTriangleMesh(&(data.mesh), mainUI.outFile());
 	}
 	//
 	//  Terminate MPI.

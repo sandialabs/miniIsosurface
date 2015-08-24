@@ -24,6 +24,7 @@ public:
 	virtual ~Image3D();
 
 	void setDimension(unsigned, unsigned, unsigned);
+	void setMPIorigin(unsigned, unsigned, unsigned);
 	void setSpacing(T, T, T);
 	void setOrigin(T, T, T);
 	void setToMPIdataBlock(void);
@@ -58,7 +59,9 @@ private:
 	T spacing[3];
 	T origin[3];
 	T *data;
+
 	bool isMPIdataBlock;
+	unsigned MPIorigin[3];
 
 //	/* ===== Reading image object ===============
 //	 * Collection of buffers to allow the Image3D
