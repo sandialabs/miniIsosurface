@@ -48,14 +48,13 @@ void MpiAlgo<T>::march(GeneralContext<T> &data){
 //  Process 0 prints an introductory message.
 //
 	if (id == 0) {
-		timestamp();
-		cout << "\n";
-		cout << "HELLO_MPI - Master process:\n";
-		cout << "  C++/MPI version\n";
-		cout << "  An MPI example program.\n";
-		cout << "\n";
-		cout << "  The number of processes is " << p << "\n";
-		cout << "\n";
+		CLOG(logDEBUG) << "\n";
+		CLOG(logDEBUG) << "HELLO_MPI - Master process:\n";
+		CLOG(logDEBUG) << "  C++/MPI version\n";
+		CLOG(logDEBUG) << "  An MPI example program.\n";
+		CLOG(logDEBUG) << "\n";
+		CLOG(logDEBUG) << "  The number of processes is " << p << "\n";
+		CLOG(logDEBUG) << "\n";
 
 	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 	fileData.readEntireVolumeData(data.imageIn);

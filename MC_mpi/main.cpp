@@ -8,6 +8,7 @@
 // Common utility headers -------------
 // Standard C/C++ library
 #include"../common/includes.h"
+#include"mpi.h"
 
 // File i/o
 #include"../common/IO/LoadImage3DMPI.h"
@@ -47,6 +48,8 @@ int main(int argc, char* argv[]) {
 	data.doc.add("Volume image data file path", mainUI.getFile());
 	fileHeader.report(data.doc);
 
+	// Initialize MPI
+	MPI::Init(argc, argv);
 	// Start the clock
 	Timer RunTime;
 	// Execute the marching cubes implementation
