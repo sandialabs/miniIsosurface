@@ -14,8 +14,11 @@ MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses
 	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
 
 	// Should be
-	//grainDim=maxDim/inProcesses;
-	grainDim=maxDim/2;
+	float cubeRootProc = static_cast<float>(inProcesses);
+	cubeRootProc=cbrt(cubeRootProc);
+	int nCbrtProcesses=static_cast<int>(cubeRootProc);
+	if (nCbrtProcesses<2) nCbrtProcesses=2;
+	grainDim=maxDim/nCbrtProcesses;
 
 	processTimer = inProcessTimer;
 }
@@ -85,15 +88,39 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
 	this->setGlobalVariables(data);
 
-	TriangleMesh_t processMesh, blockMesh;
-	PointMap_t processPointMap, blockPointMap;
-	DuplicateRemover processDuplicateRemover, blockDuplicateRemover;
+	TriangleMesh_t processMesh;
+	PointMap_t processPointMap;
+	DuplicateRemover processDuplicateRemover;
 
-	//CLOG(logDEBUG) << "Iteration " << i;
-	unsigned blockNum=pID;
-	for (;blockNum<nblocks;blockNum+=processes) {
+	// Distributing jobs
+	unsigned blocksPerProcess;
+	unsigned startBlockNum;
+	unsigned endBlockNum;
+	if (nblocks>processes) {
+		blocksPerProcess=nblocks/processes;
+
+		startBlockNum=pID*blocksPerProcess;
+
+		// The last process picks up the extra blocks..
+		if (pID==processes-1) {
+			endBlockNum=nblocks;
+		}
+		else {
+			endBlockNum=startBlockNum+blocksPerProcess;
+		}
+	}
+	else {
+		if (pID<nblocks) {
+			startBlockNum=pID;
+			endBlockNum=pID+1;
+		}
+		else {
+			startBlockNum = endBlockNum = 0;
+		}
+	}
+
+	for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
 		LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
-
 
 		unsigned blockPageIdx = blockNum / nblocksPerPage;
 		unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
@@ -127,14 +154,16 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		//unsigned mapSize = approxNumberOfEdges / 8 + 6; // Approx # of edges in map
 
 		MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
-				data.isoval, blockPointMap, *(this->globalEdgeIndices), blockMesh);
-		blockDuplicateRemover.setArrays(blockPointMap);
+				data.isoval, processPointMap, *(this->globalEdgeIndices), processMesh);
+		processDuplicateRemover.setArrays(processPointMap);
 	}
 
-	blockDuplicateRemover.sortYourSelf();
-	blockDuplicateRemover.getNewIndices();
+	if (processDuplicateRemover.getSize() > 3) {
+		processDuplicateRemover.sortYourSelf();
+		processDuplicateRemover.getNewIndices();
 
-	buildMesh(data.mesh,blockMesh,blockDuplicateRemover);
+		buildMesh(data.mesh,processMesh,processDuplicateRemover);
+	}
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();

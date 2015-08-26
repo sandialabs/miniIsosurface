@@ -30,7 +30,7 @@
 
 int main(int argc, char* argv[]) {
 
-	LOG::ReportingLevel() = logINFO; // Debug level is hard coded
+	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
 	int id;
 	int nProcesses;
