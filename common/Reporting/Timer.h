@@ -18,7 +18,13 @@
 class Timer {
 public:
 	Timer();
+	//Timer(bool);
 	virtual ~Timer();
+
+	//void startForProcess(void);
+
+	void pause(void);
+	void resume(void);
 
 	void stop(void);
 	void reportTime(YAML_Doc &) const;

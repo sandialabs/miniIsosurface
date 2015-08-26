@@ -14,13 +14,41 @@ Timer::Timer() {
 	clock_gettime(CLOCK_MONOTONIC, &start);
 }
 
-void Timer::stop(void) {
+//Timer::Timer(bool hold) {
+//	totalWallTime=0;
+//	totalCPUtime=0;
+//	tCPU = 0;
+//}
+//
+//void Timer::startForProcess(void) {
+//	totalWallTime=0;
+//	totalCPUtime=0;
+//	tCPU = clock();
+//	clock_gettime(CLOCK_MONOTONIC, &start);
+//}
+
+void Timer::pause(void) {
 	tCPU = clock()-tCPU;
-	totalCPUtime=(static_cast<double>(tCPU))/CLOCKS_PER_SEC;
+	totalCPUtime += (static_cast<double>(tCPU))/CLOCKS_PER_SEC;
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 
-	totalWallTime = (finish.tv_sec - start.tv_sec);
+	totalWallTime += (finish.tv_sec - start.tv_sec);
+	totalWallTime += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+}
+
+void Timer::resume(void) {
+	tCPU = clock();
+	clock_gettime(CLOCK_MONOTONIC, &start);
+}
+
+void Timer::stop(void) {
+	tCPU = clock()-tCPU;
+	totalCPUtime += (static_cast<double>(tCPU))/CLOCKS_PER_SEC;
+
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+
+	totalWallTime += (finish.tv_sec - start.tv_sec);
 	totalWallTime += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 }
 

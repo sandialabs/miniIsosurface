@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 	int p;
 	double wtime;
 	// Initialize MPI
-	MPI::Init();
+	MPI::Init(argc,argv);
 //
 //  Get the number of processes.
 //
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
 	Timer RunTime;
 	// Execute the marching cubes implementation
 	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm(fileHeader,id,p); // Specific to MPI
+	MpiAlgo<float_t> algorithm(fileHeader,id,p,&RunTime);
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock
@@ -77,10 +77,13 @@ int main(int argc, char* argv[]) {
 	RunTime.reportTime(data.doc);
 	data.doc.generateYAML();
 
-	if (id == 0) {
-		// Save the result
-		saveTriangleMesh(&(data.mesh), mainUI.outFile());
-	}
+	// Save the result
+	const char * baseName= mainUI.outFile();
+	std::string outFile = baseName;
+	outFile = outFile + "." + std::to_string(static_cast<long long int>(id));
+	saveTriangleMesh(&(data.mesh), outFile.c_str());
+
+
 	//
 	//  Terminate MPI.
 	//

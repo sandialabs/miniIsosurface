@@ -29,7 +29,7 @@ void buildMesh(TriangleMesh<T>& newMesh, const TriangleMesh<T>& ogMesh,Duplicate
 	 */
 	unsigned nOgPoints=newPtMap.getSize();
 	// As many new points as last index in the dataArray
-	unsigned nNewPoints=newPtMap.dataArray.end()->newPointIdx;
+	unsigned nNewPoints=newPtMap.dataArray.back().newPointIdx+1; // Because counting from 0
 	// Allocate space in the new mesh
 	newMesh.allocate(nNewPoints);
 
@@ -59,6 +59,8 @@ void buildMesh(TriangleMesh<T>& newMesh, const TriangleMesh<T>& ogMesh,Duplicate
 		unsigned newTriangleIdxs[3];
 		newTriangleIdxs[0]=oldToNewMap[ogTriangleIdxs[0]];
 		newTriangleIdxs[1]=oldToNewMap[ogTriangleIdxs[1]];
+		CLOG(logDEBUG) << "!!!!!! nOgPoints: " << oldToNewMap.size()
+				<< " newTriangleIdxs: " << newTriangleIdxs[0] << " " << newTriangleIdxs[1] << " "  << newTriangleIdxs[2] << " !!!";
 		newTriangleIdxs[2]=oldToNewMap[ogTriangleIdxs[2]];
 
 		newMesh.addTriangle(newTriangleIdxs);

@@ -48,11 +48,12 @@ void DuplicateRemover::sortYourSelf(void) {
 
 std::vector<unsigned> DuplicateRemover::oldToNewIdxMap(void) {
 
-	unsigned nPoints=getSize();
+	unsigned nPoints=this->getSize();
 	std::vector<unsigned> oldToNewMap;
+	//CLOG(logDEBUG) << "!!!!!!!!!!!!!!! nPoints oldToNewIdxMap " << nPoints << " !!!!!!!!!!!!!";
 	oldToNewMap.resize(nPoints);
 
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(unsigned iPoint=0;iPoint<nPoints;++iPoint) {
 		unsigned ptIdxOld=dataArray[iPoint].pointIdx;
 		oldToNewMap[ptIdxOld] = dataArray[iPoint].newPointIdx;
@@ -65,22 +66,24 @@ void DuplicateRemover::getNewIndices(void) {
 	if (!edge_sorted) {
 		throw object_not_sorted("DuplicateRemover");
 	}
-	/*
-	 * Going through the dataArray and creating new point indices for the data
-	 */
-	// Initialize run
-	unsigned iEdgeIndxPrevious=dataArray[0].edgeIdx;
-	unsigned iEdgeIndxCurrent=dataArray[1].edgeIdx;
-	dataArray[0].newPointIdx=0;
-	unsigned currentPointNum=0;
+	if (dataArray.size()>3) { // Block contains at least one triangle
+		/*
+		 * Going through the dataArray and creating new point indices for the data
+		 */
+		// Initialize run
+		unsigned iEdgeIndxPrevious=dataArray[0].edgeIdx;
+		unsigned iEdgeIndxCurrent=dataArray[1].edgeIdx;
+		dataArray[0].newPointIdx=0;
+		unsigned currentPointNum=0;
 
-	unsigned nPoints=getSize();
-	for (unsigned iPoint=1; iPoint <= nPoints; iPoint++) {
-		iEdgeIndxCurrent=dataArray[iPoint].edgeIdx;
-		if (iEdgeIndxCurrent!=iEdgeIndxPrevious) currentPointNum++;
+		unsigned nPoints=this->getSize();
+		for (unsigned iPoint=1; iPoint < nPoints; iPoint++) {
+			iEdgeIndxCurrent=dataArray[iPoint].edgeIdx;
+			if (iEdgeIndxCurrent!=iEdgeIndxPrevious) currentPointNum++;
 
-		dataArray[iPoint].newPointIdx=currentPointNum;
-		iEdgeIndxPrevious=iEdgeIndxCurrent;
+			dataArray[iPoint].newPointIdx=currentPointNum;
+			iEdgeIndxPrevious=iEdgeIndxCurrent;
+		}
 	}
 }
 

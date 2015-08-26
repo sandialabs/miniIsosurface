@@ -57,28 +57,27 @@ void Image3DReader<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xE
 
 template<typename T>
 void Image3DReader<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlobal, const unsigned yIdxGlobal, const unsigned zIdxGlobal) const {
+	unsigned xIdx, yIdx, zIdx;
 	if (isMPIimage) {
-		unsigned xIdx=xIdxGlobal-imageData->MPIorigin[0];
-		unsigned yIdx=yIdxGlobal-imageData->MPIorigin[1];
-		unsigned zIdx=zIdxGlobal-imageData->MPIorigin[2];
-		CLOG(logDEBUG) << "Cooridnate 2: " << yIdxGlobal << " " << imageData->MPIorigin[1];
-		CLOG(logDEBUG) << "Gradient coordinate: " << xIdx << " " << yIdx << " " << zIdx;
+		xIdx=xIdxGlobal-imageData->MPIorigin[0];
+		yIdx=yIdxGlobal-imageData->MPIorigin[1];
+		zIdx=zIdxGlobal-imageData->MPIorigin[2];
 	}
 	else {
-		unsigned xIdx=xIdxGlobal;
-		unsigned yIdx=xIdxGlobal;
-		unsigned zIdx=xIdxGlobal;
+		xIdx=xIdxGlobal;
+		yIdx=xIdxGlobal;
+		zIdx=xIdxGlobal;
 	}
 	/*
 	 * Gradient computation is only done on a per need basis
 	 * Setting up cache buffers for this would not improve performance enough
 	 */
 	// Assuming bufferIdx is updated with the marching, we just need to add distance along the x-axis
-	unsigned ptIdxOnBuffer=xIdxGlobal + yIdxGlobal * imageData->dim[0] + zIdxGlobal * imageData->sliceSize;
-	if (xIdxGlobal == 0) {
+	unsigned ptIdxOnBuffer=xIdx + yIdx * imageData->dim[0] + zIdx * imageData->sliceSize;
+	if (xIdx == 0) {
 		x[0][0] = imageData->data[ptIdxOnBuffer + 1];
 		x[0][1] = imageData->data[ptIdxOnBuffer];
-	} else if (xIdxGlobal == (imageData->dim[0] - 1)) {
+	} else if (xIdx == (imageData->dim[0] - 1)) {
 		x[0][0] = imageData->data[ptIdxOnBuffer];
 		x[0][1] = imageData->data[ptIdxOnBuffer - 1];
 	} else {
@@ -86,10 +85,10 @@ void Image3DReader<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlob
 		x[0][1] = imageData->data[ptIdxOnBuffer - 1];
 	}
 
-	if (yIdxGlobal == 0) {
+	if (yIdx == 0) {
 		x[1][0] = imageData->data[ptIdxOnBuffer + imageData->dim[0]];
 		x[1][1] = imageData->data[ptIdxOnBuffer];
-	} else if (yIdxGlobal == (imageData->dim[1] - 1)) {
+	} else if (yIdx == (imageData->dim[1] - 1)) {
 		x[1][0] = imageData->data[ptIdxOnBuffer];
 		x[1][1] = imageData->data[ptIdxOnBuffer - imageData->dim[0]];
 	} else {
@@ -97,10 +96,10 @@ void Image3DReader<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlob
 		x[1][1] = imageData->data[ptIdxOnBuffer - imageData->dim[0]];
 	}
 
-	if (zIdxGlobal == 0) {
+	if (zIdx == 0) {
 		x[2][0] = imageData->data[ptIdxOnBuffer + imageData->sliceSize];
 		x[2][1] = imageData->data[ptIdxOnBuffer];
-	} else if (zIdxGlobal == (imageData->dim[2] - 1)) {
+	} else if (zIdx == (imageData->dim[2] - 1)) {
 		x[2][0] = imageData->data[ptIdxOnBuffer];
 		x[2][1] = imageData->data[ptIdxOnBuffer - imageData->sliceSize];
 	} else {

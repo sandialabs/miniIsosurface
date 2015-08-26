@@ -17,7 +17,7 @@
 
 // This Function is a friend of the Triangle Mesh class and has access to private members of that class
 template<typename T>
-void saveTriangleMesh(const TriangleMesh<T> *mesh, const char *vtkFileName) {
+void saveTriangleMesh(const TriangleMesh<T> *mesh, const char * vtkFileName) {
 	std::ofstream stream;
 	stream.open(vtkFileName);
 	int spacialDimensions = 3;

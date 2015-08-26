@@ -11,7 +11,7 @@
 # ========== Macros =============================
 
 # Compiler and flags
-CC              = g++
+CC              = mpic++
 #CXXFLAGS		= -O2 -fopenmp -lprofiler -std=c++0x
 #CXXFLAGS        = -O2 -lrt -std=c++0x
 CXXFLAGS = -O0 -g -lrt -std=c++0x

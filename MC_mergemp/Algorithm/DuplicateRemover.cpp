@@ -74,8 +74,8 @@ void DuplicateRemover::getNewIndices(void) {
 	dataArray[0].newPointIdx=0;
 	unsigned currentPointNum=0;
 
-	unsigned nPoints=getSize();
-	for (unsigned iPoint=1; iPoint <= nPoints; iPoint++) {
+	unsigned nPoints=this->getSize();
+	for (unsigned iPoint=1; iPoint < nPoints; ++iPoint) {
 		iEdgeIndxCurrent=dataArray[iPoint].edgeIdx;
 		if (iEdgeIndxCurrent!=iEdgeIndxPrevious) currentPointNum++;
 

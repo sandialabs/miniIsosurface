@@ -15,6 +15,7 @@
 #include"../../common/Reporting/YAML_Element.hpp"
 #include"../../common/Reporting/YAML_Doc.hpp"
 #include"../../common/Reporting/Log.h"
+#include"../../common/Reporting/Timer.h"
 
 // Strategy base class
 #include"../../common/Algorithm/MarchAlgorithm.h"
@@ -37,9 +38,9 @@
 template<typename T>
 class MpiAlgo : public MarchAlgorithm<T>  {
 public:
-	MpiAlgo(LoadImage3DMPI<T> &, int, int);
-	MpiAlgo(unsigned);
+	MpiAlgo(LoadImage3DMPI<T> &, int, int, Timer *);
 	virtual ~MpiAlgo();
+	static bool testZeroExtent(unsigned *);
 
 	unsigned numBlocks(const Range oneDRange);
 	void march(GeneralContext<T> &);
@@ -53,6 +54,7 @@ private:
 	// MPI specific
 	LoadImage3DMPI<T> fileHeader;
 	int pID,processes;
+	Timer *processTimer;
 };
 
 #endif /* IMPLEMENTATIONS_MERGEMPALGO_H_ */

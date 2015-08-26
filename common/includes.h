@@ -32,7 +32,6 @@
 
 // Parallel computing
 #include <omp.h>
-
 #include <typeinfo>
 
 #endif /* INCLUDES_H_ */

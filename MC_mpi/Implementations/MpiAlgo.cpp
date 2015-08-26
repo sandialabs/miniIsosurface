@@ -8,7 +8,7 @@
 #include "MpiAlgo.h"
 
 template<typename T>
-MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses) : fileHeader(inFileHeader) {
+MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
 	pID = inPid;
 	processes=inProcesses;
 	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
@@ -16,13 +16,8 @@ MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses
 	// Should be
 	//grainDim=maxDim/inProcesses;
 	grainDim=maxDim/2;
-	CLOG(logDEBUG) << "grainDim: " << grainDim;
-}
 
-template<typename T>
-MpiAlgo<T>::MpiAlgo(unsigned grain) {
-	grainDim=grain;
-	meshBeforeMerge=0;
+	processTimer = inProcessTimer;
 }
 
 template<typename T>
@@ -38,37 +33,40 @@ unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
 }
 
 template<typename T>
+bool MpiAlgo<T>::testZeroExtent(unsigned * extent) {
+	/*
+	 * True if zero extent
+	 * False if extent non-zero
+	 */
+	unsigned pseudoVolume=0;
+	for (int i=0;i<6;++i) {
+		pseudoVolume+=extent[i];
+	}
+	if (pseudoVolume == 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+template<typename T>
 void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
-//	/*
-//	 * MPI stuff
-//	 */
-//	// Get the number of processes
-//	int world_size;
-//	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-//
-//	// Get the rank of the process
-//	int world_rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-//
-//	CLOG(logDEBUG) << "Process rank is " << world_rank;
-
-	// DEBUGGER
-	{
-	    int i = 0;
-	    char hostname[256];
-	    gethostname(hostname, sizeof(hostname));
-	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-	    fflush(stdout);
-	    while (0 == i)
-	        sleep(5);
-	}
-
-	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
+//	// DEBUGGER
+//	int i = 0;
+//	char hostname[256];
+//	gethostname(hostname, sizeof(hostname));
+//	printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	fflush(stdout);
+//	while (0==i) {
+//		sleep(5);
+//	}
 
 	const unsigned *dims = fileHeader.getVolumeDimensions();
 
 	CLOG(logYAML) << "Marching cubes algorithm: MPI";
+
 	data.doc.add("Marching cubes algorithm", "MPI");
 
 	/*
@@ -85,50 +83,68 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	unsigned nblocks = numBlockPages * numBlockRows * numBlockCols;
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
-	setGlobalVariables(data);
+	this->setGlobalVariables(data);
 
-	TriangleMesh_t processMesh;
-	PointMap_t processPointMap;
-	DuplicateRemover * processDuplicateRemover=new DuplicateRemover;
+	TriangleMesh_t processMesh, blockMesh;
+	PointMap_t processPointMap, blockPointMap;
+	DuplicateRemover processDuplicateRemover, blockDuplicateRemover;
+//	delete processDuplicateRemover;
+//	processDuplicateRemover = new DuplicateRemover;
 
 	//CLOG(logDEBUG) << "Iteration " << i;
-	unsigned blockPageIdx = pID / nblocksPerPage;
-	unsigned blockRowIdx = (pID % nblocksPerPage) / numBlockCols;
-	unsigned blockColIdx = (pID % nblocksPerPage) % numBlockCols;
-
-	unsigned pfrom = blockPageIdx * fullRange.pages().grain();
-	unsigned pto = std::min(pfrom + fullRange.pages().grain(),
-			fullRange.pages().end());
-	unsigned rfrom = blockRowIdx * fullRange.rows().grain();
-	unsigned rto = std::min(rfrom + fullRange.rows().grain(),
-			fullRange.rows().end());
-	unsigned cfrom = blockColIdx * fullRange.cols().grain();
-	unsigned cto = std::min(cfrom + fullRange.cols().grain(),
-			fullRange.cols().end());
-
-	Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
-	unsigned blockExtent[6];
-	blockRange.extent(blockExtent);
-	fileData.setBlockExtent(blockExtent);
-	fileData.readBlockData(data.imageIn);
-	data.imageIn.setToMPIdataBlock();
-	data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);
+	unsigned blockNum=pID;
+	for (;blockNum<nblocks;blockNum+=processes) {
+		LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 
 
-	unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
+		unsigned blockPageIdx = blockNum / nblocksPerPage;
+		unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
+		unsigned blockColIdx = (blockNum % nblocksPerPage) % numBlockCols;
 
-	unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
-	//processPointMap.reserve(mapSize);
+		unsigned pfrom = blockPageIdx * fullRange.pages().grain();
+		unsigned pto = std::min(pfrom + fullRange.pages().grain(),
+				fullRange.pages().end());
+		unsigned rfrom = blockRowIdx * fullRange.rows().grain();
+		unsigned rto = std::min(rfrom + fullRange.rows().grain(),
+				fullRange.rows().end());
+		unsigned cfrom = blockColIdx * fullRange.cols().grain();
+		unsigned cto = std::min(cfrom + fullRange.cols().grain(),
+				fullRange.cols().end());
 
-	MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
-			data.isoval, processPointMap, *(this->globalEdgeIndices), processMesh);
+		Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
+		unsigned blockExtent[6];
+		blockRange.extent(blockExtent);
+		fileData.setBlockExtent(blockExtent);
 
-	processDuplicateRemover->setArrays(processPointMap);
+		processTimer->pause();
+		fileData.readBlockData(data.imageIn);
+		processTimer->resume();
 
-	processDuplicateRemover->sortYourSelf();
-	processDuplicateRemover->getNewIndices();
+		data.imageIn.setToMPIdataBlock();
+		data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);
 
-	buildMesh(data.mesh,processMesh,*processDuplicateRemover);
+
+		unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
+
+		//unsigned mapSize = approxNumberOfEdges / 8 + 6; // Approx # of edges in map
+
+		MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
+				data.isoval, blockPointMap, *(this->globalEdgeIndices), blockMesh);
+		blockDuplicateRemover.setArrays(blockPointMap);
+
+		const unsigned nPoints=processDuplicateRemover.getSize();
+		blockDuplicateRemover += nPoints;
+		processDuplicateRemover+=blockDuplicateRemover;
+		// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
+		processMesh += blockMesh;
+	}
+
+	if (processDuplicateRemover.getSize() > 3) {
+		processDuplicateRemover.sortYourSelf();
+		processDuplicateRemover.getNewIndices();
+
+		buildMesh(data.mesh,processMesh,processDuplicateRemover);
+	}
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();

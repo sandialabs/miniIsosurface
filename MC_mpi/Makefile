@@ -30,7 +30,7 @@ UTILS_DIR       = ../common/build
 # Get source code files and generate object names
 SOURCES        := $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cpp))
 OBJECTS        := $(addprefix $(BUILDDIR)/,$(notdir $(SOURCES:.cpp=.o)))
-UTILS_OBJ	   := $(wildcard $(UTILS_DIR)/*.o)
+UTILS_OBJ      := $(wildcard $(UTILS_DIR)/*.o)
 
 # ========== Compiler Rules =====================
 
@@ -38,7 +38,7 @@ UTILS_OBJ	   := $(wildcard $(UTILS_DIR)/*.o)
 
 all: main.o $(OBJECTS) $(UTILS_OBJ)
 	@echo "Linking object files...";
-	@$(CC) $(CXXFLAGS) $(BUILDDIR)/main.o $(OBJECTS) $(UTILS_OBJ) -o $(BUILDDIR)/$(TARGET) $(GPERF_FLAG);
+	@$(CC) $(CXXFLAGS) $(BUILDDIR)/main.o $(UTILS_OBJ) $(OBJECTS) -o $(BUILDDIR)/$(TARGET) $(GPERF_FLAG);
 	@echo "Compiled and linked "$(BUILDDIR)/$(TARGET)" successfully!"
 
 # Compiler commands
