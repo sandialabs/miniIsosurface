@@ -21,6 +21,8 @@
 
 #include"./DuplicateRemover.h"
 
+#include"mpi.h"
+
 template<typename T>
 void buildMesh(TriangleMesh<T>& newMesh, const TriangleMesh<T>& ogMesh,DuplicateRemover& newPtMap) {
 	/*
@@ -59,8 +61,6 @@ void buildMesh(TriangleMesh<T>& newMesh, const TriangleMesh<T>& ogMesh,Duplicate
 		unsigned newTriangleIdxs[3];
 		newTriangleIdxs[0]=oldToNewMap[ogTriangleIdxs[0]];
 		newTriangleIdxs[1]=oldToNewMap[ogTriangleIdxs[1]];
-		CLOG(logDEBUG) << "!!!!!! nOgPoints: " << oldToNewMap.size()
-				<< " newTriangleIdxs: " << newTriangleIdxs[0] << " " << newTriangleIdxs[1] << " "  << newTriangleIdxs[2] << " !!!";
 		newTriangleIdxs[2]=oldToNewMap[ogTriangleIdxs[2]];
 
 		newMesh.addTriangle(newTriangleIdxs);

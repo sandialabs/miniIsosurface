@@ -30,23 +30,17 @@
 
 int main(int argc, char* argv[]) {
 
+	LOG::ReportingLevel() = logINFO; // Debug level is hard coded
+
 	int id;
-	int p;
-	double wtime;
+	int nProcesses;
+
 	// Initialize MPI
 	MPI::Init(argc,argv);
-//
-//  Get the number of processes.
-//
-	p = MPI::COMM_WORLD.Get_size();
-//
-//  Get the individual process ID.
-//
+	//  Get the number of processes.
+	nProcesses = MPI::COMM_WORLD.Get_size();
+	//  Get the individual process ID.
 	id = MPI::COMM_WORLD.Get_rank();
-//
-//  Process 0 prints an introductory message.
-//
-	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
 	// Initialize the user interface
 	UI<float_t> mainUI(argc,argv);
@@ -67,7 +61,7 @@ int main(int argc, char* argv[]) {
 	Timer RunTime;
 	// Execute the marching cubes implementation
 	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm(fileHeader,id,p,&RunTime);
+	MpiAlgo<float_t> algorithm(fileHeader,id,nProcesses,&RunTime);
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock

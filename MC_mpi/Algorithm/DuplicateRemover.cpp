@@ -89,7 +89,7 @@ void DuplicateRemover::getNewIndices(void) {
 
 DuplicateRemover& DuplicateRemover::operator+=(const unsigned increment) {
 
-	# pragma omp parallel for
+	//# pragma omp parallel for
 	for (unsigned iPoint=0; iPoint<this->getSize(); iPoint++) {
 		this->dataArray[iPoint].pointIdx+=increment;
 	}

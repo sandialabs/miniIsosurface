@@ -88,8 +88,6 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	TriangleMesh_t processMesh, blockMesh;
 	PointMap_t processPointMap, blockPointMap;
 	DuplicateRemover processDuplicateRemover, blockDuplicateRemover;
-//	delete processDuplicateRemover;
-//	processDuplicateRemover = new DuplicateRemover;
 
 	//CLOG(logDEBUG) << "Iteration " << i;
 	unsigned blockNum=pID;
@@ -131,20 +129,12 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
 				data.isoval, blockPointMap, *(this->globalEdgeIndices), blockMesh);
 		blockDuplicateRemover.setArrays(blockPointMap);
-
-		const unsigned nPoints=processDuplicateRemover.getSize();
-		blockDuplicateRemover += nPoints;
-		processDuplicateRemover+=blockDuplicateRemover;
-		// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
-		processMesh += blockMesh;
 	}
 
-	if (processDuplicateRemover.getSize() > 3) {
-		processDuplicateRemover.sortYourSelf();
-		processDuplicateRemover.getNewIndices();
+	blockDuplicateRemover.sortYourSelf();
+	blockDuplicateRemover.getNewIndices();
 
-		buildMesh(data.mesh,processMesh,processDuplicateRemover);
-	}
+	buildMesh(data.mesh,blockMesh,blockDuplicateRemover);
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();
