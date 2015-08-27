@@ -16,7 +16,7 @@ TARGET          = MCMpi.exe
 
 # Compiler and flags
 CC              = mpic++
-CXXFLAGS        = -O2 -lrt -std=c++0x
+CXXFLAGS        = -O2 -fopenmp -std=c++0x
 #CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
 
 # Source and build directories

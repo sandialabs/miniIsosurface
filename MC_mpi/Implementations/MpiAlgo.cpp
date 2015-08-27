@@ -13,7 +13,6 @@ MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses
 	processes=inProcesses;
 	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
 
-	// Should be
 	float cubeRootProc = static_cast<float>(inProcesses);
 	cubeRootProc=cbrt(cubeRootProc);
 	int nCbrtProcesses=static_cast<int>(cubeRootProc);
@@ -141,9 +140,9 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		blockRange.extent(blockExtent);
 		fileData.setBlockExtent(blockExtent);
 
-		processTimer->pause();
+		//processTimer->pause();
 		fileData.readBlockData(data.imageIn);
-		processTimer->resume();
+		//processTimer->resume();
 
 		data.imageIn.setToMPIdataBlock();
 		data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);
