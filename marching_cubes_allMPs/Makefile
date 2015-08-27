@@ -12,7 +12,7 @@
 # ========== Macros =============================
 
 # project name (generate executable with this name)
-TARGET          = MCMpi.exe
+TARGET          = MCAll.exe
 
 # Compiler and flags
 CC              = mpic++

@@ -28,6 +28,9 @@
 // Algorithm
 #include"./Implementations/MpiAlgo.h"
 
+// Deals with each thread's timer:
+#include"./MPIclockFunctions.h"
+
 int main(int argc, char* argv[]) {
 
 	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
@@ -67,9 +70,7 @@ int main(int argc, char* argv[]) {
 	// Stop Clock
 	runTime.stop();
 
-	//Report and save YAML file
-	runTime.reportTimeMPI(data.doc);
-	data.doc.generateYAML();
+	collectTimesMPI(data.doc,&runTime);
 
 	// Save the result
 	const char * baseName = mainUI.outFile();

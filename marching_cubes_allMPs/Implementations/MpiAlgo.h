@@ -30,7 +30,7 @@
 #include"../Algorithm/buildMesh.h"
 
 // IO Object
-#include"../../common/IO/LoadImage3DMPI.h"
+#include"../../common/IO/LoadBigImage.h"
 
 //MPI
 #include"mpi.h"
@@ -38,7 +38,7 @@
 template<typename T>
 class MpiAlgo : public MarchAlgorithm<T>  {
 public:
-	MpiAlgo(LoadImage3DMPI<T> &, int, int, Timer *);
+	MpiAlgo(LoadBigImage<T> &, int, int, Timer *);
 	virtual ~MpiAlgo();
 	static bool testZeroExtent(unsigned *);
 
@@ -48,11 +48,10 @@ private:
 	// These are intermediate data structures before the final
 	// results are sent to GeneralContext
 	DuplicateRemover duplicateRemover;
-	TriangleMesh<T> * meshBeforeMerge;
 	unsigned grainDim;
 
 	// MPI specific
-	LoadImage3DMPI<T> fileHeader;
+	LoadBigImage<T> fileHeader;
 	int pID,processes;
 	Timer *processTimer;
 };

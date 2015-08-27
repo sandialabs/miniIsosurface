@@ -8,7 +8,7 @@
 #include "MpiAlgo.h"
 
 template<typename T>
-MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
+MpiAlgo<T>::MpiAlgo(LoadBigImage<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
 	pID = inPid;
 	processes=inProcesses;
 	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
@@ -128,7 +128,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 		#pragma omp for nowait
 		for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
-			LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
+			LoadBigImage<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 
 			unsigned blockPageIdx = blockNum / nblocksPerPage;
 			unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;

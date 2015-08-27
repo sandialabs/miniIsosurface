@@ -67,9 +67,9 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 	const unsigned *dims = fileHeader.getVolumeDimensions();
 
-	CLOG(logYAML) << "Marching cubes algorithm: MPI";
+	CLOG(logYAML) << "Marching cubes algorithm: MPI without OpenMP";
 
-	data.doc.add("Marching cubes algorithm", "MPI");
+	data.doc.add("Marching cubes algorithm", "MPI without OpenMP");
 
 	/*
 	 * fullRange is the entire image volume
