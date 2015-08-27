@@ -140,9 +140,9 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		blockRange.extent(blockExtent);
 		fileData.setBlockExtent(blockExtent);
 
-		//processTimer->pause();
+		processTimer->pause();
 		fileData.readBlockData(data.imageIn);
-		//processTimer->resume();
+		processTimer->resume();
 
 		data.imageIn.setToMPIdataBlock();
 		data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);

@@ -30,6 +30,10 @@ public:
 	void reportTime(YAML_Doc &) const;
 	void reportTime(void) const;
 
+	// For message passing
+	const double getWallTime (void) { return totalWallTime; };
+	const double getCPUtime (void) { return totalCPUtime; };
+
 private:
 	struct timespec start, finish;
 	clock_t tCPU;

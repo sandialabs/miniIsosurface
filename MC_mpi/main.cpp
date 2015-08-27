@@ -36,14 +36,14 @@ int main(int argc, char* argv[]) {
 	int nProcesses;
 
 	// Initialize MPI
-	MPI::Init(argc,argv);
+	MPI::Init(argc, argv);
 	//  Get the number of processes.
 	nProcesses = MPI::COMM_WORLD.Get_size();
 	//  Get the individual process ID.
 	id = MPI::COMM_WORLD.Get_rank();
 
 	// Initialize the user interface
-	UI<float_t> mainUI(argc,argv);
+	UI<float_t> mainUI(argc, argv);
 
 	// Create data object
 	GeneralContext<float_t> data;
@@ -58,21 +58,21 @@ int main(int argc, char* argv[]) {
 	fileHeader.report(data.doc);
 
 	// Start the clock
-	Timer RunTime;
+	Timer runTime;
 	// Execute the marching cubes implementation
-	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm(fileHeader,id,nProcesses,&RunTime);
+	data.isoval = mainUI.getIsoVal();
+	MpiAlgo<float_t> algorithm(fileHeader, id, nProcesses, &runTime);
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock
-	RunTime.stop();
+	runTime.stop();
 
 	//Report and save YAML file
-	RunTime.reportTime(data.doc);
+	runTime.reportTimeMPI(data.doc);
 	data.doc.generateYAML();
 
 	// Save the result
-	const char * baseName= mainUI.outFile();
+	const char * baseName = mainUI.outFile();
 	std::string outFile = baseName;
 	outFile = outFile + "." + std::to_string(static_cast<long long int>(id));
 	saveTriangleMesh(&(data.mesh), outFile.c_str());
