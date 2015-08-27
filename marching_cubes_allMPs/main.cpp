@@ -27,6 +27,7 @@
 // Local implementation headers -------
 // Algorithm
 #include"./Implementations/MpiAlgo.h"
+#include"./MPIclockFunctions.h"
 
 int main(int argc, char* argv[]) {
 
@@ -58,18 +59,17 @@ int main(int argc, char* argv[]) {
 	fileHeader.report(data.doc);
 
 	// Start the clock
-	Timer RunTime;
+	Timer runTime;
 	// Execute the marching cubes implementation
 	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm(fileHeader,id,nProcesses,&RunTime);
+	MpiAlgo<float_t> algorithm(fileHeader,id,nProcesses,&runTime);
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock
-	RunTime.stop();
+	runTime.stop();
 
 	//Report and save YAML file
-	RunTime.reportTime(data.doc);
-	data.doc.generateYAML();
+	collectTimesMPI(data.doc,&runTime);
 
 	// Save the result
 	const char * baseName= mainUI.outFile();
