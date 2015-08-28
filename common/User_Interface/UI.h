@@ -24,6 +24,7 @@ public:
 
 	//void marchImplemtation(const Image3D_t &, TriangleMesh_t *&, YAML_Doc&);
 	const char * getFile(void) const;
+	const char * getDataFile(void) const;
 	const char * outFile(void) const;
 	T getIsoVal(void) const;
 
@@ -33,7 +34,9 @@ private:
 
 	T isoval;
 	char * filePath;
+	char * dataFilePath;
 	char * outFilePath;
+	bool headerSeperate;
 };
 
 #endif /* USER_INTERFACE_UI_H_ */

@@ -20,6 +20,8 @@ public:
 		CLOG(logERROR) << "Wrong number of arguments";
 		CLOG(logERROR) << "Usage:";
 		CLOG(logERROR) << "MarchingCubes in_image.vtk out_poly.vtk isoval";
+		CLOG(logERROR) << "OR";
+		CLOG(logERROR) << "MarchingCubes in_image_header in_image_data out_poly.vtk isoval";
 	}
 
 private:

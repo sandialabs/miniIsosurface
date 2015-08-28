@@ -54,6 +54,7 @@ int main(int argc, char* argv[]) {
 	// Only load the header file, MpiAlgo will read the rest
 	LoadImage3DMPI<float_t> fileHeader;
 	fileHeader.loadHeader(mainUI.getFile());
+	fileHeader.setSperateData(mainUI.getDataFile());
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();

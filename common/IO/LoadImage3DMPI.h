@@ -30,6 +30,7 @@ public:
 	virtual ~LoadImage3DMPI();
 
 	// File loading members
+	void setSperateData(const char *);
 	// General file
 	void loadHeader(const char *);
 	void report(YAML_Doc &) const;
@@ -51,6 +52,8 @@ private:
 	std::ifstream stream;
 	LineStream *reader;
 	const char *vtkFile;
+	const char *vtkDataFile;
+	bool seperateData;
 
 	// general parameters for the image file
 	unsigned xdimFile,ydimFile,zdimFile;

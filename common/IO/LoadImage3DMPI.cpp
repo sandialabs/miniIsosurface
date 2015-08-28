@@ -15,10 +15,12 @@ LoadImage3DMPI<T>::LoadImage3DMPI() {
 	fileNpoints=0;
 	reader=0;
 	vtkFile=0;
+	vtkDataFile=0;
 	nPointsInBlock=0;
 	typeInfo=0;
 	blockExtentSet=false;
 	imageDataIdx=0;
+	seperateData=false;
 }
 
 template<typename T>
@@ -42,15 +44,24 @@ LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
 	typeInfo=new TypeInfo(loaderObject.typeInfo->getId());
 
 	// Copy the line reader locally for this object
-	vtkFile=loaderObject.whichFile();
-	stream.open(vtkFile);
-	if (!stream) {
-		throw file_not_found(vtkFile);
+	seperateData=loaderObject.seperateData;
+	if (seperateData) {
+		vtkFile=loaderObject.vtkFile;
+		vtkDataFile=loaderObject.vtkDataFile;
+		stream.open(vtkDataFile);
+	}
+	else {
+		vtkFile=loaderObject.vtkFile;
+		vtkDataFile=0;
+		stream.open(vtkFile);
+		// Skip all the header lines
+		for(int iLine=0; iLine<N_HEADER_LINES;++iLine) {
+			stream.ignore ( 256, '\n' );
+		}
 	}
 
-	// Skip all the header lines
-	for(int iLine=0; iLine<N_HEADER_LINES;++iLine) {
-		stream.ignore ( 256, '\n' );
+	if (!stream) {
+		throw file_not_found(vtkFile);
 	}
 	reader = new LineStream(stream);
 	blockExtentSet=false;
@@ -62,6 +73,18 @@ LoadImage3DMPI<T>::~LoadImage3DMPI() {
 	stream.close();
 	delete reader;
 	delete typeInfo;
+}
+
+template<typename T>
+void LoadImage3DMPI<T>::setSperateData(const char * inDataFile) {
+	if (inDataFile != 0) {
+		seperateData=true;
+		vtkDataFile=inDataFile;
+	}
+	else {
+		seperateData=false;
+		vtkDataFile=0;
+	}
 }
 
 template<typename T>
