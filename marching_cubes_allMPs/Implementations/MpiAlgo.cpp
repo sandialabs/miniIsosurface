@@ -68,7 +68,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 	const unsigned *dims = fileHeader.getVolumeDimensions();
 
-	CLOG(logWARNING) << "This MPI + OpenMP version of this code is unstable";
+	CLOG(logWARNING) << "The MPI + OpenMP version of this code is unstable";
 	CLOG(logYAML) << "Marching cubes algorithm: MPI + OpenMP";
 
 	data.doc.add("Marching cubes algorithm", "MPI + OpenMP");
@@ -120,6 +120,40 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	PointMap_t processPointMap;
 	DuplicateRemover processDuplicateRemover;
 
+	unsigned processExtent[6]={0,0,0,0,0,0};
+
+	// Load data for a process
+	for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
+		unsigned blockPageIdx = blockNum / nblocksPerPage;
+		unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
+		unsigned blockColIdx = (blockNum % nblocksPerPage) % numBlockCols;
+
+		unsigned pfrom = blockPageIdx * fullRange.pages().grain();
+		unsigned pto = std::min(pfrom + fullRange.pages().grain(),
+				fullRange.pages().end());
+		unsigned rfrom = blockRowIdx * fullRange.rows().grain();
+		unsigned rto = std::min(rfrom + fullRange.rows().grain(),
+				fullRange.rows().end());
+		unsigned cfrom = blockColIdx * fullRange.cols().grain();
+		unsigned cto = std::min(cfrom + fullRange.cols().grain(),
+				fullRange.cols().end());
+
+		Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
+		unsigned blockExtent[6];
+		blockRange.extent(blockExtent);
+		for (int i=0;i<5;i+=2) {
+			if (processExtent[i] > blockExtent[i]) processExtent[i] = blockExtent[i];
+		}
+		for (int i=1;i<6;i+=2) {
+			if (processExtent[i] < blockExtent[i]) processExtent[i] = blockExtent[i];
+		}
+	}
+	LoadBigImage<float_t> fileData(fileHeader);
+	fileData.setBlockExtent(processExtent);
+	fileData.readBlockData(data.imageIn);
+	data.imageIn.setToMPIdataBlock();
+	data.imageIn.setMPIorigin(processExtent[0],processExtent[2],processExtent[4]);
+
 	#pragma omp parallel
 	{
 		TriangleMesh_t threadMesh;
@@ -128,7 +162,6 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 		#pragma omp for nowait
 		for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
-			LoadBigImage<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 
 			unsigned blockPageIdx = blockNum / nblocksPerPage;
 			unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
@@ -147,15 +180,6 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 			Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
 			unsigned blockExtent[6];
 			blockRange.extent(blockExtent);
-			fileData.setBlockExtent(blockExtent);
-
-			processTimer->pause();
-			fileData.readBlockData(data.imageIn);
-			processTimer->resume();
-
-			data.imageIn.setToMPIdataBlock();
-			data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);
-
 
 			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
 
