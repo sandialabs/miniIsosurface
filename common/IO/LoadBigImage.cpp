@@ -42,8 +42,11 @@ LoadBigImage<T>::LoadBigImage(LoadBigImage& loaderObject) {
 	typeInfo=new TypeInfo(loaderObject.typeInfo->getId());
 
 	// Copy the line reader locally for this object
-	vtkFile="../Data/in.vtk";
+	vtkFile="../Data/big_1349";
 	stream.open(vtkFile);
+	if (!stream) {
+		throw file_not_found(vtkFile);
+	}
 
 	reader = new LineStream(stream);
 	blockExtentSet=false;

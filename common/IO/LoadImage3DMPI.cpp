@@ -44,6 +44,9 @@ LoadImage3DMPI<T>::LoadImage3DMPI(LoadImage3DMPI& loaderObject) {
 	// Copy the line reader locally for this object
 	vtkFile=loaderObject.whichFile();
 	stream.open(vtkFile);
+	if (!stream) {
+		throw file_not_found(vtkFile);
+	}
 
 	// Skip all the header lines
 	for(int iLine=0; iLine<N_HEADER_LINES;++iLine) {
