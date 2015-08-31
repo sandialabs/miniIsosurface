@@ -10,7 +10,7 @@
 #include"../common/includes.h"
 
 // File i/o
-#include"../common/IO/LoadBigImage.h"
+#include"../common/IO/LoadImage3DMPI.h"
 #include"../common/IO/SaveTriangleMesh.h"
 
 // Reporting
@@ -50,8 +50,9 @@ int main(int argc, char* argv[]) {
 	GeneralContext<float_t> data;
 
 	// Only load the header file, MpiAlgo will read the rest
-	LoadBigImage<float_t> fileHeader;
+	LoadImage3DMPI<float_t> fileHeader;
 	fileHeader.loadHeader(mainUI.getFile());
+	fileHeader.setSperateData(mainUI.getDataFile());
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();

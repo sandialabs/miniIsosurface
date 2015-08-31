@@ -117,8 +117,11 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 			startBlockNum = endBlockNum = 0;
 		}
 	}
+	unsigned progressCount=0;
 
 	for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
+		CLOG(logINFO) << "Process number " << pID << " has completed " << progressCount << " blocks of " << endBlockNum - startBlockNum;
+
 		LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 
 		unsigned blockPageIdx = blockNum / nblocksPerPage;
@@ -155,6 +158,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
 				data.isoval, processPointMap, *(this->globalEdgeIndices), processMesh);
 		processDuplicateRemover.setArrays(processPointMap);
+		progressCount++;
 	}
 
 	if (processDuplicateRemover.getSize() > 3) {

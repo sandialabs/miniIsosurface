@@ -30,7 +30,7 @@
 #include"../Algorithm/buildMesh.h"
 
 // IO Object
-#include"../../common/IO/LoadBigImage.h"
+#include"../../common/IO/LoadImage3DMPI.h"
 
 //MPI
 #include"mpi.h"
@@ -38,7 +38,7 @@
 template<typename T>
 class MpiAlgo : public MarchAlgorithm<T>  {
 public:
-	MpiAlgo(LoadBigImage<T> &, int, int, Timer *);
+	MpiAlgo(LoadImage3DMPI<T> &, int, int, Timer *);
 	virtual ~MpiAlgo();
 	static bool testZeroExtent(unsigned *);
 
@@ -51,7 +51,7 @@ private:
 	unsigned grainDim;
 
 	// MPI specific
-	LoadBigImage<T> fileHeader;
+	LoadImage3DMPI<T> fileHeader;
 	int pID,processes;
 	Timer *processTimer;
 };

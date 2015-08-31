@@ -8,7 +8,7 @@
 #include "MpiAlgo.h"
 
 template<typename T>
-MpiAlgo<T>::MpiAlgo(LoadBigImage<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
+MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
 	pID = inPid;
 	processes=inProcesses;
 	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
@@ -18,7 +18,7 @@ MpiAlgo<T>::MpiAlgo(LoadBigImage<T> & inFileHeader, int inPid, int inProcesses, 
 //	cubeRootProc=cbrt(cubeRootProc);
 //	int nCbrtProcesses=static_cast<int>(cubeRootProc);
 //	if (nCbrtProcesses<2) nCbrtProcesses=2;
-	grainDim=maxDim/inProcesses;
+	grainDim=maxDim/(2*inProcesses);
 
 	processTimer = inProcessTimer;
 }
@@ -55,17 +55,6 @@ bool MpiAlgo<T>::testZeroExtent(unsigned * extent) {
 
 template<typename T>
 void MpiAlgo<T>::march(GeneralContext<T> &data) {
-
-//	// DEBUGGER
-//	int i = 0;
-//	char hostname[256];
-//	gethostname(hostname, sizeof(hostname));
-//	printf("PID %d on %s ready for attach\n", getpid(), hostname);
-//	fflush(stdout);
-//	while (0==i) {
-//		sleep(5);
-//	}
-
 	const unsigned *dims = fileHeader.getVolumeDimensions();
 
 	CLOG(logWARNING) << "The MPI + OpenMP version of this code is unstable";
@@ -148,7 +137,10 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 			if (processExtent[i] < blockExtent[i]) processExtent[i] = blockExtent[i];
 		}
 	}
-	LoadBigImage<float_t> fileData(fileHeader);
+	LoadImage3DMPI<float_t> fileData(fileHeader);
+	CLOG(logDEBUG1) << "Process extent: " << processExtent[0] << "  " << processExtent[1]
+						<< " " << processExtent[2] << " " << processExtent[3] << " "
+						<< processExtent[4] << " " << processExtent[5];
 	fileData.setBlockExtent(processExtent);
 	fileData.readBlockData(data.imageIn);
 	data.imageIn.setToMPIdataBlock();
@@ -162,6 +154,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 		#pragma omp for nowait
 		for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
+			CLOG(logINFO) << "Process number " << pID << " is working on " << blockNum << " blocks of " << nblocks;
 
 			unsigned blockPageIdx = blockNum / nblocksPerPage;
 			unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
@@ -195,6 +188,9 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 			const unsigned nPoints=processDuplicateRemover.getSize();
 			threadDuplicateRemover += nPoints;
 			processDuplicateRemover+=threadDuplicateRemover;
+
+			CLOG(logDEBUG1) << "Thread mesh verts: " << threadMesh.numberOfVertices();
+			CLOG(logDEBUG1) << "Thread mesh tris: " << threadMesh.numberOfTriangles();
 			// The += operator for TriangleMesh3D object is overloaded to merge mesh objects
 			processMesh += threadMesh;
 		}
@@ -202,6 +198,9 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 	processDuplicateRemover.sortYourSelf();
 	processDuplicateRemover.getNewIndices();
+
+	CLOG(logDEBUG1) << "Process mesh verts: " << processMesh.numberOfVertices();
+	CLOG(logDEBUG1) << "Process mesh tris: " << processMesh.numberOfTriangles();
 
 	CLOG(logDEBUG) << "final";
 	buildMesh(data.mesh,processMesh,processDuplicateRemover);
