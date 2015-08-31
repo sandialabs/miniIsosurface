@@ -18,7 +18,7 @@ MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses
 //	cubeRootProc=cbrt(cubeRootProc);
 //	int nCbrtProcesses=static_cast<int>(cubeRootProc);
 //	if (nCbrtProcesses<2) nCbrtProcesses=2;
-	grainDim=maxDim/(2*inProcesses);
+	grainDim=maxDim/(4*inProcesses);
 
 	processTimer = inProcessTimer;
 }
@@ -69,9 +69,9 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 			dims[0] - 1, grainDim);
 	fullRange.extent(data.ext);
 
-	unsigned numBlockPages = numBlocks(fullRange.pages());
-	unsigned numBlockRows = numBlocks(fullRange.rows());
-	unsigned numBlockCols = numBlocks(fullRange.cols());
+	unsigned numBlockPages = this->numBlocks(fullRange.pages());
+	unsigned numBlockRows = this->numBlocks(fullRange.rows());
+	unsigned numBlockCols = this->numBlocks(fullRange.cols());
 
 	unsigned nblocks = numBlockPages * numBlockRows * numBlockCols;
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
@@ -109,7 +109,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	PointMap_t processPointMap;
 	DuplicateRemover processDuplicateRemover;
 
-	unsigned processExtent[6]={0,0,0,0,0,0};
+	unsigned processExtent[6]={dims[0]-1,0,dims[1]-1,0,dims[2]-1,0};
 
 	// Load data for a process
 	for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
@@ -130,17 +130,24 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		Range3D blockRange(pfrom, pto, rfrom, rto, cfrom, cto);
 		unsigned blockExtent[6];
 		blockRange.extent(blockExtent);
+//		CLOG(logDEBUG) << "Current Block Extent: " << blockExtent[0] << "  " << blockExtent[1]
+//						<< " " << blockExtent[2] << " " << blockExtent[3] << " " << blockExtent[4]
+//						<< " " << blockExtent[5];
+//		CLOG(logDEBUG1) << "Process extent: " << processExtent[0] << "  " << processExtent[1]
+//								<< " " << processExtent[2] << " " << processExtent[3] << " "
+//								<< processExtent[4] << " " << processExtent[5];
 		for (int i=0;i<5;i+=2) {
-			if (processExtent[i] > blockExtent[i]) processExtent[i] = blockExtent[i];
+			if (blockExtent[i] < processExtent[i]) processExtent[i] = blockExtent[i];
 		}
 		for (int i=1;i<6;i+=2) {
-			if (processExtent[i] < blockExtent[i]) processExtent[i] = blockExtent[i];
+			if (blockExtent[i] > processExtent[i]) processExtent[i] = blockExtent[i];
 		}
 	}
 	LoadImage3DMPI<float_t> fileData(fileHeader);
-	CLOG(logDEBUG1) << "Process extent: " << processExtent[0] << "  " << processExtent[1]
-						<< " " << processExtent[2] << " " << processExtent[3] << " "
-						<< processExtent[4] << " " << processExtent[5];
+//	CLOG(logDEBUG1) << "Process extent: " << processExtent[0] << "  " << processExtent[1]
+//						<< " " << processExtent[2] << " " << processExtent[3] << " "
+//						<< processExtent[4] << " " << processExtent[5];
+
 	fileData.setBlockExtent(processExtent);
 	fileData.readBlockData(data.imageIn);
 	data.imageIn.setToMPIdataBlock();
@@ -154,7 +161,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 		#pragma omp for nowait
 		for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
-			CLOG(logINFO) << "Process number " << pID << " is working on " << blockNum << " blocks of " << nblocks;
+			//CLOG(logINFO) << "Process number " << pID << " is working on " << blockNum << " blocks of " << nblocks;
 
 			unsigned blockPageIdx = blockNum / nblocksPerPage;
 			unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
