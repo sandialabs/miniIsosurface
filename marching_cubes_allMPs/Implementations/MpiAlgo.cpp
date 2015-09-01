@@ -158,11 +158,14 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		TriangleMesh_t threadMesh;
 		PointMap_t threadPointMap;
 		DuplicateRemover threadDuplicateRemover;
+		unsigned blockId=0;
+		EdgeIndexer<T> localEdges(processExtent);
 
 		#pragma omp for nowait
 		for (unsigned blockNum=startBlockNum;blockNum<endBlockNum;++blockNum) {
 			//CLOG(logINFO) << "Process number " << pID << " is working on " << blockNum << " blocks of " << nblocks;
 
+			//CLOG(logDEBUG) << "Block num " << blockNum;
 			unsigned blockPageIdx = blockNum / nblocksPerPage;
 			unsigned blockRowIdx = (blockNum % nblocksPerPage) / numBlockCols;
 			unsigned blockColIdx = (blockNum % nblocksPerPage) % numBlockCols;
@@ -186,12 +189,16 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 			//unsigned mapSize = approxNumberOfEdges / 8 + 6; // Approx # of edges in map
 
 			MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
-					data.isoval, threadPointMap, *(this->globalEdgeIndices), threadMesh);
+					data.isoval, threadPointMap, localEdges, threadMesh);
 			threadDuplicateRemover.setArrays(threadPointMap);
+			blockId=blockNum;
 		}
 
 		#pragma omp critical
 		{
+			std::string outFile = "threadMesh.";
+			outFile = outFile + std::to_string(static_cast<long long int>(blockId));
+			saveTriangleMesh(&threadMesh, outFile.c_str());
 			const unsigned nPoints=processDuplicateRemover.getSize();
 			threadDuplicateRemover += nPoints;
 			processDuplicateRemover+=threadDuplicateRemover;
@@ -203,14 +210,15 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		}
 	}
 
-	processDuplicateRemover.sortYourSelf();
-	processDuplicateRemover.getNewIndices();
-
 	CLOG(logDEBUG1) << "Process mesh verts: " << processMesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Process mesh tris: " << processMesh.numberOfTriangles();
 
-	CLOG(logDEBUG) << "final";
-	buildMesh(data.mesh,processMesh,processDuplicateRemover);
+	if (processDuplicateRemover.getSize() > 3) {
+		processDuplicateRemover.sortYourSelf();
+		processDuplicateRemover.getNewIndices();
+
+		buildMesh(data.mesh,processMesh,processDuplicateRemover);
+	}
 
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();

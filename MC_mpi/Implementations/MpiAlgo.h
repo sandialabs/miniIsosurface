@@ -32,6 +32,8 @@
 // IO Object
 #include"../../common/IO/LoadImage3DMPI.h"
 
+#include"../../common/IO/SaveTriangleMesh.h"
+
 //MPI
 #include"mpi.h"
 
