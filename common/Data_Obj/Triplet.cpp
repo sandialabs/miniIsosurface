@@ -110,7 +110,7 @@ bool Triplet<T>::operator!=(const T * coords) const {
 
 // Retrieve coordinates
 template<typename T>
-const T * Triplet<T>::getCoordinates(void) const {
+T const* Triplet<T>::getCoordinates(void) const {
 	return coordinates;
 }
 

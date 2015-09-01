@@ -53,8 +53,8 @@ public:
 	}
 
 	// Coordinate retrieval
-	const T* getCoordinates(void) const;
-	const T& operator[](int idx) const { return coordinates[idx]; };
+	T const* getCoordinates(void) const;
+	T const& operator[](int idx) const { return coordinates[idx]; };
 	template<typename Anything> friend std::ostream& operator<<(std::ostream&, const Triplet<Anything>&);
 
 private:
