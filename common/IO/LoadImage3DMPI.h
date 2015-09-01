@@ -39,7 +39,7 @@ public:
 	void readEntireVolumeData(Image3D<T>&);
 	void readBlockData(Image3D<T>&);
 	// Object member read
-	const unsigned* getVolumeDimensions(void) const;
+	unsigned const* getVolumeDimensions(void);
 	unsigned getMaxVoumeDimension(void) const;
 	unsigned getnVolumePoints(void) const;
 	const T* getSpacing(void) const;
@@ -57,6 +57,7 @@ private:
 
 	// general parameters for the image file
 	unsigned xdimFile,ydimFile,zdimFile;
+	unsigned dimsArray[3];
 	unsigned fileNpoints;
 	T spacing[3];
 	T origin[3];

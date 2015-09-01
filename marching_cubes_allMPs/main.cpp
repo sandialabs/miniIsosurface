@@ -26,8 +26,8 @@
 
 // Local implementation headers -------
 // Algorithm
-#include"./Implementations/MpiAlgo.h"
 #include"./MPIclockFunctions.h"
+#include "Implementations/MallAlgo.h"
 
 int main(int argc, char* argv[]) {
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 	Timer runTime;
 	// Execute the marching cubes implementation
 	data.isoval=mainUI.getIsoVal();
-	MpiAlgo<float_t> algorithm(fileHeader,id,nProcesses,&runTime);
+	MallAlgo<float_t> algorithm(fileHeader,id,nProcesses,&runTime);
 	data.setAlgorithm(&algorithm);
 	data.march();
 	// Stop Clock

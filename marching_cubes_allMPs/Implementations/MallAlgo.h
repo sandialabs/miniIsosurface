@@ -36,10 +36,10 @@
 #include"mpi.h"
 
 template<typename T>
-class MpiAlgo : public MarchAlgorithm<T>  {
+class MallAlgo : public MarchAlgorithm<T>  {
 public:
-	MpiAlgo(LoadImage3DMPI<T> &, int, int, Timer *);
-	virtual ~MpiAlgo();
+	MallAlgo(LoadImage3DMPI<T> &, int, int, Timer *);
+	virtual ~MallAlgo();
 	static bool testZeroExtent(unsigned *);
 
 	unsigned numBlocks(const Range oneDRange);
@@ -47,8 +47,7 @@ public:
 private:
 	// These are intermediate data structures before the final
 	// results are sent to GeneralContext
-	DuplicateRemover duplicateRemover;
-	unsigned grainDim;
+	unsigned grainDimX, grainDimY, grainDimZ;
 
 	// MPI specific
 	LoadImage3DMPI<T> fileHeader;

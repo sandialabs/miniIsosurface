@@ -36,7 +36,6 @@ public:
 	unsigned getNumberOfPoints() const;
 	const T* getSpacing() const;
 	const T* getOrigin() const;
-	// Should phase this function out
 	const T* getData() const;
 
 //	void report(YAML_Doc &) const;

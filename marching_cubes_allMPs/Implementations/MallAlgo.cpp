@@ -1,42 +1,41 @@
 /*
- * MpiAlgo.cpp
+ * MallAlgo.cpp
  *
  *  Created on: Aug 17, 2015
  *      Author: sjmunn
  */
 
-#include "MpiAlgo.h"
+#include "MallAlgo.h"
 
 template<typename T>
-MpiAlgo<T>::MpiAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
+MallAlgo<T>::MallAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
 	pID = inPid;
 	processes=inProcesses;
-	unsigned maxDim=inFileHeader.getMaxVoumeDimension();
+	const unsigned *dims = fileHeader.getVolumeDimensions();
+	grainDimX=dims[0]-1;
+	grainDimY=dims[1]-1;
 
-	// Should be
-//	float cubeRootProc = static_cast<float>(inProcesses);
-//	cubeRootProc=cbrt(cubeRootProc);
-//	int nCbrtProcesses=static_cast<int>(cubeRootProc);
-//	if (nCbrtProcesses<2) nCbrtProcesses=2;
-	grainDim=maxDim/(4*inProcesses);
+	grainDimZ=(dims[2]-1)/(4*inProcesses);
+
+	if (grainDimZ==0) grainDimZ=1;
 
 	processTimer = inProcessTimer;
 }
 
 template<typename T>
-MpiAlgo<T>::~MpiAlgo() {
+MallAlgo<T>::~MallAlgo() {
 	// TODO Auto-generated destructor stub
 }
 
 template<typename T>
-unsigned MpiAlgo<T>::numBlocks(const Range oneDRange) {
+unsigned MallAlgo<T>::numBlocks(const Range oneDRange) {
 	unsigned numberOfBlocks = (oneDRange.end() - oneDRange.begin() + oneDRange.grain() - 1)
 			/ oneDRange.grain();
 	return numberOfBlocks;
 }
 
 template<typename T>
-bool MpiAlgo<T>::testZeroExtent(unsigned * extent) {
+bool MallAlgo<T>::testZeroExtent(unsigned * extent) {
 	/*
 	 * True if zero extent
 	 * False if extent non-zero
@@ -54,7 +53,7 @@ bool MpiAlgo<T>::testZeroExtent(unsigned * extent) {
 }
 
 template<typename T>
-void MpiAlgo<T>::march(GeneralContext<T> &data) {
+void MallAlgo<T>::march(GeneralContext<T> &data) {
 	const unsigned *dims = fileHeader.getVolumeDimensions();
 
 	CLOG(logWARNING) << "The MPI + OpenMP version of this code is unstable";
@@ -65,8 +64,8 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 	/*
 	 * fullRange is the entire image volume
 	 */
-	Range3D fullRange(0, dims[2] - 1, grainDim, 0, dims[1] - 1, grainDim, 0,
-			dims[0] - 1, grainDim);
+	Range3D fullRange(0, dims[2] - 1, grainDimZ, 0, dims[1] - 1, grainDimY, 0,
+			dims[0] - 1, grainDimX);
 	fullRange.extent(data.ext);
 
 	unsigned numBlockPages = this->numBlocks(fullRange.pages());
@@ -190,15 +189,16 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 			MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
 					data.isoval, threadPointMap, localEdges, threadMesh);
+
 			threadDuplicateRemover.setArrays(threadPointMap);
 			blockId=blockNum;
 		}
 
 		#pragma omp critical
 		{
-			std::string outFile = "threadMesh.";
-			outFile = outFile + std::to_string(static_cast<long long int>(blockId));
-			saveTriangleMesh(&threadMesh, outFile.c_str());
+//			std::string outFile = "threadMesh.";
+//			outFile = outFile + std::to_string(static_cast<long long int>(blockId));
+//			saveTriangleMesh(&threadMesh, outFile.c_str());
 			const unsigned nPoints=processDuplicateRemover.getSize();
 			threadDuplicateRemover += nPoints;
 			processDuplicateRemover+=threadDuplicateRemover;
@@ -226,4 +226,4 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 
 
 // Must instantiate class for separate compilation
-template class MpiAlgo<float_t> ;
+template class MallAlgo<float_t> ;

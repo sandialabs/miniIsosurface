@@ -291,12 +291,12 @@ void LoadImage3DMPI<T>::streamIgnore(unsigned nPointsIgnore) {
 }
 
 template<typename T>
-const unsigned* LoadImage3DMPI<T>::getVolumeDimensions(void) const {
-	unsigned *dims = new unsigned[3];
-	dims[0]=xdimFile;
-	dims[1]=ydimFile;
-	dims[2]=zdimFile;
-	return &dims[0];
+unsigned const* LoadImage3DMPI<T>::getVolumeDimensions(void) {
+	if (xdimFile+ydimFile+zdimFile==0) throw block_extent_not_set("@ LoadImage3DMPI<T>::getVolumeDimensions");
+	dimsArray[0]=xdimFile;
+	dimsArray[1]=ydimFile;
+	dimsArray[2]=zdimFile;
+	return dimsArray;
 }
 
 template<typename T>
