@@ -285,9 +285,24 @@ void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
 
 template<typename T>
 void LoadImage3DMPI<T>::streamIgnore(unsigned nPointsIgnore) {
-	size_t ignoreSize = nPointsIgnore * typeInfo->size();
-	std::vector<char> rbufIgnore(ignoreSize);
-	stream.read(&rbufIgnore[0], ignoreSize);
+	// This operation is prone to data type overflow
+	unsigned iPointIgnore = 0;
+	unsigned iPtIgnoreIncrement=134217728; // Read at most 1 GB at a time
+
+	// Will ignore data in chunks of 1 GB
+	for (;iPointIgnore<nPointsIgnore;iPointIgnore+=iPtIgnoreIncrement) {
+		unsigned diffIgnore = nPointsIgnore-iPointIgnore;
+		if (diffIgnore>iPtIgnoreIncrement) {
+			size_t ignoreSize = iPtIgnoreIncrement * typeInfo->size();
+			std::vector<char> rbufIgnore(ignoreSize);
+			stream.read(&rbufIgnore[0], ignoreSize);
+		}
+		else {
+			size_t ignoreSize = diffIgnore * typeInfo->size();
+			std::vector<char> rbufIgnore(ignoreSize);
+			stream.read(&rbufIgnore[0], ignoreSize);
+		}
+	}
 }
 
 template<typename T>

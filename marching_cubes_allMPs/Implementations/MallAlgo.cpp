@@ -8,7 +8,7 @@
 #include "MallAlgo.h"
 
 template<typename T>
-MallAlgo<T>::MallAlgo(LoadImage3DMPI<T> & inFileHeader, int inPid, int inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
+MallAlgo<T>::MallAlgo(LoadImage3DMPI<T> & inFileHeader, unsigned inPid, unsigned inProcesses, Timer * inProcessTimer) : MarchAlgorithm<T>(),fileHeader(inFileHeader) {
 	pID = inPid;
 	processes=inProcesses;
 	const unsigned *dims = fileHeader.getVolumeDimensions();
@@ -183,7 +183,7 @@ void MallAlgo<T>::march(GeneralContext<T> &data) {
 			unsigned blockExtent[6];
 			blockRange.extent(blockExtent);
 
-			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
+			//unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
 
 			//unsigned mapSize = approxNumberOfEdges / 8 + 6; // Approx # of edges in map
 

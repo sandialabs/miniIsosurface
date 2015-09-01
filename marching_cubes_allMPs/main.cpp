@@ -33,8 +33,8 @@ int main(int argc, char* argv[]) {
 
 	LOG::ReportingLevel() = logDEBUG1; // Debug level is hard coded
 
-	int id;
-	int nProcesses;
+	unsigned id;
+	unsigned nProcesses;
 
 	// Initialize MPI
 	MPI::Init(argc,argv);

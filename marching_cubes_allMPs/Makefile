@@ -16,8 +16,8 @@ TARGET          = MCAll.exe
 
 # Compiler and flags
 CC              = mpic++
-#CXXFLAGS        = -O2 -fopenmp -std=c++0x
-CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
+CXXFLAGS        = -O2 -lrt -fopenmp -std=c++0x
+#CXXFLAGS        = -O0 -g -Wall -Wconversion -fopenmp -std=c++0x
 
 # Source and build directories
 SRCDIRS         = Algorithm Implementations User_Interface

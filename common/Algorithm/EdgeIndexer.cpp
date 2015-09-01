@@ -26,7 +26,7 @@ EdgeIndexer<T>::EdgeIndexer(unsigned * extentOfMarch) {
 template<typename T>
 unsigned EdgeIndexer<T>::getEdgeIndex(unsigned x, unsigned y,
 		unsigned z, int iEdge) const {
-	unsigned edgeIndex;
+	unsigned edgeIndex=0;
 	switch (iEdge) {
 	// Edges parallel to the x-axis
 	case 0:

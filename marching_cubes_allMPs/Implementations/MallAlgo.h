@@ -38,7 +38,7 @@
 template<typename T>
 class MallAlgo : public MarchAlgorithm<T>  {
 public:
-	MallAlgo(LoadImage3DMPI<T> &, int, int, Timer *);
+	MallAlgo(LoadImage3DMPI<T> &, unsigned, unsigned, Timer *);
 	virtual ~MallAlgo();
 	static bool testZeroExtent(unsigned *);
 
@@ -51,7 +51,7 @@ private:
 
 	// MPI specific
 	LoadImage3DMPI<T> fileHeader;
-	int pID,processes;
+	unsigned pID,processes;
 	Timer *processTimer;
 };
 

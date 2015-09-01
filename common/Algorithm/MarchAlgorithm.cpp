@@ -20,7 +20,7 @@ MarchAlgorithm<T>::~MarchAlgorithm() {
 template<typename T>
 void MarchAlgorithm<T>::setGlobalVariables(GeneralContext<T> &inData) {
 	globalEdgeIndices = new EdgeIndexer<T>(inData.ext);
-	unsigned mapSize = globalEdgeIndices->nAllEdges / 8; // Very approximate hack..
+	//unsigned mapSize = globalEdgeIndices->nAllEdges / 8;
 	//globalPointMap.rehash(mapSize);
 }
 
