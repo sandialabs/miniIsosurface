@@ -11,7 +11,7 @@
 # ========== Macros =============================
 
 # Compiler and flags
-CC              = mpic++
+CC              = g++
 #CXXFLAGS		= -O2 -fopenmp -lprofiler -std=c++0x
 CXXFLAGS        = -O2 -lrt -std=c++0x
 #CXXFLAGS = -O0 -g -Wall -Wconversion -lrt -std=c++0x
@@ -31,7 +31,7 @@ OBJECTS        := $(addprefix $(BUILDDIR)/,$(notdir $(SOURCES:.cpp=.o)))
 
 all: $(OBJECTS)
 	@echo "All utility objects have been compiled";
-	
+
 # General purpose object compiler
 $(BUILDDIR)/%.o: ./*/%.cpp
 	@mkdir -p $(BUILDDIR);
@@ -43,7 +43,7 @@ $(BUILDDIR)/%.o: ./*/%.cpp
 .PHONEY: clean
 clean:
 	rm -f $(BUILDDIR)/*.o;
-	
+
 .PHONEY: clean_run_data
 clean_run_data:
 	rm -f yaml_out.*;
@@ -52,7 +52,7 @@ clean_run_data:
 .PHONEY: deepclean
 deepclean: clean clean_run_data
 	rm -rf $(BUILDDIR);
-	
+
 # ========== Debug Rules ========================
 
 debug:

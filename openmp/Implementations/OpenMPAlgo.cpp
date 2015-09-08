@@ -9,8 +9,8 @@
 
 template<typename T>
 OpenMPAlgo<T>::OpenMPAlgo() {
-	// TODO Auto-generated constructor stub
-	grainDim=256;
+  // TODO Auto-generated constructor stub
+  grainDim=256;
 }
 
 template<typename T>
@@ -39,8 +39,6 @@ void OpenMPAlgo<T>::march(GeneralContext<T> &data){
 	CLOG(logYAML) << "Marching cubes algorithm: OpenMP";
 	data.doc.add("Marching cubes algorithm", "OpenMP");
 
-	unsigned grainDim=256;
-
 	/*
 	 * fullRange is the entire image volume
 	 */
@@ -64,7 +62,7 @@ void OpenMPAlgo<T>::march(GeneralContext<T> &data){
 
 		#pragma omp for nowait
 		for (unsigned i = 0; i < nblocks; ++i) {
-			//CLOG(logDEBUG) << "Iteration " << i;
+
 			unsigned blockPageIdx = i / nblocksPerPage;
 			unsigned blockRowIdx = (i % nblocksPerPage) / numBlockCols;
 			unsigned blockColIdx = (i % nblocksPerPage) % numBlockCols;
@@ -83,8 +81,12 @@ void OpenMPAlgo<T>::march(GeneralContext<T> &data){
 			unsigned blockExtent[6];
 			blockRange.extent(blockExtent);
 
+			CLOG(logDEBUG1) << "Block extent " << blockExtent[0] << " "
+					<< blockExtent[1] << " " << blockExtent[2] << " "
+					<< blockExtent[3] << " " << blockExtent[4] << " "
+					<< blockExtent[5];
 			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
-
+			
 			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
 			threadPointMap.rehash(mapSize);
 
