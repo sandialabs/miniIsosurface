@@ -15,8 +15,8 @@ TARGET          = MCSerial
 
 # Compiler and flags
 CC              = g++
-#CXXFLAGS        = -O2 -lrt -std=c++0x
-CXXFLAGS        = -O0 -g -lrt -std=c++0x
+CXXFLAGS        = -O2 -lrt -std=c++0x
+#CXXFLAGS        = -O0 -g -lrt -std=c++0x
 
 # Linker and flags
 LINKER			= g++
@@ -67,7 +67,7 @@ $(BUILDDIR)/%.o: ./*/%.cpp
 .PHONEY: clean
 clean:
 	rm -f $(BUILDDIR)/*.o;
-	
+
 .PHONEY: clean_run_data
 clean_run_data:
 	rm -f yaml_out.*;
@@ -76,7 +76,7 @@ clean_run_data:
 .PHONEY: deepclean
 deepclean: clean clean_run_data
 	rm -rf $(BUILDDIR);
-	
+
 # ========== Debug Rules ========================
 
 debug:

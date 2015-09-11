@@ -1,0 +1,11 @@
+Mini-Application Name: Marching Cubes
+Mini-Application Version: 0.1
+Volume image data file path: ../Data/inHeader.vtk
+File x-dimension: 512
+File y-dimension: 512
+File z-dimension: 361
+Number of points in image volume: 94633984
+Marching cubes algorithm: SERIAL
+Total Program CPU Time (clicks): 1.79e+06
+Total Program CPU Time (seconds): 1.79
+Total Program WALL Time (seconds): 1.78487

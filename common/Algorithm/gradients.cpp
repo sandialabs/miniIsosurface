@@ -10,12 +10,11 @@
 template<typename T>
 void computeGradient(unsigned xidx, unsigned yidx, unsigned zidx, const Image3DReader<T>* imageVolume, T grad[3]) {
 	T x[3][2];
-	imageVolume->getValsForGradient(x,xidx,yidx,zidx);
+	T run[3];
+	imageVolume->getValsForGradient(x,run,xidx,yidx,zidx);
 
-	const T* spacing=imageVolume->imageData->getSpacing();
 	for (int iAxis=0;iAxis<3;++iAxis) {
-		grad[iAxis]=(x[iAxis][1]-x[iAxis][0]) / spacing[iAxis];
-		CLOG(logDEBUG) << "Gradient value: " << grad[iAxis];
+		grad[iAxis]=(x[iAxis][1]-x[iAxis][0]) / run[iAxis];
 	}
 }
 

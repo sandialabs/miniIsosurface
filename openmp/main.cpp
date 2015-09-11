@@ -42,10 +42,8 @@ int main(int argc, char* argv[]) {
 	fileHeader.loadHeader(mainUI.getFile());
 	fileHeader.setSperateData(mainUI.getDataFile());
 
-	CLOG(logDEBUG) << "Before reading image volume";
 	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 	fileData.readEntireVolumeData(data.imageIn);
-	CLOG(logDEBUG) << "After reading image vol";
 
 	// Report file data characteristics
 	CLOG(logYAML) << "Volume image data file path: " << mainUI.getFile();

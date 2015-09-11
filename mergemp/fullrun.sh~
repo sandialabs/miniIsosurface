@@ -1,4 +1,4 @@
 #!/bin/bash
-./build/MCSerial ../Data/inHeader.vtk ../Data/in.vtk ../Data/outSerial.vtk 2000
+./build/MCoMP.exe ../Data/inHeader.vtk ../Data/in.vtk ../Data/outSerial.vtk 2000
 # Debug version
 #valgrind ./build/MCoMP.exe ../Data/ctmini.vtk ../Data/miniOut.vtk 2000

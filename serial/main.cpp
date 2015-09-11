@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
 
 	LoadImage3DMPI<float_t> fileHeader;
 	fileHeader.loadHeader(mainUI.getFile());
+	fileHeader.setSperateData(mainUI.getDataFile());
 
 	LoadImage3DMPI<float_t> fileData(fileHeader); // We will need multiple data loaders in MPI
 	fileData.readEntireVolumeData(data.imageIn);

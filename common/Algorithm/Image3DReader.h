@@ -28,7 +28,7 @@ public:
 	void setImage3DOutputBuffers(unsigned, unsigned,unsigned);
 	void getVertexValues(T *,unsigned,unsigned);
 
-	void getValsForGradient(T (& x)[3][2], const unsigned, const unsigned, const unsigned) const;
+	void getValsForGradient(T (& x)[3][2], T (& run)[3], const unsigned, const unsigned, const unsigned) const;
 
 	Image3D<T> *imageData;
 private:

@@ -16,9 +16,9 @@ TARGET          = MCMerge.exe
 
 # Compiler and flags
 CC              = g++
-#CXXFLAGS        = -O2 -fopenmp -std=c++0x
+CXXFLAGS        = -O2 -fopenmp -std=c++0x
 #GPERF_FLAG 		= -lprofiler
-CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
+#CXXFLAGS        = -O0 -g -fopenmp -std=c++0x
 
 # Source and build directories
 SRCDIRS         = Algorithm Implementations User_Interface
@@ -60,7 +60,7 @@ $(BUILDDIR)/%.o: ./*/%.cpp
 .PHONEY: clean
 clean:
 	rm -f $(BUILDDIR)/*.o;
-	
+
 .PHONEY: clean_run_data
 clean_run_data:
 	rm -f yaml_out.*;
@@ -69,7 +69,7 @@ clean_run_data:
 .PHONEY: deepclean
 deepclean: clean clean_run_data
 	rm -rf $(BUILDDIR);
-	
+
 # ========== Debug Rules ========================
 
 debug:

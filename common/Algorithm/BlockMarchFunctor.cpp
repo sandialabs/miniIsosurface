@@ -15,11 +15,7 @@ BlockMarchFunctor<T>::BlockMarchFunctor(Image3DReader_type &volReader, const uns
 	dims = volReader.imageData->getDimension();
 	origin = volReader.imageData->getOrigin();
 	spacing = volReader.imageData->getSpacing();
-//	buffer = volReader.getData();
 	T val[8]; // Vertex values for each cube
-
-	//CLOG(logDEBUG1) << "Extent: " << blockExt[0] << " " << blockExt[1] << " "
-	//		<< blockExt[2] << " " << blockExt[3] << " " << blockExt[4] << " " << blockExt[5];
 
 	sliceSize = dims[0] * dims[1];
 

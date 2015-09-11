@@ -56,8 +56,9 @@ void Image3DReader<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xE
 }
 
 template<typename T>
-void Image3DReader<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlobal, const unsigned yIdxGlobal, const unsigned zIdxGlobal) const {
+void Image3DReader<T>::getValsForGradient(T (& x)[3][2], T (& run)[3], const unsigned xIdxGlobal, const unsigned yIdxGlobal, const unsigned zIdxGlobal) const {
 	unsigned xIdx, yIdx, zIdx;
+
 	if (isMPIimage) {
 		xIdx=xIdxGlobal-imageData->MPIorigin[0];
 		yIdx=yIdxGlobal-imageData->MPIorigin[1];
@@ -65,46 +66,59 @@ void Image3DReader<T>::getValsForGradient(T (& x)[3][2], const unsigned xIdxGlob
 	}
 	else {
 		xIdx=xIdxGlobal;
-		yIdx=xIdxGlobal;
-		zIdx=xIdxGlobal;
+		yIdx=yIdxGlobal;
+		zIdx=zIdxGlobal;
 	}
 	/*
 	 * Gradient computation is only done on a per need basis
 	 * Setting up cache buffers for this would not improve performance enough
 	 */
-	// Assuming bufferIdx is updated with the marching, we just need to add distance along the x-axis
 	unsigned ptIdxOnBuffer=xIdx + yIdx * imageData->dim[0] + zIdx * imageData->sliceSize;
+	
+	const T *spacing = imageData->getSpacing();
 	if (xIdx == 0) {
 		x[0][0] = imageData->data[ptIdxOnBuffer + 1];
 		x[0][1] = imageData->data[ptIdxOnBuffer];
+		run[0] = spacing[0];
 	} else if (xIdx == (imageData->dim[0] - 1)) {
 		x[0][0] = imageData->data[ptIdxOnBuffer];
 		x[0][1] = imageData->data[ptIdxOnBuffer - 1];
+		run[0] = spacing[0];
 	} else {
 		x[0][0] = imageData->data[ptIdxOnBuffer + 1];
 		x[0][1] = imageData->data[ptIdxOnBuffer - 1];
+		run[0] = 2*spacing[0];
+		//run[0] = spacing[0];
 	}
 
 	if (yIdx == 0) {
 		x[1][0] = imageData->data[ptIdxOnBuffer + imageData->dim[0]];
 		x[1][1] = imageData->data[ptIdxOnBuffer];
+		run[1] = spacing[1];
 	} else if (yIdx == (imageData->dim[1] - 1)) {
 		x[1][0] = imageData->data[ptIdxOnBuffer];
 		x[1][1] = imageData->data[ptIdxOnBuffer - imageData->dim[0]];
+		run[1] = spacing[1];
 	} else {
 		x[1][0] = imageData->data[ptIdxOnBuffer + imageData->dim[0]];
 		x[1][1] = imageData->data[ptIdxOnBuffer - imageData->dim[0]];
+		run[1] = 2*spacing[1];
+		// run[1] = spacing[1];
 	}
 
 	if (zIdx == 0) {
 		x[2][0] = imageData->data[ptIdxOnBuffer + imageData->sliceSize];
 		x[2][1] = imageData->data[ptIdxOnBuffer];
+		run[2] = spacing[2];
 	} else if (zIdx == (imageData->dim[2] - 1)) {
 		x[2][0] = imageData->data[ptIdxOnBuffer];
 		x[2][1] = imageData->data[ptIdxOnBuffer - imageData->sliceSize];
+		run[2] = spacing[2];
 	} else {
 		x[2][0] = imageData->data[ptIdxOnBuffer + imageData->sliceSize];
 		x[2][1] = imageData->data[ptIdxOnBuffer - imageData->sliceSize];
+		run[2] = 2*spacing[2];
+		// run[2] = spacing[2];
 	}
 }
 
