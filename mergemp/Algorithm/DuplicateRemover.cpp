@@ -69,9 +69,9 @@ void DuplicateRemover::getNewIndices(void) {
 	 * Going through the dataArray and creating new point indices for the data
 	 */
 	// Initialize run
-	unsigned iEdgeIndxPrevious=dataArray[0].edgeIdx;
-	unsigned iEdgeIndxCurrent=dataArray[1].edgeIdx;
-	dataArray[0].newPointIdx=0;
+	unsigned iEdgeIndxPrevious=this->dataArray[0].edgeIdx;
+	unsigned iEdgeIndxCurrent=this->dataArray[1].edgeIdx;
+	this->dataArray[0].newPointIdx=0;
 	unsigned currentPointNum=0;
 
 	unsigned nPoints=this->getSize();

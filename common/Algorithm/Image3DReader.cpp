@@ -38,10 +38,6 @@ void Image3DReader<T>::setImage3DOutputBuffers(unsigned xIdx, unsigned yIdx, uns
 
 template<typename T>
 void Image3DReader<T>::getVertexValues(T *vertexVals, unsigned xIdx, unsigned xExtent) {
-//	CLOG(logDEBUG) << "Global xIdx: " << xIdx;
-//	CLOG(logDEBUG) << "xExtent: " << xExtent;
-//	if (isMPIimage) xIdx=xIdx-imageData->MPIorigin[0];
-//	CLOG()
 	vertexVals[0] = X1buffer[xIdx-xExtent];
 	vertexVals[1] = X1buffer[xIdx-xExtent+1];
 
@@ -88,7 +84,6 @@ void Image3DReader<T>::getValsForGradient(T (& x)[3][2], T (& run)[3], const uns
 		x[0][0] = imageData->data[ptIdxOnBuffer + 1];
 		x[0][1] = imageData->data[ptIdxOnBuffer - 1];
 		run[0] = 2*spacing[0];
-		//run[0] = spacing[0];
 	}
 
 	if (yIdx == 0) {
@@ -103,7 +98,6 @@ void Image3DReader<T>::getValsForGradient(T (& x)[3][2], T (& run)[3], const uns
 		x[1][0] = imageData->data[ptIdxOnBuffer + imageData->dim[0]];
 		x[1][1] = imageData->data[ptIdxOnBuffer - imageData->dim[0]];
 		run[1] = 2*spacing[1];
-		// run[1] = spacing[1];
 	}
 
 	if (zIdx == 0) {
@@ -118,7 +112,6 @@ void Image3DReader<T>::getValsForGradient(T (& x)[3][2], T (& run)[3], const uns
 		x[2][0] = imageData->data[ptIdxOnBuffer + imageData->sliceSize];
 		x[2][1] = imageData->data[ptIdxOnBuffer - imageData->sliceSize];
 		run[2] = 2*spacing[2];
-		// run[2] = spacing[2];
 	}
 }
 

@@ -61,7 +61,6 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 
 		#pragma omp for nowait
 		for (unsigned i = 0; i < nblocks; ++i) {
-			//CLOG(logDEBUG) << "Iteration " << i;
 			unsigned blockPageIdx = i / nblocksPerPage;
 			unsigned blockRowIdx = (i % nblocksPerPage) / numBlockCols;
 			unsigned blockColIdx = (i % nblocksPerPage) % numBlockCols;
@@ -81,9 +80,6 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 			blockRange.extent(blockExtent);
 
 			unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
-
-			unsigned mapSize = approxNumberOfEdges / 8 + 6; // Very approximate hack..
-			//threadPointMap.reserve(mapSize);
 
 			MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, blockExtent,
 					data.isoval, threadPointMap, *(this->globalEdgeIndices), threadMesh);
@@ -105,12 +101,13 @@ void MergeMPAlgo<T>::march(GeneralContext<T> &data){
 		}
 	}
 
-	duplicateRemover.sortYourSelf();
-	duplicateRemover.getNewIndices();
+	if (duplicateRemover.getSize() > 3) {
+	  duplicateRemover.sortYourSelf();
+	  duplicateRemover.getNewIndices();
 
-	CLOG(logDEBUG) << "final";
-	buildMesh(data.mesh,meshBeforeMerge,duplicateRemover);
-
+	  CLOG(logDEBUG) << "final";
+	  buildMesh(data.mesh,meshBeforeMerge,duplicateRemover);
+	}
 	CLOG(logDEBUG1) << "Mesh verts: " << data.mesh.numberOfVertices();
 	CLOG(logDEBUG1) << "Mesh tris: " << data.mesh.numberOfTriangles();
 }

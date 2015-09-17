@@ -28,14 +28,6 @@ BlockMarchFunctor<T>::BlockMarchFunctor(Image3DReader_type &volReader, const uns
 		T ypos = origin[1] + (T(blockExt[2]) * spacing[1]);
 		for (yidx = blockExt[2]; yidx <= blockExt[3];
 				++yidx, ypos += spacing[1]) {
-//
-//			bufferIdx=blockExt[0]+ (yidx * dims[0]) + (zidx * sliceSize);
-//
-//			/*
-//			 * 4 buffers are created to improve cache efficiency
-//			 * this improves run time by about .1 seconds
-//			 */
-//			this->updateBuffers();
 			volReader.setImage3DOutputBuffers(blockExt[0],yidx,zidx);
 
 			T xpos = origin[0] + (T(blockExt[0]) * spacing[0]);
@@ -44,23 +36,13 @@ BlockMarchFunctor<T>::BlockMarchFunctor(Image3DReader_type &volReader, const uns
 
 				T pos[8][3], grad[8][3];
 				volReader.getVertexValues(val,xidx,blockExt[0]);
-
-//				T val[8];
-//				//getPointValues(val);
-//
-//				// get cell-points values
-//				val[0] = X1buffer[xidx-blockExt[0]];
-//				val[1] = X1buffer[xidx-blockExt[0]+1];
-//
-//				val[2] = X2buffer[xidx-blockExt[0]+1];
-//				val[3] = X2buffer[xidx-blockExt[0]];
-//
-//				val[4] = X3buffer[xidx-blockExt[0]];
-//				val[5] = X3buffer[xidx-blockExt[0]+1];
-//
-//				val[6] = X4buffer[xidx-blockExt[0]+1];
-//				val[7] = X4buffer[xidx-blockExt[0]];
-
+				
+				if (xidx+yidx+zidx==0) {
+				  CLOG(logDEBUG1) << "Vertex vals at origin:";
+				  for (int iV=0;iV<8;iV++) {
+				    CLOG(logDEBUG1) << val[iV];
+				  }
+				}
 				cellCaseId = findCaseId(val,isoval);
 				// no intersections
 				if (cellCaseId == 0 || cellCaseId == 255) {
