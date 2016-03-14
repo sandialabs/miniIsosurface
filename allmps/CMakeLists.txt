@@ -22,7 +22,7 @@ endif()
 add_executable(${target} main.cpp ${srcs})
 
 target_link_libraries(${target}
-  manteveo_marching_cubes_common
+  mantevo_marching_cubes_common
   ${MPI_CXX_LIBRARIES}
   )
 target_compile_options(${target}

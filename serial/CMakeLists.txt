@@ -6,4 +6,4 @@ set(srcs
 
 add_executable(${target} main.cpp ${srcs})
 
-target_link_libraries(${target} manteveo_marching_cubes_common)
+target_link_libraries(${target} mantevo_marching_cubes_common)
