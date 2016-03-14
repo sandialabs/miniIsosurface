@@ -1,4 +1,0 @@
-#!/bin/bash
-./build/MCoMP.exe ../Data/ctmini.vtk ../Data/miniOut.vtk 2000
-# Debug version
-#valgrind ./build/MCoMP.exe ../Data/ctmini.vtk ../Data/miniOut.vtk 2000
