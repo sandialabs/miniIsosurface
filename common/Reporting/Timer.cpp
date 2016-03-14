@@ -8,42 +8,62 @@
 #include "Timer.h"
 
 Timer::Timer() {
+	start();
+}
+
+void Timer::getCurrentTimeValues(TimeValue_t &ticksCPU,
+																 TimeValue_t &wallSeconds,
+																 TimeValue_t &wallNanoseconds) const {
+	ticksCPU = clock();
+
+#if (_POSIX_TIMERS > 0) && (_POSIX_MONOTONIC_CLOCK > 0)
+	struct timespec currentTime;
+	clock_gettime(CLOCK_MONOTONIC, &currentTime);
+	wallSeconds = currentTime.tv_sec;
+	wallNanoseconds = currentTime.tv_nsec;
+#else
+	struct timeval currentTime;
+	gettimeofday(&currentTime, NULL);
+	wallSeconds = currentTime.tv_sec;
+	wallNanoseconds = currentTime.tv_usec * 1000;
+#endif
+}
+
+void Timer::start() {
 	totalWallTime=0;
 	totalCPUtime=0;
-	tCPU = clock();
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	totalTicksCPU=0;
+
+	resume();
 }
 
 void Timer::pause(void) {
-	tCPU = clock()-tCPU;
-	totalCPUtime += (static_cast<double>(tCPU))/CLOCKS_PER_SEC;
+	TimeValue_t currentTicksCPU, currentWallSeconds, currentWallNanoseconds;
+	getCurrentTimeValues(currentTicksCPU,
+											 currentWallSeconds,
+											 currentWallNanoseconds);
 
-	clock_gettime(CLOCK_MONOTONIC, &finish);
+	totalTicksCPU = currentTicksCPU-startTicksCPU;
+	totalCPUtime += (static_cast<double>(totalTicksCPU))/CLOCKS_PER_SEC;
 
-	totalWallTime += (finish.tv_sec - start.tv_sec);
-	totalWallTime += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+	totalWallTime += (currentWallSeconds - startWallSeconds);
+	totalWallTime +=
+			(currentWallNanoseconds - currentWallNanoseconds) / 1000000000.0;
 }
 
 void Timer::resume(void) {
-	tCPU = clock();
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	getCurrentTimeValues(startTicksCPU, startWallSeconds, startWallNanoseconds);
 }
 
 void Timer::stop(void) {
-	tCPU = clock()-tCPU;
-	totalCPUtime += (static_cast<double>(tCPU))/CLOCKS_PER_SEC;
-
-	clock_gettime(CLOCK_MONOTONIC, &finish);
-
-	totalWallTime += (finish.tv_sec - start.tv_sec);
-	totalWallTime += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+	pause();
 }
 
 void Timer::reportTime(YAML_Doc &doc) const {
-	CLOG(logYAML) << "Total Program CPU Time (clicks): " << tCPU;
+	CLOG(logYAML) << "Total Program CPU Time (clicks): " << totalTicksCPU;
 	CLOG(logYAML) << "Total Program CPU Time (seconds): " << totalCPUtime;
 	CLOG(logYAML) << "Total Program WALL Time (seconds): " << totalWallTime;
-	doc.add("Total Program CPU Time (clicks)",static_cast<float>(tCPU));
+	doc.add("Total Program CPU Time (clicks)",static_cast<float>(totalTicksCPU));
 	doc.add("Total Program CPU Time (seconds)",totalCPUtime);
 	doc.add("Total Program WALL Time (seconds)",totalWallTime);
 }

@@ -23,6 +23,8 @@ public:
 
 	//void startForProcess(void);
 
+	void start(void);
+
 	void pause(void);
 	void resume(void);
 
@@ -35,10 +37,18 @@ public:
 	const double getCPUtime (void) { return totalCPUtime; };
 
 private:
-	struct timespec start, finish;
-	clock_t tCPU;
+	typedef long long TimeValue_t;
+
+	TimeValue_t startTicksCPU;
+	TimeValue_t startWallSeconds;
+	TimeValue_t startWallNanoseconds;
 	double totalWallTime;
 	double totalCPUtime;
+	TimeValue_t totalTicksCPU;
+
+	void getCurrentTimeValues(TimeValue_t &ticksCPU,
+														TimeValue_t &wallSeconds,
+														TimeValue_t &wallNanoseconds) const;
 };
 
 #endif /* REPORTING_TIMER_H_ */
