@@ -53,7 +53,7 @@ void OpenMPAlgo<T>::march(GeneralContext<T> &data){
 	unsigned nblocks = numBlockPages * numBlockRows * numBlockCols;
 	unsigned nblocksPerPage = numBlockRows * numBlockCols;
 	CLOG(logDEBUG1) << "Number of OpenMP Blocks " << nblocks;
-	setGlobalVariables(data);
+	this->setGlobalVariables(data);
 
 	#pragma omp parallel
 	{
