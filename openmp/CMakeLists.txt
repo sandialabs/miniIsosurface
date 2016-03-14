@@ -15,3 +15,4 @@ add_executable(${target} main.cpp ${srcs})
 
 target_link_libraries(${target} mantevo_marching_cubes_common)
 target_compile_options(${target} PUBLIC ${OpenMP_CXX_FLAGS})
+set_target_properties(${target} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})

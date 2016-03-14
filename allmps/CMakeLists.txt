@@ -32,5 +32,5 @@ target_compile_options(${target}
   PUBLIC ${OpenMP_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}
   )
 set_target_properties(${target}
-  PROPERTIES LINK_FLAGS ${MPI_CXX_LINK_FLAGS}
+  PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS} ${MPI_CXX_LINK_FLAGS}"
   )
