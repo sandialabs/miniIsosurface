@@ -32,6 +32,6 @@ void computeAllGradients (unsigned &xidx, unsigned &yidx, unsigned &zidx, const 
 
 
 // Must explicitly instantiate template functions for separate compiling to work
-template static void computeGradient<float_t> (unsigned xidx, unsigned yidx, unsigned zidx, const Image3DReader<float_t>*,	float_t grad[3]);
+template void computeGradient<float_t> (unsigned xidx, unsigned yidx, unsigned zidx, const Image3DReader<float_t>*,	float_t grad[3]);
 
 template void computeAllGradients<float_t> (unsigned &xidx, unsigned &yidx, unsigned &zidx, const Image3DReader<float_t>*, float_t (& grad)[8][3]);

@@ -32,7 +32,7 @@ void SerialAlgo<T>::march(GeneralContext<T> &data) {
 			dims[0] - 1, grainDim);
 	cellRange.extent(data.ext);
 
-	setGlobalVariables(data);
+	this->setGlobalVariables(data);
 
 	// The block is simply the full data extent
 	MarchAlgorithm<T>::extractIsosurfaceFromBlock(data.imageIn, data.ext,
