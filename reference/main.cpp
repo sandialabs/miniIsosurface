@@ -8,6 +8,7 @@
 
 #include "../util/MarchingCubesTables.h"
 #include "LoadImage.h"
+#include "SaveTriangleMesh.h"
 
 #include "Image3D.h"
 #include "TriangleMesh.h"
@@ -226,5 +227,7 @@ int main(int argc, char* argv[])
               << std::chrono::duration<double>(t_end-t_start).count()
               << " s\n";
 
-    //saveTriangleMesh(mesh, outFile); TODO
+    saveTriangleMesh(polygonalMesh, outFile);
+
+    //TODO create similar YAML stuff
 }

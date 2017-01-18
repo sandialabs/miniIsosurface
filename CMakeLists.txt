@@ -3,6 +3,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(mantevo-marching-cubes)
 
+add_subdirectory(tests)
 add_subdirectory(reference)
+
 
 

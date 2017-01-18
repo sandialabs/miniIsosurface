@@ -15,6 +15,14 @@ template <typename T>
 class TriangleMesh
 {
 public:
+    using PointIterator =
+        typename std::vector<std::array<T, 3> >::const_iterator;
+    using NormalIterator =
+        typename std::vector<std::array<T, 3> >::const_iterator;
+    using TriangleIterator =
+        typename std::vector<std::array<unsigned, 3> >::const_iterator;
+
+
     TriangleMesh(
         std::vector<std::array<T, 3> > points,
         std::vector<std::array<T, 3> > normals,
@@ -23,6 +31,46 @@ public:
         normals(normals),
         indexTriangles(indexTriangles)
     {}
+
+    unsigned numberOfVertices() const
+    {
+        return points.size();
+    }
+
+    unsigned numberOfTriangles() const
+    {
+        return indexTriangles.size();
+    }
+
+    PointIterator pointsBegin() const
+    {
+        return points.begin();
+    }
+
+    PointIterator pointsEnd() const
+    {
+        return points.end();
+    }
+
+    NormalIterator normalsBegin() const
+    {
+        return normals.begin();
+    }
+
+    NormalIterator normalsEnd() const
+    {
+        return normals.end();
+    }
+
+    TriangleIterator trianglesBegin() const
+    {
+        return indexTriangles.begin();
+    }
+
+    TriangleIterator trianglesEnd() const
+    {
+        return indexTriangles.end();
+    }
 
 private:
     std::vector<std::array<T, 3> > points;
