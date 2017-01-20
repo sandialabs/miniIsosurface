@@ -7,10 +7,17 @@
 
 #include "Image3D.h"
 
+namespace util {
+
 template<typename T>
 std::array<std::array<T, 3>, 8>
 Image3D<T>::getPosCube(unsigned xidx, unsigned yidx, unsigned zidx) const
 {
+    // Modify input indices to match with the location of this index origin.
+    xidx -= indexOrigin[0];
+    yidx -= indexOrigin[1];
+    zidx -= indexOrigin[2];
+
     std::array<std::array<T, 3>, 8> pos;
 
     T xpos = origin[0] + xidx * spacing[0];
@@ -56,6 +63,11 @@ template <typename T>
 std::array<std::array<T, 3>, 8>
 Image3D<T>::getGradCube(unsigned xidx, unsigned yidx, unsigned zidx) const
 {
+    // Modify input indices to match with the location of this index origin.
+    xidx -= indexOrigin[0];
+    yidx -= indexOrigin[1];
+    zidx -= indexOrigin[2];
+
     std::array<std::array<T, 3>, 8> grad;
 
     grad[0] = computeGradient(xidx, yidx, zidx);
@@ -238,6 +250,11 @@ template <typename T>
 typename Image3D<T>::Image3DBuffer
 Image3D<T>::createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const
 {
+    // Modify input indices to match with the location of this index origin.
+    xbeg -= indexOrigin[0];
+    yidx -= indexOrigin[1];
+    zidx -= indexOrigin[2];
+
     using Iter = typename std::vector<T>::const_iterator;
 
     unsigned bufferIdx = xbeg + (yidx * dim[0]) + (zidx * dim[0] * dim[1]);
@@ -274,3 +291,5 @@ std::array<T, 8> Image3D<T>::Image3DBuffer::getCubeVertexValues(unsigned xidx) c
 // Need this for explicit instantiation
 template class Image3D<double>;
 template class Image3D<float>;
+
+} // util namespace

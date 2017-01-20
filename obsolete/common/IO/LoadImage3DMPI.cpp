@@ -243,7 +243,8 @@ void LoadImage3DMPI<T>::readBlockData(Image3D<T>& image) {
 	if (!blockExtentSet) throw block_extent_not_set("Set block extent first");
 
 	// Get to initial position
-	unsigned npointsIgnore = blockExtent[0]+ (blockExtent[2] * xdimFile) + (blockExtent[4] * xdimFile*ydimFile);
+	unsigned npointsIgnore =
+        blockExtent[0]+ (blockExtent[2] * xdimFile) + (blockExtent[4] * xdimFile*ydimFile);
 	this->streamIgnore(npointsIgnore);
 
 	unsigned nXpoints = blockExtent[1]-blockExtent[0]+2; // + 2 for first and last pts

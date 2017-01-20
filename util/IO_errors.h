@@ -12,6 +12,7 @@
 
 //#include"Log.h"
 
+#include <iostream>
 #include <stdexcept>
 
 namespace util {

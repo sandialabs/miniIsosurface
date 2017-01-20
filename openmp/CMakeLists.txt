@@ -1,7 +1,7 @@
 set(target openmp)
 
 set(srcs
-    ../reference/Image3D.cpp
+    ../util/Image3D.cpp
     )
 
 find_package(OpenMP)

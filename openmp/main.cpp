@@ -11,10 +11,10 @@
 #include "../util/util.h"     // for findCaseId and interpolate
 #include "../util/MarchingCubesTables.h"
 
-#include "../reference/LoadImage.h"        // Same as at reference TODO
-#include "../reference/SaveTriangleMesh.h" // Same as at reference
+#include "../util/LoadImage.h"
+#include "../reference/SaveTriangleMesh.h" // Same as at reference TODO
 
-#include "../reference/Image3D.h"          // Same as at reference TODO
+#include "../util/Image3D.h"
 #include "../reference/TriangleMesh.h"     // Same as at reference
 
 template <typename T>
@@ -23,7 +23,7 @@ sectionOfMarchingCubes(
     unsigned const& xbeg, unsigned const& ybeg, unsigned const& zbeg,
     unsigned const& xend, unsigned const& yend, unsigned const& zend,
     T const&                                isoval,
-    Image3D<T> const&                       image,
+    util::Image3D<T> const&                 image,
     std::vector<std::array<T, 3> >&         points,         // reference
     std::vector<std::array<T, 3> >&         normals,        // reference
     std::vector<std::array<unsigned, 3> >&  indexTriangles, // reference
@@ -135,7 +135,7 @@ sectionOfMarchingCubes(
 
 template <typename T>
 TriangleMesh<T>
-MarchingCubes(Image3D<T> const& image, T const& isoval, unsigned const& grainDim)
+MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& grainDim)
 {
     // The marching cubes algorithm creates a polygonal mesh to approximate an
     // isosurface from a three-dimensional discrete scalar field.
@@ -185,17 +185,17 @@ MarchingCubes(Image3D<T> const& image, T const& isoval, unsigned const& grainDim
 
     #pragma omp parallel
     {
-        // Each openMP thread manages it's own sectionPoints, sectionNormals,
-        // sectionIndexTriangles and sectionPointMap.
-        std::vector<std::array<T, 3> > sectionPoints;
-        std::vector<std::array<T, 3> > sectionNormals;
-        std::vector<std::array<unsigned, 3> > sectionIndexTriangles;
+        // Each openMP thread manages it's own threadPoints, threadNormals,
+        // threadIndexTriangles and threadPointMap.
+        std::vector<std::array<T, 3> > threadPoints;
+        std::vector<std::array<T, 3> > threadNormals;
+        std::vector<std::array<unsigned, 3> > threadIndexTriangles;
 
-        // sectionPointMap will be a dictionary from global edge indices
-        // to indices in sectionPoints and sectionNormals. Note that
-        // sectionPoints and sectionNormals share the same indices
+        // threadPointMap will be a dictionary from global edge indices
+        // to indices in threadPoints and threadNormals. Note that
+        // threadPoints and threadNormals share the same indices
         // but are only unique among this section/thread of execution.
-        std::unordered_map<unsigned, unsigned> sectionPointMap;
+        std::unordered_map<unsigned, unsigned> threadPointMap;
 
         #pragma omp for nowait
         for(unsigned i = 0; i < numSections; ++i)
@@ -217,35 +217,35 @@ MarchingCubes(Image3D<T> const& image, T const& isoval, unsigned const& grainDim
             // For performance reasons, rehashing the unordered map.
             unsigned approxNumberOfEdges = 3*(xend-xbeg)*(yend-ybeg)*(zend-zbeg);
             unsigned mapSize = approxNumberOfEdges / 8 + 6;
-            sectionPointMap.rehash(mapSize);
+            threadPointMap.rehash(mapSize);
 
             // Variables for this thread of execution are given by reference and
             // will be modified.
             sectionOfMarchingCubes(
                 xbeg, ybeg, zbeg,           // constant inputs
                 xend, yend, zend,           // constant inputs
-                isoval, image,              // constant input
-                sectionPoints,              // for modification, taken by reference
-                sectionNormals,             // for modification, taken by reference
-                sectionIndexTriangles,      // for modification, taken by reference
-                sectionPointMap);           // for modification, taken by reference
+                isoval, image,              // constant inputs
+                threadPoints,              // for modification, taken by reference
+                threadNormals,             // for modification, taken by reference
+                threadIndexTriangles,      // for modification, taken by reference
+                threadPointMap);           // for modification, taken by reference
         }
 
         // As each section is complete, the mesh information is added to
         // points, normals and indexTriangles. The triangles in
-        // sectionIndexTriangles will have to be offset to have indices
-        // that coincide with points and not sectionPoints. critical ensures
+        // threadIndexTriangles will have to be offset to have indices
+        // that coincide with points and not threadPoints. critical ensures
         // that this block of code will execute one thread at a time.
         #pragma omp critical
         {
             unsigned offset = points.size();
 
             points.insert(
-                points.end(), sectionPoints.begin(), sectionPoints.end());
+                points.end(), threadPoints.begin(), threadPoints.end());
             normals.insert(
-                normals.end(), sectionNormals.begin(), sectionNormals.end());
+                normals.end(), threadNormals.begin(), threadNormals.end());
 
-            for(std::array<unsigned, 3>& tri: sectionIndexTriangles)
+            for(std::array<unsigned, 3>& tri: threadIndexTriangles)
             {
                 tri[0] = tri[0] + offset;
                 tri[1] = tri[1] + offset;
@@ -254,7 +254,7 @@ MarchingCubes(Image3D<T> const& image, T const& isoval, unsigned const& grainDim
 
             indexTriangles.insert(
                 indexTriangles.end(),
-                sectionIndexTriangles.begin(), sectionIndexTriangles.end());
+                threadIndexTriangles.begin(), threadIndexTriangles.end());
         }
     }
 
@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
     }
 
     // Load the image file
-    Image3D<float> image = loadImage<float>(vtkFile);
+    util::Image3D<float> image = util::loadImage<float>(vtkFile);
 
     // Time the output
     std::clock_t c_start = std::clock();

@@ -11,7 +11,9 @@
 #include <array>
 #include <vector>
 
-#include <iostream>
+//#include <iostream>
+
+namespace util {
 
 template <typename T>
 class Image3D
@@ -19,9 +21,21 @@ class Image3D
 public:
     Image3D(std::vector<T> data,
             std::array<unsigned, 3> dim,
-            std::array<unsigned, 3> spacing,
-            std::array<unsigned, 3> origin)
-      : data(data), dim(dim), spacing(spacing), origin(origin)
+            std::array<T, 3> spacing,
+            std::array<T, 3> origin)
+        : data(data), dim(dim),
+        spacing(spacing), origin(origin),
+        indexOrigin({0, 0, 0})
+    {}
+
+    Image3D(std::vector<T> data,
+            std::array<unsigned, 3> dim,
+            std::array<T, 3> spacing,
+            std::array<T, 3> origin,
+            std::array<unsigned, 3> indexOrigin)
+        : data(data), dim(dim),
+        spacing(spacing), origin(origin),
+        indexOrigin(indexOrigin)
     {}
 
     std::array<std::array<T, 3>, 8>
@@ -34,12 +48,12 @@ public:
     getGlobalEdgeIndex(unsigned xidx, unsigned yidx, unsigned zidx,
                  unsigned cubeEdgeIdx) const;
 
-    unsigned xBeginIdx() const { return 0; }
-    unsigned yBeginIdx() const { return 0; }
-    unsigned zBeginIdx() const { return 0; }
-    unsigned xEndIdx() const { return dim[0]; }
-    unsigned yEndIdx() const { return dim[1]; }
-    unsigned zEndIdx() const { return dim[2]; }
+    unsigned xBeginIdx() const { return indexOrigin[0]; }
+    unsigned yBeginIdx() const { return indexOrigin[1]; }
+    unsigned zBeginIdx() const { return indexOrigin[2]; }
+    unsigned xEndIdx() const { return indexOrigin[0] + dim[0]; }
+    unsigned yEndIdx() const { return indexOrigin[1] + dim[1]; }
+    unsigned zEndIdx() const { return indexOrigin[2] + dim[2]; }
 
 private:
     std::array<T, 3>
@@ -82,10 +96,13 @@ public:
     createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const;
 
 private:
-    std::vector<T> data;
+    std::vector<T>          data;
     std::array<unsigned, 3> dim;
-    std::array<unsigned, 3> spacing;
-    std::array<unsigned, 3> origin;
+    std::array<T, 3>        spacing;
+    std::array<T, 3>        origin;
+    std::array<unsigned, 3> indexOrigin;
 };
+
+} // util namespace
 
 #endif

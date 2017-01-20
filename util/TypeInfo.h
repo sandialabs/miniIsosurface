@@ -23,6 +23,10 @@ namespace util
             NUM_TYPES
         };
 
+        TypeInfo()
+          : id(TypeId::ID_UNKNOWN)
+        {}
+
         TypeInfo(TypeId inId)
           : id(inId)
         {}

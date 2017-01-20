@@ -151,7 +151,7 @@ void MpiAlgo<T>::march(GeneralContext<T> &data) {
 		data.imageIn.setMPIorigin(blockExtent[0],blockExtent[2],blockExtent[4]);
 
 
-		unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
+		//unsigned approxNumberOfEdges = 3*(pto-pfrom)*(rto-rfrom)*(cto-cfrom);
 
 		//unsigned mapSize = approxNumberOfEdges / 8 + 6; // Approx # of edges in map
 

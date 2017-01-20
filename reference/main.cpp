@@ -10,15 +10,15 @@
 
 #include "../util/util.h" // util::findCaseId, util::interpolate
 #include "../util/MarchingCubesTables.h"
-#include "LoadImage.h"
-#include "SaveTriangleMesh.h"
+#include "../util/LoadImage.h"
+#include "SaveTriangleMesh.h" // TODO move to util
 
-#include "Image3D.h"
-#include "TriangleMesh.h"
+#include "../util/Image3D.h"
+#include "TriangleMesh.h" // TODO move to util
 
 template <typename T>
 TriangleMesh<T>
-MarchingCubes(Image3D<T> const& image, T const& isoval)
+MarchingCubes(util::Image3D<T> const& image, T const& isoval)
 {
     // The marching cubes algorithm creates a polygonal mesh to approximate an
     // isosurface from a three-dimensional discrete scalar field.
@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
     float isoval = atof(argv[3]); //TODO show usage error
 
     // Load the image file
-    Image3D<float> image = loadImage<float>(vtkFile);
+    util::Image3D<float> image = util::loadImage<float>(vtkFile);
 
     // Time the output
     std::clock_t c_start = std::clock();
