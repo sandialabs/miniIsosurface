@@ -25,28 +25,32 @@ mantevo-marching-cubes makes use of C++11 features. Namely
 
 # Build Instructions #
 1. Clone the repository
+
 ```
 git clone https://gitlab.sandia.gov/kmorel-src/mantevo-marching-cubes.git
 ```
 2. Create a build directory. mantevo-marching-mubes does not require an out-of-tree build, but it is
 cleaner.
+
 ```
 mkdir my_build_dir
 cd my_build_dir
 ```
 3. Invoke CMake from your build directory, pointing to the mantevo-marching-cubes source directory.
+
 ```
 cmake /path/to/mantevo-marching-cubes
 ```
 4. Invoke GNU make from the build directory.
+
 ```
 make
 ```
 
 After compiling, the following executables will be created:
-* ./reference/reference
-* ./openmp/openmp
-* ./tests/SameContentsCheck
+* `./reference/reference`
+* `./openmp/openmp`
+* `./tests/SameContentsCheck`
 
 ## reference ##
 Example usage with an isovalue of 1.0:
