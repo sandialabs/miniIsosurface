@@ -5,6 +5,7 @@ project(mantevo-marching-cubes)
 
 add_subdirectory(tests)
 add_subdirectory(reference)
+add_subdirectory(openmp)
 
 
 

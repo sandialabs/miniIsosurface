@@ -2,48 +2,19 @@
 #include <vector>
 #include <unordered_map>
 
+#include <cstdlib>
+
 #include <ctime>
 #include <chrono>
 #include <iomanip>
 
+#include "../util/util.h" // util::findCaseId, util::interpolate
 #include "../util/MarchingCubesTables.h"
 #include "LoadImage.h"
 #include "SaveTriangleMesh.h"
 
 #include "Image3D.h"
 #include "TriangleMesh.h"
-
-template<typename T> // TODO put somewhere else?
-int
-findCaseId(std::array<T, 8> const& cubeVertexVals, T const& isoval)
-{
-    int caseId=0;
-    for(int i = 0; i < 8; ++i)
-    {
-        // Note that util::caseMask[i] = {1, 2, 4, 8, 16, 32, 64, 128}
-        // Example:
-        //   Suppose caseId = 3, i = 4 and cubeVertexVals[4] >= isoval.
-        //   Then caseId will be set to caseId | 16. In terms of bits,
-        //   caseId = 11000000 | 00001000 = 11001000 = 19
-        if(cubeVertexVals[i] >= isoval)
-        {
-            caseId |= util::caseMask[i];
-        }
-    }
-    return caseId;
-}
-
-template <typename T, std::size_t N> // TODO put somewhere else?
-std::array<T, N>
-interpolate(std::array<T, N> const& a, std::array<T, N> const& b, T weight)
-{
-    std::array<T, N> ret;
-    for(int i = 0; i != N; ++i)
-    {
-        ret[i] = a[i] + (weight * (b[i] - a[i]));
-    }
-    return ret;
-}
 
 template <typename T>
 TriangleMesh<T>
@@ -107,7 +78,7 @@ MarchingCubes(Image3D<T> const& image, T const& isoval)
                 // of a cube with one corner being at the x, y, z index.
                 std::array<T, 8> cubeVertexVals = buffer.getCubeVertexValues(xidx);
 
-                int cellCaseId = findCaseId(cubeVertexVals, isoval);
+                int cellCaseId = util::findCaseId(cubeVertexVals, isoval);
 
                 // The 0th and 255th cellCaseId are the cases where the isosurface
                 // does not intersect the cube.
@@ -170,9 +141,9 @@ MarchingCubes(Image3D<T> const& image, T const& isoval)
                                 (cubeVertexVals[v2] - cubeVertexVals[v1]);
 
                             std::array<T, 3> newPt =
-                                interpolate(posCube[v1], posCube[v2], w);
+                                util::interpolate(posCube[v1], posCube[v2], w);
                             std::array<T, 3> newNorm =
-                                interpolate(gradCube[v1], gradCube[v2], w);
+                                util::interpolate(gradCube[v1], gradCube[v2], w);
 
                             points.push_back(newPt);
                             normals.push_back(newNorm);
@@ -191,8 +162,7 @@ MarchingCubes(Image3D<T> const& image, T const& isoval)
     std::cout << indexTriangles.size() << std::endl; // TODO
 
     // points, normals and indexTriangles contain all the information
-    // needed with respect to a new polygonal mesh, stored in the
-    // TriangleMesh data structure.
+    // needed with respect to this new polygonal mesh, stored in TriangleMesh.
     return TriangleMesh<T>(points, normals, indexTriangles);
 }
 

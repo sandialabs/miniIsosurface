@@ -236,11 +236,11 @@ Image3D<T>::edgeIndexZaxis(unsigned x, unsigned y, unsigned z) const
 
 template <typename T>
 typename Image3D<T>::Image3DBuffer
-Image3D<T>::createBuffer(unsigned xidx, unsigned yidx, unsigned zidx) const
+Image3D<T>::createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const
 {
     using Iter = typename std::vector<T>::const_iterator;
 
-    unsigned bufferIdx = xidx + (yidx * dim[0]) + (zidx * dim[0] * dim[1]);
+    unsigned bufferIdx = xbeg + (yidx * dim[0]) + (zidx * dim[0] * dim[1]);
     Iter beg = data.begin();
 
     Iter x1buffer = beg + bufferIdx;
@@ -248,7 +248,7 @@ Image3D<T>::createBuffer(unsigned xidx, unsigned yidx, unsigned zidx) const
     Iter x3buffer = beg + bufferIdx + dim[0] * dim[1];
     Iter x4buffer = beg + bufferIdx + dim[0] + dim[0] * dim[1];
 
-    return Image3D<T>::Image3DBuffer(x1buffer, x2buffer, x3buffer, x4buffer, xBeginIdx());
+    return Image3D<T>::Image3DBuffer(x1buffer, x2buffer, x3buffer, x4buffer, xbeg);
 }
 
 template <typename T>

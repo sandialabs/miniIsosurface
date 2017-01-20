@@ -79,7 +79,7 @@ private:
     };
 public:
     Image3DBuffer
-    createBuffer(unsigned xidx, unsigned yidx, unsigned zidx) const;
+    createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const;
 
 private:
     std::vector<T> data;
