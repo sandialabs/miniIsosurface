@@ -315,13 +315,6 @@ bool sameMesh(TriangleMesh<float> const& meshA, TriangleMesh<float> const& meshB
     return true;
 }
 
-bool checkSameData(char* fileA, char* fileB)
-{
-    TriangleMesh<float> meshA = LoadFloatMesh(fileA);
-    TriangleMesh<float> meshB = LoadFloatMesh(fileB);
-    return sameMesh(meshA, meshB); //TODO
-}
-
 int main(int argc, char* argv[])
 {
     char* fileA = argv[1];
