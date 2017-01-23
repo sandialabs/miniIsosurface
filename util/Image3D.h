@@ -11,31 +11,43 @@
 #include <array>
 #include <vector>
 
-//#include <iostream>
-
 namespace util {
 
 template <typename T>
 class Image3D
 {
 public:
+
+    // This constructor is used to construct images that contain
+    // only a section of data. When this is the case, data must contain
+    // more points than just indexed by indexBeg to indexEnd. This is because
+    // calling getPosCube or getGradCube require values outside of
+    // indexBeg and indexEnd.
     Image3D(std::vector<T> data,
-            std::array<unsigned, 3> dim,
             std::array<T, 3> spacing,
-            std::array<T, 3> origin)
-        : data(data), dim(dim),
-        spacing(spacing), origin(origin),
-        indexOrigin({0, 0, 0})
+            std::array<T, 3> zeroPos,
+            std::array<unsigned, 3> indexBeg,
+            std::array<unsigned, 3> indexEnd,
+            std::array<unsigned, 3> dataBeg,
+            std::array<unsigned, 3> dataEnd,
+            std::array<unsigned, 3> globalDim)
+      : data(data), spacing(spacing), zeroPos(zeroPos),
+        indexBeg(indexBeg), indexEnd(indexEnd),
+        dataBeg(dataBeg), dataEnd(dataEnd),
+        globalDim(globalDim)
     {}
 
+    // This constructor is used to construct an image of size
+    // dimensions.
     Image3D(std::vector<T> data,
-            std::array<unsigned, 3> dim,
             std::array<T, 3> spacing,
-            std::array<T, 3> origin,
-            std::array<unsigned, 3> indexOrigin)
-        : data(data), dim(dim),
-        spacing(spacing), origin(origin),
-        indexOrigin(indexOrigin)
+            std::array<T, 3> zeroPos,
+            std::array<unsigned, 3> dimensions)
+      : data(data), spacing(spacing), zeroPos(zeroPos),
+        indexBeg({0, 0, 0}),
+        indexEnd({dimensions[0] - 1, dimensions[1]-1, dimensions[2]-1}),
+        dataBeg({0, 0, 0}), dataEnd(dimensions),
+        globalDim(dimensions)
     {}
 
     std::array<std::array<T, 3>, 8>
@@ -48,12 +60,12 @@ public:
     getGlobalEdgeIndex(unsigned xidx, unsigned yidx, unsigned zidx,
                  unsigned cubeEdgeIdx) const;
 
-    unsigned xBeginIdx() const { return indexOrigin[0]; }
-    unsigned yBeginIdx() const { return indexOrigin[1]; }
-    unsigned zBeginIdx() const { return indexOrigin[2]; }
-    unsigned xEndIdx() const { return indexOrigin[0] + dim[0]; }
-    unsigned yEndIdx() const { return indexOrigin[1] + dim[1]; }
-    unsigned zEndIdx() const { return indexOrigin[2] + dim[2]; }
+    unsigned xBeginIdx() const { return indexBeg[0]; }
+    unsigned yBeginIdx() const { return indexBeg[1]; }
+    unsigned zBeginIdx() const { return indexBeg[2]; }
+    unsigned xEndIdx() const { return indexEnd[0]; }
+    unsigned yEndIdx() const { return indexEnd[1]; }
+    unsigned zEndIdx() const { return indexEnd[2]; }
 
 private:
     std::array<T, 3>
@@ -96,11 +108,28 @@ public:
     createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const;
 
 private:
-    std::vector<T>          data;
-    std::array<unsigned, 3> dim;
-    std::array<T, 3>        spacing;
-    std::array<T, 3>        origin;
-    std::array<unsigned, 3> indexOrigin;
+    std::vector<T>          data;       // A vector containing scalar values
+                                        // along three-dimensional space.
+
+    std::array<T, 3>        spacing;    // The distance between two points in
+                                        // the mesh.
+
+    std::array<T, 3>        zeroPos;    // The position at index (0, 0, 0).
+
+    std::array<unsigned, 3> indexBeg;   // The indices that can be used to get
+    std::array<unsigned, 3> indexEnd;   // information for a cube are all indices
+                                        // such that index[i] is in
+                                        // [indexBeg[i], indexEnd[i]) where i
+                                        // is 0, 1, or 2.
+
+    std::array<unsigned, 3> dataBeg;    // The indices that data contains are
+    std::array<unsigned, 3> dataEnd;    // given by dataBeg and dataEnd. So
+                                        // all indices such that index[i] is in
+                                        // [dataBeg[i], dataEnd[i]) where i
+                                        // is 0, 1 or 2.
+
+    std::array<unsigned, 3> globalDim;  // The dimension of the entire
+                                        // image.
 };
 
 } // util namespace

@@ -28,7 +28,7 @@ loadHeader(
     std::ifstream& stream,
     std::array<unsigned, 3>& dim,
     std::array<T, 3>& spacing,
-    std::array<T, 3>& origin,
+    std::array<T, 3>& zeroPos,
     unsigned& npoints,
     TypeInfo& ti)
 {
@@ -81,7 +81,7 @@ loadHeader(
         }
         else if (tag == "ORIGIN")
         {
-            lineStream >> origin[0] >> origin[1] >> origin[2];
+            lineStream >> zeroPos[0] >> zeroPos[1] >> zeroPos[2];
             if (lineStream.bad())
             {
                 throw bad_format("Expecting ORIGIN [3]");
@@ -140,6 +140,37 @@ loadHeader(
     }
 }
 
+void skipHeader(std::ifstream& stream)
+{
+    std::string line;
+    for(int i = 0; i != 10; ++i)
+        std::getline(stream, line);
+}
+
+void
+streamIgnore(std::ifstream& stream, unsigned nPoints, std::size_t pointSize)
+{
+    unsigned increment=134217728; // Read at most 1 GB at a time
+
+    for(unsigned iIgnore = 0; iIgnore < nPoints; iIgnore += increment)
+    {
+        unsigned diffIgnore = nPoints - iIgnore;
+
+        if(diffIgnore > increment)
+        {
+            std::size_t ignoreSize = increment * pointSize;
+            std::vector<char> rbufIgnore(ignoreSize);
+            stream.read(&rbufIgnore[0], ignoreSize);
+        }
+        else
+        {
+            std::size_t ignoreSize = diffIgnore * pointSize;
+            std::vector<char> rbufIgnore(ignoreSize);
+            stream.read(&rbufIgnore[0], ignoreSize);
+        }
+    }
+}
+
 template <typename T>
 Image3D<T>
 loadImage(const char* file)
@@ -150,13 +181,13 @@ loadImage(const char* file)
 
     std::array<unsigned, 3> dim;
     std::array<T, 3> spacing;
-    std::array<T, 3> origin;
+    std::array<T, 3> zeroPos;
     unsigned npoints;
 
     TypeInfo ti;
 
     // These variables are all taken by reference
-    loadHeader(stream, dim, spacing, origin, npoints, ti);
+    loadHeader(stream, dim, spacing, zeroPos, npoints, ti);
 
     std::size_t bufsize = npoints * ti.size();
     std::vector<char> rbuf(bufsize);
@@ -170,7 +201,7 @@ loadImage(const char* file)
 
     stream.close();
 
-    return Image3D<T>(data, dim, spacing, origin);
+    return Image3D<T>(data, spacing, zeroPos, dim);
 }
 
 } // util namespace

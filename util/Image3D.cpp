@@ -13,16 +13,11 @@ template<typename T>
 std::array<std::array<T, 3>, 8>
 Image3D<T>::getPosCube(unsigned xidx, unsigned yidx, unsigned zidx) const
 {
-    // Modify input indices to match with the location of this index origin.
-    xidx -= indexOrigin[0];
-    yidx -= indexOrigin[1];
-    zidx -= indexOrigin[2];
-
     std::array<std::array<T, 3>, 8> pos;
 
-    T xpos = origin[0] + xidx * spacing[0];
-    T ypos = origin[1] + yidx * spacing[1];
-    T zpos = origin[2] + zidx * spacing[2];
+    T xpos = zeroPos[0] + xidx * spacing[0];
+    T ypos = zeroPos[1] + yidx * spacing[1];
+    T zpos = zeroPos[2] + zidx * spacing[2];
 
     pos[0][0] = xpos;
     pos[0][1] = ypos;
@@ -64,9 +59,9 @@ std::array<std::array<T, 3>, 8>
 Image3D<T>::getGradCube(unsigned xidx, unsigned yidx, unsigned zidx) const
 {
     // Modify input indices to match with the location of this index origin.
-    xidx -= indexOrigin[0];
-    yidx -= indexOrigin[1];
-    zidx -= indexOrigin[2];
+    xidx -= dataBeg[0];
+    yidx -= dataBeg[1];
+    zidx -= dataBeg[2];
 
     std::array<std::array<T, 3>, 8> grad;
 
@@ -88,6 +83,10 @@ Image3D<T>::computeGradient(unsigned xidx, unsigned yidx, unsigned zidx) const
 {
     std::array<std::array<T, 2>, 3> x;
     std::array<T, 3> run;
+
+    std::array<unsigned, 3> dim = { dataEnd[0] - dataBeg[0],
+                                    dataEnd[1] - dataBeg[1],
+                                    dataEnd[2] - dataBeg[2] };
 
     unsigned dataIdx = xidx + yidx * dim[0] + zidx * dim[0] * dim[1];
     if (xidx == 0)
@@ -221,7 +220,7 @@ Image3D<T>::edgeIndexXaxis(unsigned x, unsigned y, unsigned z) const
     //unsigned rangeY = dim[1] - 1;
     //unsigned rangeZ = dim[2] - 1;
 
-    unsigned index = x + ((dim[0] - 1) * y) + (dim[1] * (dim[0] - 1) * z);
+    unsigned index = x + ((globalDim[0] - 1) * y) + (globalDim[1] * (globalDim[0] - 1) * z);
     return index;
 }
 
@@ -229,8 +228,8 @@ template<typename T>
 unsigned
 Image3D<T>::edgeIndexYaxis(unsigned x, unsigned y, unsigned z) const
 {
-    unsigned nXedges = (dim[0] - 1) * dim[1] * dim[2];
-    unsigned index = nXedges + x + (dim[0] * y) + (dim[0] * (dim[1] - 1) * z);
+    unsigned nXedges = (globalDim[0] - 1) * globalDim[1] * globalDim[2];
+    unsigned index = nXedges + x + (globalDim[0] * y) + (globalDim[0] * (globalDim[1] - 1) * z);
     return index;
 }
 
@@ -238,11 +237,11 @@ template<typename T>
 unsigned
 Image3D<T>::edgeIndexZaxis(unsigned x, unsigned y, unsigned z) const
 {
-    unsigned nXedges = (dim[0] - 1) * dim[1] * dim[2];
-    unsigned nYedges = dim[0] * (dim[1] - 1) * dim[2];
+    unsigned nXedges = (globalDim[0] - 1) * globalDim[1] * globalDim[2];
+    unsigned nYedges = globalDim[0] * (globalDim[1] - 1) * globalDim[2];
     unsigned nXYedges = nXedges + nYedges;
 
-    unsigned index = nXYedges + x + (dim[0] * y) + (dim[0] * dim[1] * z);
+    unsigned index = nXYedges + x + (globalDim[0] * y) + (globalDim[0] * globalDim[1] * z);
     return index;
 }
 
@@ -251,9 +250,13 @@ typename Image3D<T>::Image3DBuffer
 Image3D<T>::createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const
 {
     // Modify input indices to match with the location of this index origin.
-    xbeg -= indexOrigin[0];
-    yidx -= indexOrigin[1];
-    zidx -= indexOrigin[2];
+    xbeg -= dataBeg[0];
+    yidx -= dataBeg[1];
+    zidx -= dataBeg[2];
+
+    std::array<unsigned, 3> dim = { dataEnd[0] - dataBeg[0],
+                                    dataEnd[1] - dataBeg[1],
+                                    dataEnd[2] - dataBeg[2] };
 
     using Iter = typename std::vector<T>::const_iterator;
 
@@ -265,7 +268,8 @@ Image3D<T>::createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const
     Iter x3buffer = beg + bufferIdx + dim[0] * dim[1];
     Iter x4buffer = beg + bufferIdx + dim[0] + dim[0] * dim[1];
 
-    return Image3D<T>::Image3DBuffer(x1buffer, x2buffer, x3buffer, x4buffer, xbeg);
+    return Image3D<T>::Image3DBuffer(
+        x1buffer, x2buffer, x3buffer, x4buffer, xbeg + dataBeg[0]);
 }
 
 template <typename T>

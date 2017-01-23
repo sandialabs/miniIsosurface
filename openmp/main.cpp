@@ -116,7 +116,6 @@ sectionOfMarchingCubes(
                                 util::interpolate(posCube[v1], posCube[v2], w);
                             std::array<T, 3> newNorm =
                                 util::interpolate(gradCube[v1], gradCube[v2], w);
-
                             points.push_back(newPt);
                             normals.push_back(newNorm);
                         }
@@ -172,9 +171,9 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
     unsigned yBeginIdx = image.yBeginIdx();
     unsigned zBeginIdx = image.zBeginIdx();
 
-    unsigned xEndIdxExtent = image.xEndIdx() - 1;
-    unsigned yEndIdxExtent = image.yEndIdx() - 1;
-    unsigned zEndIdxExtent = image.zEndIdx() - 1;
+    unsigned xEndIdxExtent = image.xEndIdx();
+    unsigned yEndIdxExtent = image.yEndIdx();
+    unsigned zEndIdxExtent = image.zEndIdx();
 
     unsigned numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
     unsigned numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;

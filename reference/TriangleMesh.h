@@ -22,6 +22,8 @@ public:
     using TriangleIterator =
         typename std::vector<std::array<unsigned, 3> >::const_iterator;
 
+    TriangleMesh()
+    {}
 
     TriangleMesh(
         std::vector<std::array<T, 3> > points,

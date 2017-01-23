@@ -52,27 +52,31 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
     unsigned yBeginIdx = image.yBeginIdx();
     unsigned zBeginIdx = image.zBeginIdx();
 
-    // The algorithm looks at a cube at a time, where the (i, i, i)th
-    // cube will contain the (i+1, i+1, i+1) vertex. So the last index
-    // needed is 1 minus the end index.
-    unsigned xEndIdxExtent = image.xEndIdx() - 1;
-    unsigned yEndIdxExtent = image.yEndIdx() - 1;
-    unsigned zEndIdxExtent = image.zEndIdx() - 1;
+    // The algorithm looks at a cube ata a time, where the (i, i, i)th
+    // cube will contain the (i+1, i+1, i+1) vertex. Since Image3D
+    // is used to access cube information, the EndIdx returns the
+    // one value past the last i such that i+1 is still within the image.
+    // So if the image contains 512 points in the x dimension, the
+    // valid index range is from 0 to 510. image.xEndIdx() returns one
+    // past that, so image.xEndIdx() returns 511.
+    unsigned xEndIdx = image.xEndIdx();
+    unsigned yEndIdx = image.yEndIdx();
+    unsigned zEndIdx = image.zEndIdx();
 
     // For each cube, determine whether or not the isosurface intersects
     // the given cube. If so, first find the cube configuration from a lookup
     // table. Then add the triangles of that cube configuration to points,
     // normals and triangles. Use pointMap to not add any duplicate points or
     // normals.
-    for (unsigned zidx = zBeginIdx; zidx != zEndIdxExtent; ++zidx)
+    for (unsigned zidx = zBeginIdx; zidx != zEndIdx; ++zidx)
     {
-        for (unsigned yidx = yBeginIdx; yidx != yEndIdxExtent; ++yidx)
+        for (unsigned yidx = yBeginIdx; yidx != yEndIdx; ++yidx)
         {
             // A buffer is used to improve cache efficency when retrieving
             // vertex values of each cube.
             auto buffer = image.createBuffer(xBeginIdx, yidx, zidx);
 
-            for (unsigned xidx = xBeginIdx; xidx != xEndIdxExtent; ++xidx)
+            for (unsigned xidx = xBeginIdx; xidx != xEndIdx; ++xidx)
             {
                 // For each x, y, z index, get the corresponding 8 scalar values
                 // of a cube with one corner being at the x, y, z index.
@@ -159,8 +163,6 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
             }
         }
     }
-    std::cout << indexTriangles.size() << std::endl; // TODO
-
     // points, normals and indexTriangles contain all the information
     // needed with respect to this new polygonal mesh, stored in TriangleMesh.
     return TriangleMesh<T>(points, normals, indexTriangles);
