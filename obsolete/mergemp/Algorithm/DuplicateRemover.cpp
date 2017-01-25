@@ -94,7 +94,7 @@ DuplicateRemover& DuplicateRemover::operator+=(const unsigned increment) {
 	return *this;
 }
 
-DuplicateRemover& DuplicateRemover::operator+=(const DuplicateRemover&threadMap) {
+DuplicateRemover& DuplicateRemover::operator+=(const DuplicateRemover& threadMap) {
 
 	dataArray.insert(dataArray.end(), threadMap.dataArray.begin(), threadMap.dataArray.end());
 

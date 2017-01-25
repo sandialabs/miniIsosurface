@@ -20,7 +20,8 @@ is done without any parallelization. The openmp implementation uses openMP.
 mantevo-marching-cubes makes use of C++11 features. Namely
 * `auto` type-specifier
 * range based for-loops
-* The `std::vector<T>::data()` member function
+* The `std::vector<T>::data` member function
+* The `std::vector<T>::emplace_back` member function
 * The `std::array<T, N>` class
 
 # Build Instructions #
@@ -65,6 +66,14 @@ Example usage with an isovalue of 1.0 and grainDim size of 1012:
 ```
 export OMP_NUM_THREADS=n
 ./openmp/openmp myImage.vtk outputMeshOpenMP.vtk 1.0 1012
+```
+
+## openmpDupFree ##
+When parallel versions are run, points along the boundaries may be accounted for multiple
+times. This version is the same as openmp except it removes those duplicate points.
+```
+export OMP_NUM_THREADS=n
+./openmpDupFree/openmpDupFree myImage.vtk outputMeshOpenMP_NoSame.vtk 1.0 1012
 ```
 
 ## SameContentsCheck ##
