@@ -49,14 +49,15 @@ make
 ```
 
 After compiling, the following executables will be created:
-* `./reference/reference`
+* `./serial/serial`
 * `./openmp/openmp`
+* `./openmpDupFree/openmpDupFree`
 * `./tests/SameContentsCheck`
 
-## reference ##
+## serial ##
 Example usage with an isovalue of 1.0:
 ```
-./reference/reference myImage.vtk outputMeshSerial.vtk 1.0
+./serial/serial myImage.vtk outputMeshSerial.vtk 1.0
 ```
 
 ## openmp ##

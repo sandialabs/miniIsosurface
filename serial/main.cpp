@@ -1,3 +1,10 @@
+/*
+ * serial/main.cpp
+ *
+ *  Created on: Jan 25, 2017
+ *      Author: dbourge
+ */
+
 #include <array>
 #include <vector>
 #include <unordered_map>
@@ -11,13 +18,13 @@
 #include "../util/util.h" // util::findCaseId, util::interpolate
 #include "../util/MarchingCubesTables.h"
 #include "../util/LoadImage.h"
-#include "SaveTriangleMesh.h" // TODO move to util
+#include "../util/SaveTriangleMesh.h"
 
 #include "../util/Image3D.h"
-#include "TriangleMesh.h" // TODO move to util
+#include "../util/TriangleMesh.h"
 
 template <typename T>
-TriangleMesh<T>
+util::TriangleMesh<T>
 MarchingCubes(util::Image3D<T> const& image, T const& isoval)
 {
     // The marching cubes algorithm creates a polygonal mesh to approximate an
@@ -165,7 +172,7 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
     }
     // points, normals and indexTriangles contain all the information
     // needed with respect to this new polygonal mesh, stored in TriangleMesh.
-    return TriangleMesh<T>(points, normals, indexTriangles);
+    return util::TriangleMesh<T>(points, normals, indexTriangles);
 }
 
 
@@ -186,7 +193,7 @@ int main(int argc, char* argv[])
     // loaded at vtkFile and the isoval of the surface to approximate. It's
     // output is a TriangleMesh which stores the mesh as a vector
     // of triangles.
-    TriangleMesh<float> polygonalMesh = MarchingCubes(image, isoval);
+    util::TriangleMesh<float> polygonalMesh = MarchingCubes(image, isoval);
 
     // End timing
     std::clock_t c_end = std::clock();
@@ -199,7 +206,7 @@ int main(int argc, char* argv[])
               << std::chrono::duration<double>(t_end-t_start).count()
               << " s\n";
 
-    saveTriangleMesh(polygonalMesh, outFile);
+    util::saveTriangleMesh(polygonalMesh, outFile);
 
     //TODO create similar YAML stuff
 }

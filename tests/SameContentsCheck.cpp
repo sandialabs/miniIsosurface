@@ -1,3 +1,10 @@
+/*
+ * tests/SameContentsCheck.cpp
+ *
+ *  Created on: Jan 25, 2017
+ *      Author: dbourge
+ */
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,7 +16,7 @@
 #include <algorithm>
 #include <unordered_map>
 
-#include "../reference/TriangleMesh.h"
+#include "../util/TriangleMesh.h"
 #include "../util/ConvertBuffer.h"
 
 // Quick test used to make sure that output files are exactly
@@ -39,7 +46,7 @@ bool checkSameFiles(char* fileA, char* fileB)
     return streamA.eof() && streamB.eof();
 }
 
-TriangleMesh<float> LoadFloatMesh(char* file)
+util::TriangleMesh<float> LoadFloatMesh(char* file)
 {
     std::vector<std::array<float, 3> > points;
     std::vector<std::array<unsigned, 3> > indexTriangles;
@@ -151,7 +158,7 @@ TriangleMesh<float> LoadFloatMesh(char* file)
         }
     }
 
-    return TriangleMesh<float>(points, normals, indexTriangles);
+    return util::TriangleMesh<float>(points, normals, indexTriangles);
 }
 
 template<typename T, std::size_t N>
@@ -170,7 +177,9 @@ template <typename T>
 using UnorderedMapArr =
     std::unordered_map<std::array<T, 3>, unsigned, arrayHash<T, 3> >;
 
-bool sameMesh(TriangleMesh<float> const& meshA, TriangleMesh<float> const& meshB)
+bool sameMesh(
+    util::TriangleMesh<float> const& meshA,
+    util::TriangleMesh<float> const& meshB)
 {
     if(meshA.numberOfTriangles() != meshB.numberOfTriangles())
     {
@@ -320,8 +329,8 @@ int main(int argc, char* argv[])
     char* fileA = argv[1];
     char* fileB = argv[2];
 
-    TriangleMesh<float> meshA = LoadFloatMesh(fileA);
-    TriangleMesh<float> meshB = LoadFloatMesh(fileB);
+    util::TriangleMesh<float> meshA = LoadFloatMesh(fileA);
+    util::TriangleMesh<float> meshB = LoadFloatMesh(fileB);
 
     if(sameMesh(meshA, meshB))
         std::cout << "The two meshes are equivalent." << std::endl;

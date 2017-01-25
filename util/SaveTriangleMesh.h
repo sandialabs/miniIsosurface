@@ -1,12 +1,12 @@
 /*
  * SaveTriangleMesh.h
  *
- *  Created on: January 18, 2017
+ *  Created on: Jan 18, 2017
  *      Author: dbourge, sjmunn
  */
 
-#ifndef REFERENCE_SAVETRIANGLEMESH_H_
-#define REFERENCE_SAVETRIANGLEMESH_H_
+#ifndef UTIL_SAVETRIANGLEMESH_H_
+#define UTIL_SAVETRIANGLEMESH_H_
 
 #include <iostream>
 #include <fstream>
@@ -17,6 +17,8 @@
 #include "../util/TypeInfo.h"
 
 #include "TriangleMesh.h"
+
+namespace util {
 
 template<typename T>
 void
@@ -32,7 +34,7 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
     unsigned ntriangles = mesh.numberOfTriangles();
     unsigned spacialDimensions = 3;
 
-    util::TypeInfo ti = util::createTemplateTypeInfo<T>();
+    TypeInfo ti = createTemplateTypeInfo<T>();
 
     stream << "# vtk DataFile Version 3.0" << std::endl;
     stream << "Isosurface Mesh" << std::endl;
@@ -54,7 +56,7 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
         for (int i = 0; i < 3; ++i)
         {
             *bufPointer = (*iter)[i];
-            util::flipEndianness(*bufPointer++);
+            flipEndianness(*bufPointer++);
         }
     }
     stream.write(&wbuff[0], wbuff.size());
@@ -70,11 +72,11 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
     for(TriangleIterator iter = triBegIter; iter != triEndIter; ++iter)
     {
         *ind = 3;
-        util::flipEndianness(*ind++);
+        flipEndianness(*ind++);
         for (int i = 0; i < 3; ++i)
         {
             *ind = (*iter)[i];
-            util::flipEndianness(*ind++);
+            flipEndianness(*ind++);
         }
     }
 
@@ -94,7 +96,7 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
         for (int i = 0; i < 3; ++i)
         {
             *bufPointer = (*iter)[i];
-            util::flipEndianness(*bufPointer++);
+            flipEndianness(*bufPointer++);
         }
     }
 
@@ -104,6 +106,8 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
     stream << std::endl;
 
     stream.close();
+}
+
 }
 
 #endif

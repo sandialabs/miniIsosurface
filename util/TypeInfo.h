@@ -1,3 +1,10 @@
+/*
+ * TypeInfo.h
+ *
+ *  Created on: Jan 18, 2017
+ *      Author: dbourge, sjmunn
+ */
+
 #ifndef __TypeInfo_h
 #define __TypeInfo_h
 

@@ -1,4 +1,4 @@
-set(target reference)
+set(target serial)
 
 set(srcs
     ../util/Image3D.cpp

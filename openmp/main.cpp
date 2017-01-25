@@ -1,3 +1,10 @@
+/*
+ * openmp/main.cpp
+ *
+ *  Created on: Jan 25, 2017
+ *      Author: dbourge
+ */
+
 #include <array>
 #include <vector>
 #include <unordered_map>
@@ -12,10 +19,10 @@
 #include "../util/MarchingCubesTables.h"
 
 #include "../util/LoadImage.h"
-#include "../reference/SaveTriangleMesh.h" // Same as at reference TODO
+#include "../util/SaveTriangleMesh.h"
 
 #include "../util/Image3D.h"
-#include "../reference/TriangleMesh.h"     // Same as at reference
+#include "../util/TriangleMesh.h"
 
 template <typename T>
 void
@@ -133,7 +140,7 @@ sectionOfMarchingCubes(
 }
 
 template <typename T>
-TriangleMesh<T>
+util::TriangleMesh<T>
 MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& grainDim)
 {
     // The marching cubes algorithm creates a polygonal mesh to approximate an
@@ -259,7 +266,7 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
 
     // points, normals and indexTriangles contain all the information
     // needed with respect to this new polygonal mesh, stored in TriangleMesh.
-    return TriangleMesh<T>(points, normals, indexTriangles);
+    return util::TriangleMesh<T>(points, normals, indexTriangles);
 }
 
 int main(int argc, char* argv[])
@@ -288,7 +295,7 @@ int main(int argc, char* argv[])
     // loaded at vtkFile and the isoval of the surface to approximate. It's
     // output is a TriangleMesh which stores the mesh as a vector
     // of triangles.
-    TriangleMesh<float> polygonalMesh = MarchingCubes(image, isoval, grainDim);
+    util::TriangleMesh<float> polygonalMesh = MarchingCubes(image, isoval, grainDim);
 
     // End timing
     std::clock_t c_end = std::clock();
@@ -301,5 +308,5 @@ int main(int argc, char* argv[])
               << std::chrono::duration<double>(t_end-t_start).count()
               << " s\n";
 
-    saveTriangleMesh(polygonalMesh, outFile);
+    util::saveTriangleMesh(polygonalMesh, outFile);
 }

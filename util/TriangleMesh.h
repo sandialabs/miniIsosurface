@@ -11,6 +11,8 @@
 #include <vector>
 #include <array>
 
+namespace util {
+
 template <typename T>
 class TriangleMesh
 {
@@ -79,5 +81,7 @@ private:
     std::vector<std::array<T, 3> > normals;
     std::vector<std::array<unsigned, 3> > indexTriangles;
 };
+
+}
 
 #endif

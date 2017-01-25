@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "../reference/TriangleMesh.h"     // Same as at reference
+#include "../util/TriangleMesh.h"
 
 namespace util {
 
