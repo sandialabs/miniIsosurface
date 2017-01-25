@@ -7,7 +7,7 @@ add_subdirectory(tests)
 add_subdirectory(serial)
 add_subdirectory(openmp)
 add_subdirectory(openmpDupFree)
-#add_subdirectory(mpi)
+add_subdirectory(mpi)
 
 
 

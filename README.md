@@ -52,6 +52,7 @@ After compiling, the following executables will be created:
 * `./serial/serial`
 * `./openmp/openmp`
 * `./openmpDupFree/openmpDupFree`
+* `./mpi/mpi`
 * `./tests/SameContentsCheck`
 
 ## serial ##
@@ -75,6 +76,13 @@ times. This version is the same as openmp except it removes those duplicate poin
 ```
 export OMP_NUM_THREADS=n
 ./openmpDupFree/openmpDupFree myImage.vtk outputMeshOpenMP_NoSame.vtk 1.0 1012
+```
+
+## mpi ##
+mpirun can be used to launch the executable. The -np flag tells mpi how many
+processes to run.
+```
+mpirun -np numProcesses ./mpi/mpi ~/dataGen.vtk ~/mpi.vtk 1.0 1012
 ```
 
 ## SameContentsCheck ##
