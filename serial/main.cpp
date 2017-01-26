@@ -11,23 +11,23 @@
 
 #include <string>
 #include <string.h>
-
 #include <cstdlib>
 
 #include <ctime>
 #include <chrono>
 #include <iomanip>
 
-#include "../util/util.h" // util::findCaseId, util::interpolate
-#include "../util/MarchingCubesTables.h"
+#include "../util/Image3D.h"
+#include "../util/TriangleMesh.h"
+
 #include "../util/LoadImage.h"
 #include "../util/SaveTriangleMesh.h"
 
+#include "../util/util.h" // util::findCaseId, util::interpolate
+#include "../util/MarchingCubesTables.h"
+
 #include "../util/Timer.h"
 #include "../mantevo/YAML_Doc.hpp"
-
-#include "../util/Image3D.h"
-#include "../util/TriangleMesh.h"
 
 template <typename T>
 util::TriangleMesh<T>
@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
             std::size_t pos = wholeFile.rfind("/");
             if(pos == std::string::npos)
             {
-                yamlDirectory = "";
+                yamlDirectory = "./";
                 yamlFileName = wholeFile;
             }
             else
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
     YAML_Doc doc("Marching Cubes", "0.2", yamlDirectory, yamlFileName);
 
     // Add information related to this run to doc.
-    doc.add("Marching Cubes Algorithm", "SERIAL");
+    doc.add("Marching Cubes Algorithm", "serial");
     doc.add("Volume image data file path", vtkFile);
     doc.add("Polygonal mesh output file", outFile);
     doc.add("Isoval", isoval);
@@ -256,9 +256,9 @@ int main(int argc, char* argv[])
     // Load the image file
     util::Image3D<float> image = util::loadImage<float>(vtkFile);
 
-    doc.add("File x-dimension", static_cast<std::size_t>(image.xdimension()));
-    doc.add("File y-dimension", static_cast<std::size_t>(image.ydimension()));
-    doc.add("File z-dimension", static_cast<std::size_t>(image.zdimension()));
+    doc.add("File x-dimension", image.xdimension());
+    doc.add("File y-dimension", image.ydimension());
+    doc.add("File z-dimension", image.zdimension());
 
     // Time the output. Timer's constructor starts timing.
     util::Timer runTime;

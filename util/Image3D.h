@@ -11,6 +11,8 @@
 #include <array>
 #include <vector>
 
+using std::size_t;
+
 namespace util {
 
 template <typename T>
@@ -67,9 +69,9 @@ public:
     unsigned yEndIdx() const { return indexEnd[1]; }
     unsigned zEndIdx() const { return indexEnd[2]; }
 
-    unsigned xdimension() const { return globalDim[0]; }
-    unsigned ydimension() const { return globalDim[1]; }
-    unsigned zdimension() const { return globalDim[2]; }
+    size_t xdimension() const { return globalDim[0]; }
+    size_t ydimension() const { return globalDim[1]; }
+    size_t zdimension() const { return globalDim[2]; }
 
 private:
     std::array<T, 3>

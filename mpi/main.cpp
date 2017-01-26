@@ -9,23 +9,31 @@
 #include <vector>
 #include <unordered_map>
 
+#include <string>
+#include <string.h>
 #include <cstdlib>
 
 #include <ctime>
 #include <chrono>
 #include <iomanip>
 
-#include "../util/util.h"     // for findCaseId and interpolate
-#include "../util/MarchingCubesTables.h"
-#include "../util/TypeInfo.h"
+#include "../util/Image3D.h"
+#include "../util/TriangleMesh.h"
 
 #include "../util/LoadImage.h"
 #include "../util/SaveTriangleMesh.h"
 
-#include "../util/Image3D.h"
-#include "../util/TriangleMesh.h"
+#include "../util/util.h"     // for findCaseId and interpolate
+#include "../util/TypeInfo.h"
+#include "../util/MarchingCubesTables.h"
 
-#include "mpi.h"
+#include "../util/Timer.h"
+#include "../mantevo/YAML_Doc.hpp"
+
+#include "mpi_size_type.h"
+#include <mpi.h>
+
+using std::size_t;
 
 template <typename T>
 void
@@ -267,7 +275,8 @@ loadImageSections(const char* file, unsigned const& grainDim)
         // Let w be either x, y, or z. wBegIdx/wEndIdx and wDataBeg/wDataEnd
         // will most likely refer to different ranges. wBegIdx/wEndIdx defines
         // the range of indicies that image.createBuffer and image.getGradCube
-        // have valid inputs.
+        // have valid inputs, whereas wDataBeg/wDataEnd are ranges of the
+        // ghost cells.
         //
         // Calling getGradCube with (xBegIdx, yBegIdx, zEndIdx-1) will try to
         // access vertex value data at (xBegIdx-1, yBegIdx, zEndIdx-1) as well
@@ -378,44 +387,203 @@ MarchingCubes(std::vector<util::Image3D<T> > const& images, T const& isoval)
 
 int main(int argc, char* argv[])
 {
-    MPI::Init(argc, argv);
-
-    char* vtkFile = argv[1];
-    std::string outFile = argv[2];
-    float isoval = atof(argv[3]);
+    float isoval;
+    bool isovalSet = false;
+    char* vtkFile = NULL;
+    char* outFile = NULL;
+    std::string yamlDirectory = "";
+    std::string yamlFileName  = "";
 
     // To control the granularity of the parallel execution, grainDim is passed
     // to the algorithm. grainDim is the largest number of cubes to be
     // processed in each dimension.
-    unsigned grainDim = 256;
-    if(argc == 5)
+    std::size_t grainDim = 256;
+
+    // Read command line arguments
+    for(int i=0; i<argc; i++)
     {
-        grainDim = atoi(argv[4]);
+        if( (strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "-input_file") == 0))
+        {
+            vtkFile = argv[++i];
+        }
+        else if( (strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "-output_file") == 0))
+        {
+            outFile = argv[++i];
+        }
+        else if( (strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "-isoval") == 0))
+        {
+            isovalSet = true;
+            isoval = atof(argv[++i]);
+        }
+        else if( (strcmp(argv[i], "-g") == 0) || (strcmp(argv[i], "-grain_dim") == 0))
+        {
+            grainDim = std::stoul(argv[++i]);
+        }
+        else if( (strcmp(argv[i], "-y") == 0) || (strcmp(argv[i], "-yaml_output_file") == 0))
+        {
+            std::string wholeFile(argv[++i]);
+
+            size_t pos = wholeFile.rfind("/");
+            if(pos == std::string::npos)
+            {
+                yamlDirectory = "./";
+                yamlFileName = wholeFile;
+            }
+            else
+            {
+                yamlDirectory = wholeFile.substr(0, pos + 1);
+                yamlFileName = wholeFile.substr(pos + 1);
+            }
+        }
+        else if( (strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-help") == 0))
+        {
+            std::cout <<
+                "Serial Marching Cubes Options:"  << std::endl <<
+                "  -input_file (-i)"              << std::endl <<
+                "  -output_file (-o)"             << std::endl <<
+                "  -isoval (-v)"                  << std::endl <<
+                "  -grain_dim (-g), default 256"  << std::endl <<
+                "  -yaml_output_file (-y)"        << std::endl <<
+                "  -help (-h)"                    << std::endl;
+            return 0;
+        }
     }
 
+    if(isovalSet == false || vtkFile == NULL || outFile == NULL)
+    {
+        std::cout << "Error: isoval, input_file and output_file must be set." << std::endl <<
+                     "Try -help" << std::endl;
+        return 0;
+    }
+
+    // Initialize MPI
+    MPI::Init(argc, argv);
+
+    int pid = MPI::COMM_WORLD.Get_rank();
+    int nProcesses = MPI::COMM_WORLD.Get_size();
+
+    // Create a yamlDoc. If yamlDirectory and yamlFileName weren't assigned,
+    // YAML_Doc will create a file at in the current directory with a
+    // timestamp on it.
+    //
+    // This file won't be created unless pid is 0.
+    YAML_Doc doc("Marching Cubes", "0.2", yamlDirectory, yamlFileName);
+
+    if(pid == 0)
+    {
+        // Add information related to this run to doc.
+        doc.add("Marching Cubes Algorithm", "mpi");
+        doc.add("Volume image data file path", vtkFile);
+        doc.add("Polygonal mesh output file", outFile);
+        doc.add("Isoval", isoval);
+        doc.add("Grain Dimensions", grainDim);
+    }
+
+    // Each image in images will be used to run the algorithm for a section.
+    // Each processor is in charge of running the algorithm on an evenly
+    // distributed number of sections.
     std::vector<util::Image3D<float> > images =
         loadImageSections<float>(vtkFile, grainDim);
 
-    // Time the output TODO
-    // std::clock_t c_start = std::clock();
-    // auto t_start = std::chrono::high_resolution_clock::now();
+    if (pid == 0)
+    {
+        // images should never be empty on the 0th processer.
+        std::size_t xdim = images[0].xdimension();
+        std::size_t ydim = images[0].ydimension();
+        std::size_t zdim = images[0].zdimension();
+        doc.add("File x-dimension", xdim);
+        doc.add("File y-dimension", ydim);
+        doc.add("File z-dimension", zdim);
+    }
 
+    // Time the output. Timer's constructor starts timing.
+    util::Timer runTime;
+
+    // MarchingCubes runs the algorithm. As inputs it takes the image
+    // loaded at vtkFile and the isoval of the surface to approximate. It's
+    // output is a TriangleMesh which stores the mesh as a vector
+    // of triangles.
     util::TriangleMesh<float> polygonalMesh = MarchingCubes(images, isoval);
 
     // End timing
-    // std::clock_t c_end = std::clock();
-    // auto t_end = std::chrono::high_resolution_clock::now();
+    runTime.stop();
 
-    // Print the output
-    //std::cout << std::fixed << std::setprecision(2) << "CPU time used: "
-    //          << (c_end-c_start) / (1.0 * CLOCKS_PER_SEC) << " s\n"
-    //          << "Wall clock time passed: "
-    //          << std::chrono::duration<double>(t_end-t_start).count()
-    //          << " s\n";
+    // Gather the following information onto process zero for output
+    size_t numSectionsHere = images.size();
+    size_t numVertsHere = polygonalMesh.numberOfVertices();
+    size_t numTrisHere = polygonalMesh.numberOfTriangles();
+    double CPUticksHere = runTime.getTotalTicks();
+    double CPUtimeHere = runTime.getCPUtime();
+    double wallTimeHere = runTime.getWallTime();
 
-    int pid = MPI::COMM_WORLD.Get_rank();
-	outFile = outFile + "." + std::to_string(static_cast<long long int>(pid));
-    util::saveTriangleMesh(polygonalMesh, outFile.c_str());
+    // The size of the vectors should be 0 for all processes except the 0 process
+    int gatherSize = 0;
+    if(pid == 0)
+    {
+        gatherSize = nProcesses;
+    }
 
+    std::vector<size_t> numSections(gatherSize);
+    std::vector<size_t> numVerts(gatherSize);
+    std::vector<size_t> numTris(gatherSize);
+    std::vector<double> CPUticks(gatherSize);
+    std::vector<double> CPUtimes(gatherSize);
+    std::vector<double> wallTimes(gatherSize);
+
+    MPI_Gather(&numSectionsHere, 1, my_MPI_SIZE_T, numSections.data(), 1, my_MPI_SIZE_T, 0,
+                MPI_COMM_WORLD);
+     MPI_Gather(&numVertsHere, 1, my_MPI_SIZE_T, numVerts.data(), 1, my_MPI_SIZE_T, 0,
+                MPI_COMM_WORLD);
+     MPI_Gather(&numTrisHere, 1, my_MPI_SIZE_T, numTris.data(), 1, my_MPI_SIZE_T, 0,
+                MPI_COMM_WORLD);
+    MPI_Gather(&CPUticksHere, 1, MPI_DOUBLE, CPUticks.data(), 1, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
+    MPI_Gather(&CPUtimeHere, 1, MPI_DOUBLE, CPUtimes.data(), 1, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
+    MPI_Gather(&wallTimeHere, 1, MPI_DOUBLE, wallTimes.data(), 1, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
+
+    // Only create the YAML file on the process zero
+    if(pid == 0)
+    {
+        size_t totalSections = 0;
+        size_t totalTriangles = 0;
+        double totalTicks = 0.0;
+        double totalCPU = 0.0;
+        double maxWallTime = 0.0;
+
+        for(int i = 0; i != nProcesses; ++i)
+        {
+            std::string process = "Process " + std::to_string(i);
+
+            doc.add(process, "");
+
+            doc.get(process)->add("Number of sections", numSections[i]);
+            doc.get(process)->add("Number of vertices in mesh", numVerts[i]);
+            doc.get(process)->add("Number of triangles in mesh", numTris[i]);
+            doc.get(process)->add("CPU Time (clicks)", CPUticks[i]);
+            doc.get(process)->add("CPU Time (seconds)", CPUtimes[i]);
+            doc.get(process)->add("Wall Time (seconds)", wallTimes[i]);
+
+            totalSections += numSections[i];
+            totalTriangles += numTris[i];
+            totalTicks += CPUticks[i];
+            totalCPU += CPUtimes[i];
+            maxWallTime = std::max(maxWallTime, wallTimes[i]);
+        }
+        doc.add("Total number of sections", totalSections);
+        doc.add("Total number of triangles in mesh", totalTriangles);
+        doc.add("Total CPU time (clicks)", totalTicks);
+        doc.add("Total CPU time (seconds)", totalCPU);
+        doc.add("Max wall time (seconds)", maxWallTime);
+
+        std::cout << doc.generateYAML();
+    }
+
+    // Write the output file, appending the process id number
+    std::string outFilePid = std::string(outFile) + "." + std::to_string(pid);
+    util::saveTriangleMesh(polygonalMesh, outFilePid.c_str());
+
+    // And don't forget to tell MPI that everything is done!
     MPI::Finalize();
 }

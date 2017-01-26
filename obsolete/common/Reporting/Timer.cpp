@@ -48,7 +48,7 @@ void Timer::pause(void) {
 
 	totalWallTime += (currentWallSeconds - startWallSeconds);
 	totalWallTime +=
-			(currentWallNanoseconds - currentWallNanoseconds) / 1000000000.0;
+			(currentWallNanoseconds - startWallNanoseconds) / 1000000000.0;
 }
 
 void Timer::resume(void) {

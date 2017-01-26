@@ -2,6 +2,9 @@ set(target openmpDupFree)
 
 set(srcs
     ../util/Image3D.cpp
+    ../util/Timer.cpp
+    ../mantevo/YAML_Element.cpp
+    ../mantevo/YAML_Doc.cpp
     )
 
 find_package(OpenMP)

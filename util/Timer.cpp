@@ -7,6 +7,8 @@
 
 #include "Timer.h"
 
+#include <iostream>
+
 namespace util {
 
 Timer::Timer() {
@@ -42,15 +44,15 @@ void Timer::start() {
 void Timer::pause(void) {
     TimeValue_t currentTicksCPU, currentWallSeconds, currentWallNanoseconds;
     getCurrentTimeValues(currentTicksCPU,
-                                             currentWallSeconds,
-                                             currentWallNanoseconds);
+                         currentWallSeconds,
+                         currentWallNanoseconds);
 
     totalTicksCPU = currentTicksCPU-startTicksCPU;
     totalCPUtime += (static_cast<double>(totalTicksCPU))/CLOCKS_PER_SEC;
 
     totalWallTime += (currentWallSeconds - startWallSeconds);
     totalWallTime +=
-            (currentWallNanoseconds - currentWallNanoseconds) / 1000000000.0;
+            (currentWallNanoseconds - startWallNanoseconds) / 1000000000.0;
 }
 
 void Timer::resume(void) {
