@@ -42,8 +42,8 @@ sectionOfMarchingCubes(
     util::Image3D<T> const&                 image,
     std::vector<std::array<T, 3> >&         points,         // reference
     std::vector<std::array<T, 3> >&         normals,        // reference
-    std::vector<std::array<unsigned, 3> >&  indexTriangles, // reference
-    std::unordered_map<unsigned, unsigned>& pointMap)       // reference
+    std::vector<std::array<size_t, 3> >&  indexTriangles, // reference
+    std::unordered_map<size_t, size_t>& pointMap)       // reference
 {
     // For each cube, determine whether or not the isosurface intersects
     // the given cube. If so, first find the cube configuration from a lookup
@@ -51,24 +51,24 @@ sectionOfMarchingCubes(
     // normals and triangles. Use pointMap to not add any duplicate to
     // points or normals.
 
-    unsigned xbeg = image.xBeginIdx();
-    unsigned ybeg = image.yBeginIdx();
-    unsigned zbeg = image.zBeginIdx();
+    size_t xbeg = image.xBeginIdx();
+    size_t ybeg = image.yBeginIdx();
+    size_t zbeg = image.zBeginIdx();
 
-    unsigned xend = image.xEndIdx();
-    unsigned yend = image.yEndIdx();
-    unsigned zend = image.zEndIdx();
+    size_t xend = image.xEndIdx();
+    size_t yend = image.yEndIdx();
+    size_t zend = image.zEndIdx();
 
-    unsigned ptIdx = points.size();
-    for(unsigned zidx = zbeg; zidx != zend; ++zidx)
+    size_t ptIdx = points.size();
+    for(size_t zidx = zbeg; zidx != zend; ++zidx)
     {
-        for(unsigned yidx = ybeg; yidx != yend; ++yidx)
+        for(size_t yidx = ybeg; yidx != yend; ++yidx)
         {
             // A buffer is used to improve cache efficency when retrieving
             // vertex values of each cube.
             auto buffer = image.createBuffer(xbeg, yidx, zidx);
 
-            for(unsigned xidx = xbeg; xidx != xend; ++xidx)
+            for(size_t xidx = xbeg; xidx != xend; ++xidx)
             {
                 // For each x, y, z index, get the corresponding 8 scalar values
                 // of a cube with one corner being at the x, y, z index.
@@ -108,10 +108,10 @@ sectionOfMarchingCubes(
                 for(; *triEdges != -1; triEdges += 3)
                 {
                     // tri contains indices to points and normals
-                    std::array<unsigned, 3> tri;
+                    std::array<size_t, 3> tri;
                     for(int i = 0; i != 3; ++i)
                     {
-                        unsigned globalEdgeIndex =
+                        size_t globalEdgeIndex =
                             image.getGlobalEdgeIndex(xidx, yidx, zidx, triEdges[i]);
 
                         if(pointMap.find(globalEdgeIndex) != pointMap.end())
@@ -160,11 +160,11 @@ sectionOfMarchingCubes(
 template <typename T>
 std::vector<T>
 readSectionData(
-    unsigned xbeg, unsigned ybeg, unsigned zbeg,
-    unsigned xend, unsigned yend, unsigned zend,
+    size_t xbeg, size_t ybeg, size_t zbeg,
+    size_t xend, size_t yend, size_t zend,
     const char*                         file,
     util::TypeInfo const&               ti,
-    std::array<unsigned, 3> const&      globalDim)
+    std::array<size_t, 3> const&      globalDim)
 {
     std::ifstream stream(file);
     if (!stream)
@@ -174,30 +174,30 @@ readSectionData(
     // ahead of all of the header information.
     util::skipHeader(stream);
 
-    unsigned nPointsIgnore =
+    size_t nPointsIgnore =
         xbeg + (ybeg * globalDim[0]) + (zbeg * globalDim[0] * globalDim[1]);
 
     // stream is taken by reference. Place stream nPointsIgnore ahead where
     // each point is of size ti.size().
     util::streamIgnore(stream, nPointsIgnore, ti.size());
 
-    unsigned nXpoints = xend - xbeg;
-    unsigned nYpoints = yend - ybeg;
-    unsigned nZpoints = zend - zbeg;
-    unsigned nPointsInSection = nXpoints * nYpoints * nZpoints;
+    size_t nXpoints = xend - xbeg;
+    size_t nYpoints = yend - ybeg;
+    size_t nZpoints = zend - zbeg;
+    size_t nPointsInSection = nXpoints * nYpoints * nZpoints;
 
-    unsigned nXpointsIgnore = globalDim[0] - nXpoints;
-    unsigned nYpointsIgnore = globalDim[0] * (globalDim[1] - nYpoints);
+    size_t nXpointsIgnore = globalDim[0] - nXpoints;
+    size_t nYpointsIgnore = globalDim[0] * (globalDim[1] - nYpoints);
 
     std::size_t readXlineSize = nXpoints * ti.size();
     std::size_t totalReadSize = nPointsInSection * ti.size();
 
     std::vector<char> rbufRead(totalReadSize);
 
-    unsigned imageDataIdx = 0;
-    for(unsigned iZline = 0; iZline < nZpoints; ++iZline)
+    size_t imageDataIdx = 0;
+    for(size_t iZline = 0; iZline < nZpoints; ++iZline)
     {
-        for(unsigned iYline = 0; iYline < nYpoints; ++iYline)
+        for(size_t iYline = 0; iYline < nYpoints; ++iYline)
         {
             stream.read(&rbufRead[imageDataIdx], readXlineSize);
             util::streamIgnore(stream, nXpointsIgnore, ti.size());
@@ -214,44 +214,44 @@ readSectionData(
 
 template <typename T>
 std::vector<util::Image3D<T> >
-loadImageSections(const char* file, unsigned const& grainDim)
+loadImageSections(const char* file, size_t const& grainDim)
 {
     std::ifstream stream(file);
     if (!stream)
         throw util::file_not_found(file);
 
-    std::array<unsigned, 3> dim;
+    std::array<size_t, 3> dim;
     std::array<T, 3> spacing;
     std::array<T, 3> zeroPos;
-    unsigned npoints;
+    size_t npoints;
     util::TypeInfo ti;
 
     // These variables are all taken by reference
     loadHeader(stream, dim, spacing, zeroPos, npoints, ti);
     stream.close();
 
-    unsigned xBeginIdx = 0;
-    unsigned yBeginIdx = 0;
-    unsigned zBeginIdx = 0;
+    size_t xBeginIdx = 0;
+    size_t yBeginIdx = 0;
+    size_t zBeginIdx = 0;
 
-    unsigned xEndIdxExtent = dim[0] - 1;
-    unsigned yEndIdxExtent = dim[1] - 1;
-    unsigned zEndIdxExtent = dim[2] - 1;
+    size_t xEndIdxExtent = dim[0] - 1;
+    size_t yEndIdxExtent = dim[1] - 1;
+    size_t zEndIdxExtent = dim[2] - 1;
 
-    unsigned numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
-    unsigned numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
-    unsigned numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
 
-    unsigned numSections = numSectX * numSectY * numSectZ;
-    unsigned numSectionsPerPage = numSectX * numSectY;
+    size_t numSections = numSectX * numSectY * numSectZ;
+    size_t numSectionsPerPage = numSectX * numSectY;
 
     int pid = MPI::COMM_WORLD.Get_rank();
     int nProcesses = MPI::COMM_WORLD.Get_size();
 
-    unsigned sectPerProcess = (numSections + nProcesses - 1) / nProcesses;
-    unsigned split = nProcesses + numSections - sectPerProcess * nProcesses;
+    size_t sectPerProcess = (numSections + nProcesses - 1) / nProcesses;
+    size_t split = nProcesses + numSections - sectPerProcess * nProcesses;
 
-    unsigned startSectNum, endSectNum;
+    size_t startSectNum, endSectNum;
     if (pid < split)
     {
         startSectNum = pid * sectPerProcess;
@@ -265,12 +265,12 @@ loadImageSections(const char* file, unsigned const& grainDim)
     }
 
     std::vector<util::Image3D<T> > images;
-    for(unsigned i = startSectNum; i != endSectNum; ++i)
+    for(size_t i = startSectNum; i != endSectNum; ++i)
     {
         // Determine the coordinates of this section.
-        unsigned xSectIdx = (i % numSectionsPerPage) % numSectX;
-        unsigned ySectIdx = (i % numSectionsPerPage) / numSectX;
-        unsigned zSectIdx = (i / numSectionsPerPage);
+        size_t xSectIdx = (i % numSectionsPerPage) % numSectX;
+        size_t ySectIdx = (i % numSectionsPerPage) / numSectX;
+        size_t zSectIdx = (i / numSectionsPerPage);
 
         // Let w be either x, y, or z. wBegIdx/wEndIdx and wDataBeg/wDataEnd
         // will most likely refer to different ranges. wBegIdx/wEndIdx defines
@@ -313,21 +313,21 @@ loadImageSections(const char* file, unsigned const& grainDim)
         //   The third section:
         //     xDataBeg = 199, xDataEnd = 300
         //     xBegIdx = 200, xEndIdx = 299
-        unsigned xBegIdx = xSectIdx * grainDim;
-        unsigned yBegIdx = ySectIdx * grainDim;
-        unsigned zBegIdx = zSectIdx * grainDim;
+        size_t xBegIdx = xSectIdx * grainDim;
+        size_t yBegIdx = ySectIdx * grainDim;
+        size_t zBegIdx = zSectIdx * grainDim;
 
-        unsigned xEndIdx = std::min(xBegIdx + grainDim, xEndIdxExtent);
-        unsigned yEndIdx = std::min(yBegIdx + grainDim, yEndIdxExtent);
-        unsigned zEndIdx = std::min(zBegIdx + grainDim, zEndIdxExtent);
+        size_t xEndIdx = std::min(xBegIdx + grainDim, xEndIdxExtent);
+        size_t yEndIdx = std::min(yBegIdx + grainDim, yEndIdxExtent);
+        size_t zEndIdx = std::min(zBegIdx + grainDim, zEndIdxExtent);
 
-        unsigned xDataBeg = xBegIdx == 0   ?   0   :   xBegIdx - 1;
-        unsigned yDataBeg = yBegIdx == 0   ?   0   :   yBegIdx - 1;
-        unsigned zDataBeg = zBegIdx == 0   ?   0   :   zBegIdx - 1;
+        size_t xDataBeg = xBegIdx == 0   ?   0   :   xBegIdx - 1;
+        size_t yDataBeg = yBegIdx == 0   ?   0   :   yBegIdx - 1;
+        size_t zDataBeg = zBegIdx == 0   ?   0   :   zBegIdx - 1;
 
-        unsigned xDataEnd = std::min(xEndIdx + 2, dim[0]);
-        unsigned yDataEnd = std::min(yEndIdx + 2, dim[1]);
-        unsigned zDataEnd = std::min(zEndIdx + 2, dim[2]);
+        size_t xDataEnd = std::min(xEndIdx + 2, dim[0]);
+        size_t yDataEnd = std::min(yEndIdx + 2, dim[1]);
+        size_t zDataEnd = std::min(zEndIdx + 2, dim[2]);
 
         std::vector<T> imageData = readSectionData<T>(
             xDataBeg, yDataBeg, zDataBeg, xDataEnd, yDataEnd, zDataEnd,
@@ -337,10 +337,10 @@ loadImageSections(const char* file, unsigned const& grainDim)
             imageData,
             spacing,
             zeroPos,
-            std::array<unsigned, 3>({xBegIdx, yBegIdx, zBegIdx}),
-            std::array<unsigned, 3>({xEndIdx, yEndIdx, zEndIdx}),
-            std::array<unsigned, 3>({xDataBeg, yDataBeg, zDataBeg}),
-            std::array<unsigned, 3>({xDataEnd, yDataEnd, zDataEnd}),
+            std::array<size_t, 3>({xBegIdx, yBegIdx, zBegIdx}),
+            std::array<size_t, 3>({xEndIdx, yEndIdx, zEndIdx}),
+            std::array<size_t, 3>({xDataBeg, yDataBeg, zDataBeg}),
+            std::array<size_t, 3>({xDataEnd, yDataEnd, zDataEnd}),
             dim);
     }
 
@@ -353,9 +353,9 @@ MarchingCubes(std::vector<util::Image3D<T> > const& images, T const& isoval)
 {
     std::vector<std::array<T, 3> > processPoints;
     std::vector<std::array<T, 3> > processNormals;
-    std::vector<std::array<unsigned, 3> > processIndexTriangles;
+    std::vector<std::array<size_t, 3> > processIndexTriangles;
 
-    std::unordered_map<unsigned, unsigned> processPointMap;
+    std::unordered_map<size_t, size_t> processPointMap;
 
     for(util::Image3D<T> const& image: images)
     {

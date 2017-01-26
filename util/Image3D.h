@@ -28,11 +28,11 @@ public:
     Image3D(std::vector<T> data,
             std::array<T, 3> spacing,
             std::array<T, 3> zeroPos,
-            std::array<unsigned, 3> indexBeg,
-            std::array<unsigned, 3> indexEnd,
-            std::array<unsigned, 3> dataBeg,
-            std::array<unsigned, 3> dataEnd,
-            std::array<unsigned, 3> globalDim)
+            std::array<size_t, 3> indexBeg,
+            std::array<size_t, 3> indexEnd,
+            std::array<size_t, 3> dataBeg,
+            std::array<size_t, 3> dataEnd,
+            std::array<size_t, 3> globalDim)
       : data(data), spacing(spacing), zeroPos(zeroPos),
         indexBeg(indexBeg), indexEnd(indexEnd),
         dataBeg(dataBeg), dataEnd(dataEnd),
@@ -44,7 +44,7 @@ public:
     Image3D(std::vector<T> data,
             std::array<T, 3> spacing,
             std::array<T, 3> zeroPos,
-            std::array<unsigned, 3> dimensions)
+            std::array<size_t, 3> dimensions)
       : data(data), spacing(spacing), zeroPos(zeroPos),
         indexBeg({0, 0, 0}),
         indexEnd({dimensions[0] - 1, dimensions[1]-1, dimensions[2]-1}),
@@ -53,21 +53,21 @@ public:
     {}
 
     std::array<std::array<T, 3>, 8>
-    getPosCube(unsigned xidx, unsigned yidx, unsigned zidx) const;
+    getPosCube(size_t xidx, size_t yidx, size_t zidx) const;
 
     std::array<std::array<T, 3>, 8>
-    getGradCube(unsigned xidx, unsigned yidx, unsigned zidx) const;
+    getGradCube(size_t xidx, size_t yidx, size_t zidx) const;
 
-    unsigned
-    getGlobalEdgeIndex(unsigned xidx, unsigned yidx, unsigned zidx,
-                 unsigned cubeEdgeIdx) const;
+    size_t
+    getGlobalEdgeIndex(size_t xidx, size_t yidx, size_t zidx,
+                 size_t cubeEdgeIdx) const;
 
-    unsigned xBeginIdx() const { return indexBeg[0]; }
-    unsigned yBeginIdx() const { return indexBeg[1]; }
-    unsigned zBeginIdx() const { return indexBeg[2]; }
-    unsigned xEndIdx() const { return indexEnd[0]; }
-    unsigned yEndIdx() const { return indexEnd[1]; }
-    unsigned zEndIdx() const { return indexEnd[2]; }
+    size_t xBeginIdx() const { return indexBeg[0]; }
+    size_t yBeginIdx() const { return indexBeg[1]; }
+    size_t zBeginIdx() const { return indexBeg[2]; }
+    size_t xEndIdx() const { return indexEnd[0]; }
+    size_t yEndIdx() const { return indexEnd[1]; }
+    size_t zEndIdx() const { return indexEnd[2]; }
 
     size_t xdimension() const { return globalDim[0]; }
     size_t ydimension() const { return globalDim[1]; }
@@ -75,16 +75,16 @@ public:
 
 private:
     std::array<T, 3>
-    computeGradient(unsigned xidx, unsigned yidx, unsigned zidx) const;
+    computeGradient(size_t xidx, size_t yidx, size_t zidx) const;
 
-    unsigned
-    edgeIndexXaxis(unsigned x, unsigned y, unsigned z) const;
+    size_t
+    edgeIndexXaxis(size_t x, size_t y, size_t z) const;
 
-    unsigned
-    edgeIndexYaxis(unsigned x, unsigned y, unsigned z) const;
+    size_t
+    edgeIndexYaxis(size_t x, size_t y, size_t z) const;
 
-    unsigned
-    edgeIndexZaxis(unsigned x, unsigned y, unsigned z) const;
+    size_t
+    edgeIndexZaxis(size_t x, size_t y, size_t z) const;
 
     class Image3DBuffer
     {
@@ -94,24 +94,24 @@ private:
         Image3DBuffer(
             Iter x1buffer, Iter x2buffer,
             Iter x3buffer, Iter x4buffer,
-            unsigned xBeginIdx)
+            size_t xBeginIdx)
           : x1buffer(x1buffer), x2buffer(x2buffer),
             x3buffer(x3buffer), x4buffer(x4buffer),
             xBeginIdx(xBeginIdx)
         {}
 
-        std::array<T, 8> getCubeVertexValues(unsigned xidx) const;
+        std::array<T, 8> getCubeVertexValues(size_t xidx) const;
 
     private:
         Iter x1buffer;
         Iter x2buffer;
         Iter x3buffer;
         Iter x4buffer;
-        unsigned const xBeginIdx;
+        size_t const xBeginIdx;
     };
 public:
     Image3DBuffer
-    createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const;
+    createBuffer(size_t xbeg, size_t yidx, size_t zidx) const;
 
 private:
     std::vector<T>          data;       // A vector containing scalar values
@@ -122,19 +122,19 @@ private:
 
     std::array<T, 3>        zeroPos;    // The position at index (0, 0, 0).
 
-    std::array<unsigned, 3> indexBeg;   // The indices that can be used to get
-    std::array<unsigned, 3> indexEnd;   // information for a cube are all indices
+    std::array<size_t, 3> indexBeg;   // The indices that can be used to get
+    std::array<size_t, 3> indexEnd;   // information for a cube are all indices
                                         // such that index[i] is in
                                         // [indexBeg[i], indexEnd[i]) where i
                                         // is 0, 1, or 2.
 
-    std::array<unsigned, 3> dataBeg;    // The indices that data contains are
-    std::array<unsigned, 3> dataEnd;    // given by dataBeg and dataEnd. So
+    std::array<size_t, 3> dataBeg;    // The indices that data contains are
+    std::array<size_t, 3> dataEnd;    // given by dataBeg and dataEnd. So
                                         // all indices such that index[i] is in
                                         // [dataBeg[i], dataEnd[i]) where i
                                         // is 0, 1 or 2.
 
-    std::array<unsigned, 3> globalDim;  // The dimension of the entire
+    std::array<size_t, 3> globalDim;  // The dimension of the entire
                                         // image.
 };
 

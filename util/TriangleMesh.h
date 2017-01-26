@@ -22,7 +22,7 @@ public:
     using NormalIterator =
         typename std::vector<std::array<T, 3> >::const_iterator;
     using TriangleIterator =
-        typename std::vector<std::array<unsigned, 3> >::const_iterator;
+        typename std::vector<std::array<size_t, 3> >::const_iterator;
 
     TriangleMesh()
     {}
@@ -30,7 +30,7 @@ public:
     TriangleMesh(
         std::vector<std::array<T, 3> > points,
         std::vector<std::array<T, 3> > normals,
-        std::vector<std::array<unsigned, 3> > indexTriangles)
+        std::vector<std::array<size_t, 3> > indexTriangles)
       : points(points),
         normals(normals),
         indexTriangles(indexTriangles)
@@ -79,7 +79,7 @@ public:
 private:
     std::vector<std::array<T, 3> > points;
     std::vector<std::array<T, 3> > normals;
-    std::vector<std::array<unsigned, 3> > indexTriangles;
+    std::vector<std::array<size_t, 3> > indexTriangles;
 };
 
 }

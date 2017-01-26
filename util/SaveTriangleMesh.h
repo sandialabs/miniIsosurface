@@ -18,6 +18,8 @@
 
 #include "TriangleMesh.h"
 
+using std::size_t;
+
 namespace util {
 
 template<typename T>
@@ -30,9 +32,9 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
 
     std::ofstream stream(fileName);
 
-    unsigned nverts = mesh.numberOfVertices();
-    unsigned ntriangles = mesh.numberOfTriangles();
-    unsigned spacialDimensions = 3;
+    size_t nverts = mesh.numberOfVertices();
+    size_t ntriangles = mesh.numberOfTriangles();
+    size_t spacialDimensions = 3;
 
     TypeInfo ti = createTemplateTypeInfo<T>();
 
@@ -63,9 +65,9 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
     stream << std::endl;
 
     // Writing triangle indices
-    bufsize = ntriangles * 4 * sizeof(unsigned);
+    bufsize = ntriangles * 4 * sizeof(size_t);
     wbuff.resize(bufsize);
-    unsigned *ind = reinterpret_cast<unsigned*>(&wbuff[0]);
+    size_t *ind = reinterpret_cast<size_t*>(&wbuff[0]);
 
     TriangleIterator triBegIter = mesh.trianglesBegin();
     TriangleIterator triEndIter = mesh.trianglesEnd();

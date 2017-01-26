@@ -7,11 +7,13 @@
 
 #include "Image3D.h"
 
+using std::size_t;
+
 namespace util {
 
 template<typename T>
 std::array<std::array<T, 3>, 8>
-Image3D<T>::getPosCube(unsigned xidx, unsigned yidx, unsigned zidx) const
+Image3D<T>::getPosCube(size_t xidx, size_t yidx, size_t zidx) const
 {
     std::array<std::array<T, 3>, 8> pos;
 
@@ -56,7 +58,7 @@ Image3D<T>::getPosCube(unsigned xidx, unsigned yidx, unsigned zidx) const
 
 template <typename T>
 std::array<std::array<T, 3>, 8>
-Image3D<T>::getGradCube(unsigned xidx, unsigned yidx, unsigned zidx) const
+Image3D<T>::getGradCube(size_t xidx, size_t yidx, size_t zidx) const
 {
     // Modify input indices to match with the location of this index origin.
     xidx -= dataBeg[0];
@@ -79,16 +81,16 @@ Image3D<T>::getGradCube(unsigned xidx, unsigned yidx, unsigned zidx) const
 
 template <typename T>
 std::array<T, 3>
-Image3D<T>::computeGradient(unsigned xidx, unsigned yidx, unsigned zidx) const
+Image3D<T>::computeGradient(size_t xidx, size_t yidx, size_t zidx) const
 {
     std::array<std::array<T, 2>, 3> x;
     std::array<T, 3> run;
 
-    std::array<unsigned, 3> dim = { dataEnd[0] - dataBeg[0],
+    std::array<size_t, 3> dim = { dataEnd[0] - dataBeg[0],
                                     dataEnd[1] - dataBeg[1],
                                     dataEnd[2] - dataBeg[2] };
 
-    unsigned dataIdx = xidx + yidx * dim[0] + zidx * dim[0] * dim[1];
+    size_t dataIdx = xidx + yidx * dim[0] + zidx * dim[0] * dim[1];
     if (xidx == 0)
     {
         x[0][0] = data[dataIdx + 1];
@@ -156,11 +158,11 @@ Image3D<T>::computeGradient(unsigned xidx, unsigned yidx, unsigned zidx) const
 }
 
 template <typename T>
-unsigned
-Image3D<T>::getGlobalEdgeIndex(unsigned x, unsigned y, unsigned z,
-                               unsigned cubeEdgeIdx) const
+size_t
+Image3D<T>::getGlobalEdgeIndex(size_t x, size_t y, size_t z,
+                               size_t cubeEdgeIdx) const
 {
-    unsigned edgeIndex = 0;
+    size_t edgeIndex = 0;
     switch (cubeEdgeIdx) {
     // Edges parallel to the x-axis
     case 0:
@@ -206,61 +208,61 @@ Image3D<T>::getGlobalEdgeIndex(unsigned x, unsigned y, unsigned z,
 }
 
 template<typename T>
-unsigned
-Image3D<T>::edgeIndexXaxis(unsigned x, unsigned y, unsigned z) const
+size_t
+Image3D<T>::edgeIndexXaxis(size_t x, size_t y, size_t z) const
 {
-    //unsigned nXedges = (dim[0] - 1) * dim[1] * dim[2];
-    //unsigned nYedges = dim[0] * (dim[1] - 1) * dim[2];
-    //unsigned nZedges = dim[0] * dim[1] * (dim[2] - 1);
+    //size_t nXedges = (dim[0] - 1) * dim[1] * dim[2];
+    //size_t nYedges = dim[0] * (dim[1] - 1) * dim[2];
+    //size_t nZedges = dim[0] * dim[1] * (dim[2] - 1);
     //
-    //unsigned nXYedges = nXedges + nYedges;
-    //unsigned nAllEdges = nXedges + nYedges + nZedges;
+    //size_t nXYedges = nXedges + nYedges;
+    //size_t nAllEdges = nXedges + nYedges + nZedges;
     //
-    //unsigned rangeX = dim[0] - 1;
-    //unsigned rangeY = dim[1] - 1;
-    //unsigned rangeZ = dim[2] - 1;
+    //size_t rangeX = dim[0] - 1;
+    //size_t rangeY = dim[1] - 1;
+    //size_t rangeZ = dim[2] - 1;
 
-    unsigned index = x + ((globalDim[0] - 1) * y) + (globalDim[1] * (globalDim[0] - 1) * z);
+    size_t index = x + ((globalDim[0] - 1) * y) + (globalDim[1] * (globalDim[0] - 1) * z);
     return index;
 }
 
 template<typename T>
-unsigned
-Image3D<T>::edgeIndexYaxis(unsigned x, unsigned y, unsigned z) const
+size_t
+Image3D<T>::edgeIndexYaxis(size_t x, size_t y, size_t z) const
 {
-    unsigned nXedges = (globalDim[0] - 1) * globalDim[1] * globalDim[2];
-    unsigned index = nXedges + x + (globalDim[0] * y) + (globalDim[0] * (globalDim[1] - 1) * z);
+    size_t nXedges = (globalDim[0] - 1) * globalDim[1] * globalDim[2];
+    size_t index = nXedges + x + (globalDim[0] * y) + (globalDim[0] * (globalDim[1] - 1) * z);
     return index;
 }
 
 template<typename T>
-unsigned
-Image3D<T>::edgeIndexZaxis(unsigned x, unsigned y, unsigned z) const
+size_t
+Image3D<T>::edgeIndexZaxis(size_t x, size_t y, size_t z) const
 {
-    unsigned nXedges = (globalDim[0] - 1) * globalDim[1] * globalDim[2];
-    unsigned nYedges = globalDim[0] * (globalDim[1] - 1) * globalDim[2];
-    unsigned nXYedges = nXedges + nYedges;
+    size_t nXedges = (globalDim[0] - 1) * globalDim[1] * globalDim[2];
+    size_t nYedges = globalDim[0] * (globalDim[1] - 1) * globalDim[2];
+    size_t nXYedges = nXedges + nYedges;
 
-    unsigned index = nXYedges + x + (globalDim[0] * y) + (globalDim[0] * globalDim[1] * z);
+    size_t index = nXYedges + x + (globalDim[0] * y) + (globalDim[0] * globalDim[1] * z);
     return index;
 }
 
 template <typename T>
 typename Image3D<T>::Image3DBuffer
-Image3D<T>::createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const
+Image3D<T>::createBuffer(size_t xbeg, size_t yidx, size_t zidx) const
 {
     // Modify input indices to match with the location of this index origin.
     xbeg -= dataBeg[0];
     yidx -= dataBeg[1];
     zidx -= dataBeg[2];
 
-    std::array<unsigned, 3> dim = { dataEnd[0] - dataBeg[0],
+    std::array<size_t, 3> dim = { dataEnd[0] - dataBeg[0],
                                     dataEnd[1] - dataBeg[1],
                                     dataEnd[2] - dataBeg[2] };
 
     using Iter = typename std::vector<T>::const_iterator;
 
-    unsigned bufferIdx = xbeg + (yidx * dim[0]) + (zidx * dim[0] * dim[1]);
+    size_t bufferIdx = xbeg + (yidx * dim[0]) + (zidx * dim[0] * dim[1]);
     Iter beg = data.begin();
 
     Iter x1buffer = beg + bufferIdx;
@@ -273,7 +275,7 @@ Image3D<T>::createBuffer(unsigned xbeg, unsigned yidx, unsigned zidx) const
 }
 
 template <typename T>
-std::array<T, 8> Image3D<T>::Image3DBuffer::getCubeVertexValues(unsigned xidx) const
+std::array<T, 8> Image3D<T>::Image3DBuffer::getCubeVertexValues(size_t xidx) const
 {
     std::array<T, 8> cubeVertexVals;
 

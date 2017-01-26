@@ -20,16 +20,18 @@
 #include "TypeInfo.h"
 #include "ConvertBuffer.h"
 
+using std::size_t;
+
 namespace util {
 
 template <typename T>
 void
 loadHeader(
     std::ifstream& stream,
-    std::array<unsigned, 3>& dim,
+    std::array<size_t, 3>& dim,
     std::array<T, 3>& spacing,
     std::array<T, 3>& zeroPos,
-    unsigned& npoints,
+    size_t& npoints,
     TypeInfo& ti)
 {
     std::string line;
@@ -148,13 +150,13 @@ void skipHeader(std::ifstream& stream)
 }
 
 void
-streamIgnore(std::ifstream& stream, unsigned nPoints, std::size_t pointSize)
+streamIgnore(std::ifstream& stream, size_t nPoints, std::size_t pointSize)
 {
-    unsigned increment=134217728; // Read at most 1 GB at a time
+    size_t increment=134217728; // Read at most 1 GB at a time
 
-    for(unsigned iIgnore = 0; iIgnore < nPoints; iIgnore += increment)
+    for(size_t iIgnore = 0; iIgnore < nPoints; iIgnore += increment)
     {
-        unsigned diffIgnore = nPoints - iIgnore;
+        size_t diffIgnore = nPoints - iIgnore;
 
         if(diffIgnore > increment)
         {
@@ -179,10 +181,10 @@ loadImage(const char* file)
     if (!stream)
         throw file_not_found(file);
 
-    std::array<unsigned, 3> dim;
+    std::array<size_t, 3> dim;
     std::array<T, 3> spacing;
     std::array<T, 3> zeroPos;
-    unsigned npoints;
+    size_t npoints;
 
     TypeInfo ti;
 

@@ -30,17 +30,19 @@
 #include "../util/Timer.h"
 #include "../mantevo/YAML_Doc.hpp"
 
+using std::size_t;
+
 template <typename T>
 void
 sectionOfMarchingCubes(
-    unsigned const& xbeg, unsigned const& ybeg, unsigned const& zbeg,
-    unsigned const& xend, unsigned const& yend, unsigned const& zend,
+    size_t const& xbeg, size_t const& ybeg, size_t const& zbeg,
+    size_t const& xend, size_t const& yend, size_t const& zend,
     T const&                                isoval,
     util::Image3D<T> const&                 image,
     std::vector<std::array<T, 3> >&         points,         // reference
     std::vector<std::array<T, 3> >&         normals,        // reference
-    std::vector<std::array<unsigned, 3> >&  indexTriangles, // reference
-    std::unordered_map<unsigned, unsigned>& pointMap)       // reference
+    std::vector<std::array<size_t, 3> >&  indexTriangles, // reference
+    std::unordered_map<size_t, size_t>& pointMap)       // reference
 {
     // For each cube, determine whether or not the isosurface intersects
     // the given cube. If so, first find the cube configuration from a lookup
@@ -48,16 +50,16 @@ sectionOfMarchingCubes(
     // normals and triangles. Use pointMap to not add any duplicates on
     // this thread to points or normals
 
-    unsigned ptIdx = points.size();
-    for(unsigned zidx = zbeg; zidx != zend; ++zidx)
+    size_t ptIdx = points.size();
+    for(size_t zidx = zbeg; zidx != zend; ++zidx)
     {
-        for(unsigned yidx = ybeg; yidx != yend; ++yidx)
+        for(size_t yidx = ybeg; yidx != yend; ++yidx)
         {
             // A buffer is used to improve cache efficency when retrieving
             // vertex values of each cube.
             auto buffer = image.createBuffer(xbeg, yidx, zidx);
 
-            for(unsigned xidx = xbeg; xidx != xend; ++xidx)
+            for(size_t xidx = xbeg; xidx != xend; ++xidx)
             {
                 // For each x, y, z index, get the corresponding 8 scalar values
                 // of a cube with one corner being at the x, y, z index.
@@ -97,10 +99,10 @@ sectionOfMarchingCubes(
                 for(; *triEdges != -1; triEdges += 3)
                 {
                     // tri contains indices to points and normals
-                    std::array<unsigned, 3> tri;
+                    std::array<size_t, 3> tri;
                     for(int i = 0; i != 3; ++i)
                     {
-                        unsigned globalEdgeIndex =
+                        size_t globalEdgeIndex =
                             image.getGlobalEdgeIndex(xidx, yidx, zidx, triEdges[i]);
 
                         if(pointMap.find(globalEdgeIndex) != pointMap.end())
@@ -147,7 +149,7 @@ sectionOfMarchingCubes(
 
 template <typename T>
 util::TriangleMesh<T>
-MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& grainDim)
+MarchingCubes(util::Image3D<T> const& image, T const& isoval, size_t const& grainDim)
 {
     // The marching cubes algorithm creates a polygonal mesh to approximate an
     // isosurface from a three-dimensional discrete scalar field.
@@ -164,14 +166,14 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
     // Example:
     //   If indexTriangles[5] = {1, 4, 2}, then the polygonal mesh will contain
     //   a triangle with vertices at points[1], points[4] and points[2].
-    std::vector<std::array<unsigned, 3> > indexTriangles;
+    std::vector<std::array<size_t, 3> > indexTriangles;
 
     // If multiple threads or processes are present, points may be added
     // more than once. To fix this, duplicateTracker will be filled with pairs
     // containing the point index in points/normals and the global edge index.
     // Later, util::duplicateRemover will remove the duplicates and return
     // the final, duplicate free mesh.
-    std::vector<std::pair<unsigned, unsigned> > duplicateTracker;
+    std::vector<std::pair<size_t, size_t> > duplicateTracker;
 
     // Using OpenMP, this code is ran in parallel one section at a time.
     // The size of each section is determined by grainDim, which is the
@@ -187,20 +189,20 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
     //     0-299, 300-499, 300-499
     //     ...
 
-    unsigned xBeginIdx = image.xBeginIdx();
-    unsigned yBeginIdx = image.yBeginIdx();
-    unsigned zBeginIdx = image.zBeginIdx();
+    size_t xBeginIdx = image.xBeginIdx();
+    size_t yBeginIdx = image.yBeginIdx();
+    size_t zBeginIdx = image.zBeginIdx();
 
-    unsigned xEndIdxExtent = image.xEndIdx();
-    unsigned yEndIdxExtent = image.yEndIdx();
-    unsigned zEndIdxExtent = image.zEndIdx();
+    size_t xEndIdxExtent = image.xEndIdx();
+    size_t yEndIdxExtent = image.yEndIdx();
+    size_t zEndIdxExtent = image.zEndIdx();
 
-    unsigned numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
-    unsigned numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
-    unsigned numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
 
-    unsigned numSections = numSectX * numSectY * numSectZ;
-    unsigned numSectionsPerPage = numSectX * numSectY;
+    size_t numSections = numSectX * numSectY * numSectZ;
+    size_t numSectionsPerPage = numSectX * numSectY;
 
     #pragma omp parallel
     {
@@ -208,34 +210,34 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
         // threadIndexTriangles and threadPointMap.
         std::vector<std::array<T, 3> > threadPoints;
         std::vector<std::array<T, 3> > threadNormals;
-        std::vector<std::array<unsigned, 3> > threadIndexTriangles;
+        std::vector<std::array<size_t, 3> > threadIndexTriangles;
 
         // threadPointMap will be a dictionary from global edge indices
         // to indices in threadPoints and threadNormals. Note that
         // threadPoints and threadNormals share the same indices
         // but are only unique among this section/thread of execution.
-        std::unordered_map<unsigned, unsigned> threadPointMap;
+        std::unordered_map<size_t, size_t> threadPointMap;
 
         #pragma omp for nowait
-        for(unsigned i = 0; i < numSections; ++i)
+        for(size_t i = 0; i < numSections; ++i)
         {
             // Determine the coordinates of this section.
-            unsigned xSectIdx = (i % numSectionsPerPage) % numSectX;
-            unsigned ySectIdx = (i % numSectionsPerPage) / numSectX;
-            unsigned zSectIdx = (i / numSectionsPerPage);
+            size_t xSectIdx = (i % numSectionsPerPage) % numSectX;
+            size_t ySectIdx = (i % numSectionsPerPage) / numSectX;
+            size_t zSectIdx = (i / numSectionsPerPage);
 
-            unsigned xbeg = xSectIdx * grainDim;
-            unsigned ybeg = ySectIdx * grainDim;
-            unsigned zbeg = zSectIdx * grainDim;
+            size_t xbeg = xSectIdx * grainDim;
+            size_t ybeg = ySectIdx * grainDim;
+            size_t zbeg = zSectIdx * grainDim;
 
-            unsigned xend = std::min(xbeg + grainDim, xEndIdxExtent);
-            unsigned yend = std::min(ybeg + grainDim, yEndIdxExtent);
-            unsigned zend = std::min(zbeg + grainDim, zEndIdxExtent);
+            size_t xend = std::min(xbeg + grainDim, xEndIdxExtent);
+            size_t yend = std::min(ybeg + grainDim, yEndIdxExtent);
+            size_t zend = std::min(zbeg + grainDim, zEndIdxExtent);
 
             // How does this work? TODO
             // For performance reasons, rehashing the unordered map.
-            unsigned approxNumberOfEdges = 3*(xend-xbeg)*(yend-ybeg)*(zend-zbeg);
-            unsigned mapSize = approxNumberOfEdges / 8 + 6;
+            size_t approxNumberOfEdges = 3*(xend-xbeg)*(yend-ybeg)*(zend-zbeg);
+            size_t mapSize = approxNumberOfEdges / 8 + 6;
             threadPointMap.rehash(mapSize);
 
             // Variables for this thread of execution are given by reference and
@@ -266,7 +268,7 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
             indexTriangles.reserve(
                 indexTriangles.size() + threadIndexTriangles.size());
 
-            unsigned offset = points.size();
+            size_t offset = points.size();
 
             points.insert(
                 points.end(), threadPoints.begin(), threadPoints.end());
@@ -275,7 +277,7 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
 
             // The points refered to in each tri need to refer to the points
             // in the points vector, not threadPoints.
-            for(std::array<unsigned, 3>& tri: threadIndexTriangles)
+            for(std::array<size_t, 3>& tri: threadIndexTriangles)
             {
                 tri[0] = tri[0] + offset;
                 tri[1] = tri[1] + offset;
@@ -291,8 +293,8 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, unsigned const& gr
             duplicateTracker.resize(offset + threadPointMap.size());
             for(auto iter = threadPointMap.begin(); iter != threadPointMap.end(); ++iter)
             {
-                unsigned const& pointIndex = offset + iter->second;
-                unsigned const& globalEdgeIndex = iter->first;
+                size_t const& pointIndex = offset + iter->second;
+                size_t const& globalEdgeIndex = iter->first;
 
                 duplicateTracker[pointIndex] =
                     std::make_pair(pointIndex, globalEdgeIndex);

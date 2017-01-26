@@ -15,6 +15,8 @@
 #include <iostream>
 #include <stdexcept>
 
+using std::size_t;
+
 namespace util {
 
 class file_not_found: public std::exception {
@@ -75,7 +77,7 @@ private:
 
 class file_too_large: public std::exception {
 public:
-    file_too_large(const unsigned inMessage) :
+    file_too_large(const size_t inMessage) :
         message(inMessage) {
 
         std::cout << "file_too_large " << inMessage << std::endl;
@@ -86,7 +88,7 @@ public:
     }
 
 private:
-    const unsigned message;
+    const size_t message;
 };
 
 } // util namespace

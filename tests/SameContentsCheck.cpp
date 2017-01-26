@@ -19,6 +19,8 @@
 #include "../util/TriangleMesh.h"
 #include "../util/ConvertBuffer.h"
 
+using std::size_t;
+
 // Quick test used to make sure that output files are exactly
 // equal. Use this to make sure that the new serial version
 // matches with the old version. Namely that saveTriangleMesh
@@ -49,7 +51,7 @@ bool checkSameFiles(char* fileA, char* fileB)
 util::TriangleMesh<float> LoadFloatMesh(char* file)
 {
     std::vector<std::array<float, 3> > points;
-    std::vector<std::array<unsigned, 3> > indexTriangles;
+    std::vector<std::array<size_t, 3> > indexTriangles;
     std::vector<std::array<float, 3> > normals;
 
     std::ifstream stream(file);
@@ -62,7 +64,7 @@ util::TriangleMesh<float> LoadFloatMesh(char* file)
     std::getline(stream, line);
     std::getline(stream, line);
 
-    unsigned nverts;
+    size_t nverts;
     {
         std::getline(stream, line);
         std::stringstream lineStream(line);
@@ -73,8 +75,8 @@ util::TriangleMesh<float> LoadFloatMesh(char* file)
     normals.resize(nverts);
 
     std::vector<char> wbuff;
-    unsigned spatialDimensions = 3;
-    unsigned floatSize = 4;
+    size_t spatialDimensions = 3;
+    size_t floatSize = 4;
     std::size_t bufsize = nverts * spatialDimensions * floatSize;
     wbuff.resize(bufsize);
     {
@@ -100,7 +102,7 @@ util::TriangleMesh<float> LoadFloatMesh(char* file)
         std::getline(stream, line);
     }
 
-    unsigned ntriangles;
+    size_t ntriangles;
     {
         std::getline(stream, line);
         std::stringstream lineStream(line);
@@ -113,13 +115,13 @@ util::TriangleMesh<float> LoadFloatMesh(char* file)
     }
     indexTriangles.resize(ntriangles);
 
-    bufsize = ntriangles * 4 * sizeof(unsigned);
+    bufsize = ntriangles * 4 * sizeof(size_t);
     wbuff.resize(bufsize);
     {
         stream.read(&wbuff[0], wbuff.size());
 
-        unsigned* bufPointer = reinterpret_cast<unsigned*>(&wbuff[0]);
-        for(std::array<unsigned, 3>& tri: indexTriangles)
+        size_t* bufPointer = reinterpret_cast<size_t*>(&wbuff[0]);
+        for(std::array<size_t, 3>& tri: indexTriangles)
         {
             util::flipEndianness(bufPointer[1]);
             util::flipEndianness(bufPointer[2]);
@@ -175,7 +177,7 @@ struct arrayHash
 
 template <typename T>
 using UnorderedMapArr =
-    std::unordered_map<std::array<T, 3>, unsigned, arrayHash<T, 3> >;
+    std::unordered_map<std::array<T, 3>, size_t, arrayHash<T, 3> >;
 
 bool sameMesh(
     util::TriangleMesh<float> const& meshA,
@@ -188,7 +190,7 @@ bool sameMesh(
         return false;
     }
 
-    unsigned numTris = meshA.numberOfTriangles();
+    size_t numTris = meshA.numberOfTriangles();
 
 
     // They may not have the same number of vertices!
@@ -199,8 +201,8 @@ bool sameMesh(
         return false;
     }
 
-    unsigned d1 = std::distance(meshA.normalsBegin(), meshA.normalsEnd());
-    unsigned d2 = std::distance(meshB.normalsBegin(), meshB.normalsEnd());
+    size_t d1 = std::distance(meshA.normalsBegin(), meshA.normalsEnd());
+    size_t d2 = std::distance(meshB.normalsBegin(), meshB.normalsEnd());
     if(d1 != d2)
     {
         std::cout << "not the same number of normals" << std::endl;
@@ -218,13 +220,13 @@ bool sameMesh(
 
     ///////////////////////////////////////////////////////////////////////////
     // Check that all points and normals in meshA are in meshB
-    for(unsigned i = 0; i != meshB.numberOfVertices(); ++i)
+    for(size_t i = 0; i != meshB.numberOfVertices(); ++i)
     {
         pointIdxB[pointsB[i]] = i;
         normalIdxB[normalsB[i]] = i;
     }
 
-    for(unsigned i = 0; i != meshA.numberOfVertices(); ++i)
+    for(size_t i = 0; i != meshA.numberOfVertices(); ++i)
     {
         auto itFoundPoint = pointIdxB.find(pointsA[i]);
         if(itFoundPoint == pointIdxB.end())
@@ -242,13 +244,13 @@ bool sameMesh(
     }
 
     // Check that all points and normals in meshB are in meshA
-    for(unsigned i = 0; i != meshA.numberOfVertices(); ++i)
+    for(size_t i = 0; i != meshA.numberOfVertices(); ++i)
     {
         pointIdxA[pointsA[i]] = i;
         normalIdxA[normalsA[i]] = i;
     }
 
-    for(unsigned i = 0; i != meshB.numberOfVertices(); ++i)
+    for(size_t i = 0; i != meshB.numberOfVertices(); ++i)
     {
         auto itFoundPoint = pointIdxA.find(pointsB[i]);
         if(itFoundPoint == pointIdxA.end())
@@ -270,13 +272,13 @@ bool sameMesh(
     auto trianglesA = meshA.trianglesBegin();
     auto trianglesB = meshB.trianglesBegin();
 
-    std::unordered_map<std::array<float, 9>, unsigned, arrayHash<float, 9> > triIdxB;
+    std::unordered_map<std::array<float, 9>, size_t, arrayHash<float, 9> > triIdxB;
 
     // The triangles don't have to have the same indexing scheme because it could be
     // the case that a point appears multiple times in points. This is a byproduct
     // of merging points and normals for parallel runs of the algorithm.
 
-    for(unsigned i = 0; i != numTris; ++i)
+    for(size_t i = 0; i != numTris; ++i)
     {
         float a0 = pointsB[trianglesB[i][0]][0];
         float a1 = pointsB[trianglesB[i][0]][1];
@@ -294,9 +296,9 @@ bool sameMesh(
         triIdxB[arr] = i;
     }
 
-    for(unsigned i = 0; i != numTris; ++i)
+    for(size_t i = 0; i != numTris; ++i)
     {
-        std::array<unsigned, 3> triA = trianglesA[i];
+        std::array<size_t, 3> triA = trianglesA[i];
 
         float a0 = pointsA[triA[0]][0];
         float a1 = pointsA[triA[0]][1];

@@ -29,6 +29,8 @@
 #include "../util/Timer.h"
 #include "../mantevo/YAML_Doc.hpp"
 
+using std::size_t;
+
 template <typename T>
 util::TriangleMesh<T>
 MarchingCubes(util::Image3D<T> const& image, T const& isoval)
@@ -48,7 +50,7 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
     // Example:
     //   If indexTriangles[5] = {1, 4, 2}, then the polygonal mesh will contain
     //   a triangle with vertices at points[1], points[4] and points[2].
-    std::vector<std::array<unsigned, 3> > indexTriangles;
+    std::vector<std::array<size_t, 3> > indexTriangles;
 
     // A general cube has 16 edges, each labeled with a cube edge index from
     // 0 to 15. Among the whole image, each individual edge has a global
@@ -57,13 +59,13 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
     // pointMap will be a dictionary from global edge indices to indices
     // in points and normals. Note that points and normals share the
     // indices.
-    using PointMap = std::unordered_map<unsigned, unsigned>;
+    using PointMap = std::unordered_map<size_t, size_t>;
     PointMap pointMap;
-    unsigned ptIdx = 0;
+    size_t ptIdx = 0;
 
-    unsigned xBeginIdx = image.xBeginIdx();
-    unsigned yBeginIdx = image.yBeginIdx();
-    unsigned zBeginIdx = image.zBeginIdx();
+    size_t xBeginIdx = image.xBeginIdx();
+    size_t yBeginIdx = image.yBeginIdx();
+    size_t zBeginIdx = image.zBeginIdx();
 
     // The algorithm looks at a cube ata a time, where the (i, i, i)th
     // cube will contain the (i+1, i+1, i+1) vertex. Since Image3D
@@ -72,24 +74,24 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
     // So if the image contains 512 points in the x dimension, the
     // valid index range is from 0 to 510. image.xEndIdx() returns one
     // past that, so image.xEndIdx() returns 511.
-    unsigned xEndIdx = image.xEndIdx();
-    unsigned yEndIdx = image.yEndIdx();
-    unsigned zEndIdx = image.zEndIdx();
+    size_t xEndIdx = image.xEndIdx();
+    size_t yEndIdx = image.yEndIdx();
+    size_t zEndIdx = image.zEndIdx();
 
     // For each cube, determine whether or not the isosurface intersects
     // the given cube. If so, first find the cube configuration from a lookup
     // table. Then add the triangles of that cube configuration to points,
     // normals and triangles. Use pointMap to not add any duplicate points or
     // normals.
-    for (unsigned zidx = zBeginIdx; zidx != zEndIdx; ++zidx)
+    for (size_t zidx = zBeginIdx; zidx != zEndIdx; ++zidx)
     {
-        for (unsigned yidx = yBeginIdx; yidx != yEndIdx; ++yidx)
+        for (size_t yidx = yBeginIdx; yidx != yEndIdx; ++yidx)
         {
             // A buffer is used to improve cache efficency when retrieving
             // vertex values of each cube.
             auto buffer = image.createBuffer(xBeginIdx, yidx, zidx);
 
-            for (unsigned xidx = xBeginIdx; xidx != xEndIdx; ++xidx)
+            for (size_t xidx = xBeginIdx; xidx != xEndIdx; ++xidx)
             {
                 // For each x, y, z index, get the corresponding 8 scalar values
                 // of a cube with one corner being at the x, y, z index.
@@ -129,10 +131,10 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval)
                 for(; *triEdges != -1; triEdges += 3)
                 {
                     // tri contains indices to points and normals
-                    std::array<unsigned, 3> tri;
+                    std::array<size_t, 3> tri;
                     for(int i = 0; i != 3; ++i)
                     {
-                        unsigned globalEdgeIndex =
+                        size_t globalEdgeIndex =
                             image.getGlobalEdgeIndex(xidx, yidx, zidx, triEdges[i]);
 
                         if(pointMap.find(globalEdgeIndex) != pointMap.end())
