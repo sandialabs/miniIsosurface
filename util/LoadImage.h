@@ -103,13 +103,6 @@ loadHeader(
         {
             throw bad_format("Expecting POINT_DATA <npoints>");
         }
-        //if(LOG::ReportingLevel() == logDEBUG_Step)
-        //{
-        //    if(npoints>1000)
-        //    {
-        //        throw file_too_large(npoints);
-        //    }
-        //}
     }
 
     std::string typeName;
@@ -207,4 +200,5 @@ loadImage(const char* file)
 }
 
 } // util namespace
+
 #endif

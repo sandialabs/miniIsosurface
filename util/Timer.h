@@ -48,6 +48,6 @@ private:
                               TimeValue_t &wallNanoseconds) const;
 };
 
-}
+} // util namespace
 
-#endif /* REPORTING_TIMER_H_ */
+#endif

@@ -62,6 +62,6 @@ namespace util
             break;
         }
     }
-}
+} // util namespace
 
 #endif

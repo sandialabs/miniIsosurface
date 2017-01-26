@@ -110,6 +110,6 @@ saveTriangleMesh(TriangleMesh<T> const& mesh, const char* fileName)
     stream.close();
 }
 
-}
+} // util namespace
 
 #endif

@@ -296,6 +296,6 @@ namespace util
                                       {7,6}, {4,7}, {0,4},
                                       {1,5}, {3,7}, {2,6} };
 
-}
+} // util namespace
 
 #endif

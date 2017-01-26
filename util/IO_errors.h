@@ -25,37 +25,18 @@ public:
         fileName(inFileName) {
 
         std::cout << "file_not_found " << inFileName << std::endl;
-//      CLOG(logERROR) << "File not found error";
-//      CLOG(logERROR) << "Given Path: " << fileName;
-//      CLOG(logERROR) << "In linux, type pwd [Enter] to get your current directory";
-//      CLOG(logERROR) << "The path should be specified relative to the current directory";
+        std::cout << "Given Path: " << fileName << std:endl;
     }
 
 private:
     const char* const fileName;
 };
 
-class object_not_sorted: public std::exception {
-public:
-    object_not_sorted(const char* const inObjectName) :
-        objectName(inObjectName) {
-
-        std::cout << "object_not_sorted " << inObjectName << std::endl;
-//      CLOG(logERROR) << "The MapReverse object is not sorted";
-//      CLOG(logERROR) << "Do not call MapReverse::getNewIndices if the object is not sorted";
-    }
-
-private:
-    const char* const objectName;
-};
-
 class bad_format: public std::exception {
 public:
     bad_format(const char* const inMessage) :
             message(inMessage) {
-        std::cout << "bad_format " << inMessage << std::endl;
-//      CLOG(logERROR) << "Bad format error with message: ";
-//      CLOG(logERROR) << message;
+        std::cout << "bad_format error with message: " << inMessage << std::endl;
     }
 
 private:
@@ -66,30 +47,13 @@ class no_type: public std::exception {
 public:
     no_type(const char* const inMessage) :
             message(inMessage) {
-        std::cout << "no_type " << inMessage << std::endl;
-//      CLOG(logERROR) << "Type not defined error with message: ";
-//      CLOG(logERROR) << message;
+        std::cout << "Type not defined error with message: " << inMessage << std::endl;
     }
 
 private:
     const char* const message;
 };
 
-class file_too_large: public std::exception {
-public:
-    file_too_large(const size_t inMessage) :
-        message(inMessage) {
-
-        std::cout << "file_too_large " << inMessage << std::endl;
-//      CLOG(logERROR) << "Step by Step debugging is active";
-//      CLOG(logERROR) << "Only image files up to 1000 points are accepted";
-//      CLOG(logERROR) << "The file specified has too many data points";
-//      CLOG(logERROR) << "Number of points in file: " << message;
-    }
-
-private:
-    const size_t message;
-};
-
 } // util namespace
+
 #endif

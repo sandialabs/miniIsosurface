@@ -94,6 +94,6 @@ duplicateRemover(
     return TriangleMesh<T>(mPoints, mNormals, indexTriangles);
 }
 
-}
+} // util namespace
 
 #endif
