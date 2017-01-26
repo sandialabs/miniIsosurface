@@ -11,7 +11,7 @@ find_package(MPI)
 
 if (NOT MPI_CXX_FOUND)
   message(SEND_ERROR
-    "Could not find a compatible MPI compiler.")
+      "Could not find a compatible MPI compiler. Consider turning BUILD_MPI to OFF")
 endif()
 
 add_executable(${target} main.cpp ${srcs})

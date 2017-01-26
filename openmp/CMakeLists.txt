@@ -11,7 +11,7 @@ find_package(OpenMP)
 
 if (NOT OPENMP_FOUND)
   message(SEND_ERROR
-    "Could not find a compatible OpenMP compiler.")
+      "Could not find a compatible OpenMP compiler. Consider turning BUILD_OPENMP to OFF")
 endif()
 
 add_executable(${target} main.cpp ${srcs})

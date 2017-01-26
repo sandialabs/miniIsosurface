@@ -3,11 +3,20 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(mantevo-marching-cubes)
 
+option(BUILD_OPENMP OFF)
+option(BUILD_MPI OFF)
+
 add_subdirectory(tests)
 add_subdirectory(serial)
-add_subdirectory(openmp)
-add_subdirectory(openmpDupFree)
-add_subdirectory(mpi)
+
+if(BUILD_OPENMP)
+    add_subdirectory(openmp)
+    add_subdirectory(openmpDupFree)
+endif()
+
+if(BUILD_MPI)
+    add_subdirectory(mpi)
+endif()
 
 
 
