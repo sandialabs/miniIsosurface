@@ -38,11 +38,11 @@ mkdir my_build_dir
 cd my_build_dir
 ```
 3. Invoke CMake from your build directory, pointing to the mantevo-marching-cubes source directory.
+The two flags, BUILD\_OPENMP and BUILD\_MPI, must be turned on to build all implementations.
 
 ```
 cmake /path/to/mantevo-marching-cubes -DBUILD_OPENMP=On -DBUILD_MPI=On
 ```
-The two flags, BUILD\_OPENMP and BUILD\_MPI, must be turned on to build all implementations.
 
 4. Invoke GNU make from the build directory.
 
