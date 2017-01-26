@@ -36,12 +36,12 @@ public:
         indexTriangles(indexTriangles)
     {}
 
-    unsigned numberOfVertices() const
+    std::size_t numberOfVertices() const
     {
         return points.size();
     }
 
-    unsigned numberOfTriangles() const
+    std::size_t numberOfTriangles() const
     {
         return indexTriangles.size();
     }

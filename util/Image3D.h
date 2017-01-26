@@ -67,6 +67,10 @@ public:
     unsigned yEndIdx() const { return indexEnd[1]; }
     unsigned zEndIdx() const { return indexEnd[2]; }
 
+    unsigned xdimension() const { return globalDim[0]; }
+    unsigned ydimension() const { return globalDim[1]; }
+    unsigned zdimension() const { return globalDim[2]; }
+
 private:
     std::array<T, 3>
     computeGradient(unsigned xidx, unsigned yidx, unsigned zidx) const;
