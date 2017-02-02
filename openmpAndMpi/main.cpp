@@ -197,15 +197,18 @@ MarchingCubes(std::vector<util::Image3D<T> > const& images, T const& isoval)
         {
             // How does this work? TODO
             // For performance reasons, rehashing the unordered map.
-            ///size_t approxNumberOfEdges = 3*(xend-xbeg)*(yend-ybeg)*(zend-zbeg);
-            ///size_t mapSize = approxNumberOfEdges / 8 + 6;
-            ///threadPointMap.rehash(mapSize);
+            util::Image3D<T> const& image = images[i];
+            size_t approxNumberOfEdges = 3 *
+                (image.xEndIdx() - image.xBeginIdx()) *
+                (image.yEndIdx() - image.yBeginIdx()) *
+                (image.zEndIdx() - image.zBeginIdx()) ;
+            size_t mapSize = approxNumberOfEdges / 8 + 6;
+            threadPointMap.rehash(mapSize);
 
-            // TODO
             // Variables for this thread of execution are given by reference and
             // will be modified.
             sectionOfMarchingCubes(
-                isoval, images[i],              // constant inputs
+                isoval, image,                  // constant inputs
                 threadPoints,                   // for modification, taken by reference
                 threadNormals,                  // for modification, taken by reference
                 threadIndexTriangles,           // for modification, taken by reference

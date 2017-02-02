@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
     // Each processor is in charge of running the algorithm on an evenly
     // distributed number of sections.
     std::vector<util::Image3D<float> > images =
-        loadImageSections<float>(vtkFile, grainDim);
+        mpiutil::loadImageSections<float>(vtkFile, grainDim);
 
     if (pid == 0)
     {
