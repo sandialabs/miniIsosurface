@@ -18,5 +18,9 @@ if(BUILD_MPI)
     add_subdirectory(mpi)
 endif()
 
+if(BUILD_OPENMP AND BUILD_MPI)
+    add_subdirectory(openmpAndMpi)
+endif()
+
 
 

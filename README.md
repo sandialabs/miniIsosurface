@@ -55,6 +55,7 @@ After compiling, the following executables will be created:
 * `./openmp/openmp`
 * `./openmpDupFree/openmpDupFree`
 * `./mpi/mpi`
+* `./openmpAndMpi/openmpAndMpi`
 * `./tests/SameContentsCheck`
 
 For all executables, the `input_file`, `output_file` and `isoval` flags must be set.
@@ -91,6 +92,14 @@ mpirun can be used to launch this executable. The -np flag tells mpi how many
 processes to run.
 ```
 mpirun -np numProcesses ./mpi/mpi -i myImage.vtk -o outputMeshMPI.vtk -v 1.0 -g 1012
+```
+
+## openmpAndMpi ##
+mpirun can be used to launch this executbale. The -np flag tells mpi how many
+processes to run.
+```
+mpirun -np numProcesses ./openmpAndMpi/openmpAndMpi -i myImage.vtk \
+  -o outputMeshOpenmpAndMpi -v 1.0 -g 1012
 ```
 
 ## SameContentsCheck ##

@@ -26,12 +26,13 @@
 #include "../util/util.h"     // for findCaseId and interpolate
 #include "../util/TypeInfo.h"
 #include "../util/MarchingCubesTables.h"
+#include "../util/DuplicateRemover.h"
 
 #include "../util/Timer.h"
 #include "../mantevo/YAML_Doc.hpp"
 
-#include "mpi_size_type.h"
-#include "mpiutil.h"
+#include "../mpi/mpi_size_type.h"
+#include "../mpi/mpiutil.h"
 #include <mpi.h>
 
 using std::size_t;
@@ -168,17 +169,107 @@ MarchingCubes(std::vector<util::Image3D<T> > const& images, T const& isoval)
 
     std::unordered_map<size_t, size_t> processPointMap;
 
-    for(util::Image3D<T> const& image: images)
+    // If multiple threads are present, points may be added
+    // more than once. To fix this, duplicateTracker will be filled with pairs
+    // containing the point index in points/normals and the global edge index.
+    // Later, util::duplicateRemover will remove the duplicates and return
+    // the final, duplicate free mesh of this processor.
+    std::vector<std::pair<size_t, size_t> > duplicateTracker;
+
+    #pragma omp parallel
     {
-        sectionOfMarchingCubes(
-            isoval, image,                  // constant inputs
-            processPoints,                  // for modification, taken by reference
-            processNormals,                 // for modification, taken by reference
-            processIndexTriangles,          // for modification, taken by reference
-            processPointMap);               // for modification, taken by reference
+        // Each openMP thread manages it's own threadPoints, threadNormals,
+        // threadIndexTriangles and threadPointMap.
+        std::vector<std::array<T, 3> > threadPoints;
+        std::vector<std::array<T, 3> > threadNormals;
+        std::vector<std::array<size_t, 3> > threadIndexTriangles;
+
+        // threadPointMap will be a dictionary from global edge indices
+        // to indices in threadPoints and threadNormals. Note that
+        // threadPoints and threadNormals share the same indices
+        // but are only unique among this section/thread of execution.
+        std::unordered_map<size_t, size_t> threadPointMap;
+
+        size_t numSections = images.size();
+
+        #pragma omp for nowait
+        for(size_t i = 0; i < numSections; ++i)
+        {
+            // How does this work? TODO
+            // For performance reasons, rehashing the unordered map.
+            ///size_t approxNumberOfEdges = 3*(xend-xbeg)*(yend-ybeg)*(zend-zbeg);
+            ///size_t mapSize = approxNumberOfEdges / 8 + 6;
+            ///threadPointMap.rehash(mapSize);
+
+            // TODO
+            // Variables for this thread of execution are given by reference and
+            // will be modified.
+            sectionOfMarchingCubes(
+                isoval, images[i],              // constant inputs
+                threadPoints,                   // for modification, taken by reference
+                threadNormals,                  // for modification, taken by reference
+                threadIndexTriangles,           // for modification, taken by reference
+                threadPointMap);                // for modification, taken by reference
+        }
+
+        // As each section is complete, the mesh information is added to
+        // points, normals and indexTriangles and duplicateTracker. The triangles
+        // in threadIndexTriangles will have to be offset to have indices
+        // that coincide with points and not threadPoints.
+        //
+        // critical ensures that this block of code will execute one
+        // thread at a time.
+        #pragma omp critical
+        {
+            // Reserve space in points, normals and indexTriangles so that
+            // these vectors don't have to resize themselves constantly.
+            processPoints.reserve(processPoints.size() + threadPoints.size());
+            processNormals.reserve(processNormals.size() + threadNormals.size());
+            processIndexTriangles.reserve(
+                processIndexTriangles.size() + threadIndexTriangles.size());
+
+            size_t offset = processPoints.size();
+
+            processPoints.insert(
+                processPoints.end(), threadPoints.begin(), threadPoints.end());
+            processNormals.insert(
+                processNormals.end(), threadNormals.begin(), threadNormals.end());
+
+            // The points refered to in each tri need to refer to the points
+            // in the points vector, not threadPoints.
+            for(std::array<size_t, 3>& tri: threadIndexTriangles)
+            {
+                tri[0] = tri[0] + offset;
+                tri[1] = tri[1] + offset;
+                tri[2] = tri[2] + offset;
+            }
+
+            processIndexTriangles.insert(
+                processIndexTriangles.end(),
+                threadIndexTriangles.begin(), threadIndexTriangles.end());
+
+            // duplicateTracker provides information for the util::duplicateRemover
+            // function.
+            duplicateTracker.resize(offset + threadPointMap.size());
+            for(auto iter = threadPointMap.begin(); iter != threadPointMap.end(); ++iter)
+            {
+                size_t const& pointIndex = offset + iter->second;
+                size_t const& globalEdgeIndex = iter->first;
+
+                duplicateTracker[pointIndex] =
+                    std::make_pair(pointIndex, globalEdgeIndex);
+            }
+        }
     }
 
-    return util::TriangleMesh<T>(processPoints, processNormals, processIndexTriangles);
+    // If there are no triangles whatsover, return here.
+    if(processIndexTriangles.size() == 0)
+    {
+        return util::TriangleMesh<T>();
+    }
+
+    return util::duplicateRemover(
+        duplicateTracker, processPoints, processNormals, processIndexTriangles);
 }
 
 int main(int argc, char* argv[])
@@ -285,7 +376,7 @@ int main(int argc, char* argv[])
     // Each processor is in charge of running the algorithm on an evenly
     // distributed number of sections.
     std::vector<util::Image3D<float> > images =
-        loadImageSections<float>(vtkFile, grainDim);
+        mpiutil::loadImageSections<float>(vtkFile, grainDim);
 
     if (pid == 0)
     {

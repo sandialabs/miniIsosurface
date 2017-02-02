@@ -20,6 +20,197 @@
 
 namespace mpiutil {
 
+template <typename T>
+std::vector<T>
+readSectionData(
+    size_t xbeg, size_t ybeg, size_t zbeg,
+    size_t xend, size_t yend, size_t zend,
+    const char*                         file,
+    util::TypeInfo const&               ti,
+    std::array<size_t, 3> const&        globalDim)
+{
+    std::ifstream stream(file);
+    if (!stream)
+        throw util::file_not_found(file);
+
+    // stream is taken by reference. When finished, this function puts stream
+    // ahead of all of the header information.
+    util::skipHeader(stream);
+
+    size_t nPointsIgnore =
+        xbeg + (ybeg * globalDim[0]) + (zbeg * globalDim[0] * globalDim[1]);
+
+    // stream is taken by reference. Place stream nPointsIgnore ahead where
+    // each point is of size ti.size().
+    util::streamIgnore(stream, nPointsIgnore, ti.size());
+
+    size_t nXpoints = xend - xbeg;
+    size_t nYpoints = yend - ybeg;
+    size_t nZpoints = zend - zbeg;
+    size_t nPointsInSection = nXpoints * nYpoints * nZpoints;
+
+    size_t nXpointsIgnore = globalDim[0] - nXpoints;
+    size_t nYpointsIgnore = globalDim[0] * (globalDim[1] - nYpoints);
+
+    std::size_t readXlineSize = nXpoints * ti.size();
+    std::size_t totalReadSize = nPointsInSection * ti.size();
+
+    std::vector<char> rbufRead(totalReadSize);
+
+    size_t imageDataIdx = 0;
+    for(size_t iZline = 0; iZline < nZpoints; ++iZline)
+    {
+        for(size_t iYline = 0; iYline < nYpoints; ++iYline)
+        {
+            stream.read(&rbufRead[imageDataIdx], readXlineSize);
+            util::streamIgnore(stream, nXpointsIgnore, ti.size());
+            imageDataIdx += readXlineSize;
+        }
+        util::streamIgnore(stream, nYpointsIgnore, ti.size());
+    }
+
+    std::vector<T> data(nPointsInSection);
+    util::convertBufferWithTypeInfo(rbufRead.data(), ti, nPointsInSection, data.data());
+
+    return data;
+}
+
+template <typename T>
+std::vector<util::Image3D<T> >
+loadImageSections(const char* file, size_t const& grainDim)
+{
+    std::ifstream stream(file);
+    if (!stream)
+        throw util::file_not_found(file);
+
+    std::array<size_t, 3> dim;
+    std::array<T, 3> spacing;
+    std::array<T, 3> zeroPos;
+    size_t npoints;
+    util::TypeInfo ti;
+
+    // These variables are all taken by reference
+    loadHeader(stream, dim, spacing, zeroPos, npoints, ti);
+    stream.close();
+
+    size_t xBeginIdx = 0;
+    size_t yBeginIdx = 0;
+    size_t zBeginIdx = 0;
+
+    size_t xEndIdxExtent = dim[0] - 1;
+    size_t yEndIdxExtent = dim[1] - 1;
+    size_t zEndIdxExtent = dim[2] - 1;
+
+    size_t numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
+    size_t numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
+
+    size_t numSections = numSectX * numSectY * numSectZ;
+    size_t numSectionsPerPage = numSectX * numSectY;
+
+    int pid = MPI::COMM_WORLD.Get_rank();
+    int nProcesses = MPI::COMM_WORLD.Get_size();
+
+    size_t sectPerProcess = (numSections + nProcesses - 1) / nProcesses;
+    size_t split = nProcesses + numSections - sectPerProcess * nProcesses;
+
+    size_t startSectNum, endSectNum;
+    if (pid < split)
+    {
+        startSectNum = pid * sectPerProcess;
+        endSectNum = startSectNum + sectPerProcess;
+    }
+    else
+    {
+        startSectNum = split * sectPerProcess +
+                       (pid - split) * (sectPerProcess - 1);
+        endSectNum = startSectNum + sectPerProcess - 1;
+    }
+
+    std::vector<util::Image3D<T> > images;
+    for(size_t i = startSectNum; i != endSectNum; ++i)
+    {
+        // Determine the coordinates of this section.
+        size_t xSectIdx = (i % numSectionsPerPage) % numSectX;
+        size_t ySectIdx = (i % numSectionsPerPage) / numSectX;
+        size_t zSectIdx = (i / numSectionsPerPage);
+
+        // Let w be either x, y, or z. wBegIdx/wEndIdx and wDataBeg/wDataEnd
+        // will most likely refer to different ranges. wBegIdx/wEndIdx defines
+        // the range of indicies that image.createBuffer and image.getGradCube
+        // have valid inputs, whereas wDataBeg/wDataEnd are ranges of the
+        // ghost cells.
+        //
+        // Calling getGradCube with (xBegIdx, yBegIdx, zEndIdx-1) will try to
+        // access vertex value data at (xBegIdx-1, yBegIdx, zEndIdx-1) as well
+        // as at (xBegIdx, yBegIdx, zEndIdx+1) even though these values are
+        // outside of the [wBegIdx, wEndIdx) ranges. The actual range for data
+        // values is instead given by wDataBeg/wDataEnd.
+        //
+        // This is done so that for the same inputs, the mpi implementaiton will
+        // output equivalent meshes as the reference or openmp implementations.
+        //
+        // Example:
+        //  Suppose we have a 1D image that has 100 points and we want to have
+        //  1 section. Then for the first section:
+        //    xDataBeg = 0, xDataEnd = 100
+        //    xBegIdx = 0, xEndIdx = 99
+        // Example:
+        //  Suppose we have a 1D image that has 512 points and we want to have
+        //  2 sections of (close to) the same size
+        //   The first section:
+        //     xDataBeg = 0, xDataEnd = 258
+        //     xBegIdx = 0,  xEndIdx = 256
+        //   The second section:
+        //     xDataBeg = 255, xDataEnd = 512
+        //     xBegIdx = 256, xEndIdx = 511
+        // Example:
+        //   Suppose we have a 1D image that has 300 points and we want to have
+        //   3 sections of (close to) the same size.
+        //   The first section:
+        //     xDataBeg = 0, xDataEnd = 102
+        //     xBegIdx = 0, xEndIdx = 100
+        //   The second section:
+        //     xDataBeg = 99 , xDataEnd = 202
+        //     xBegIdx = 100, xEndIdx = 200
+        //   The third section:
+        //     xDataBeg = 199, xDataEnd = 300
+        //     xBegIdx = 200, xEndIdx = 299
+        size_t xBegIdx = xSectIdx * grainDim;
+        size_t yBegIdx = ySectIdx * grainDim;
+        size_t zBegIdx = zSectIdx * grainDim;
+
+        size_t xEndIdx = std::min(xBegIdx + grainDim, xEndIdxExtent);
+        size_t yEndIdx = std::min(yBegIdx + grainDim, yEndIdxExtent);
+        size_t zEndIdx = std::min(zBegIdx + grainDim, zEndIdxExtent);
+
+        size_t xDataBeg = xBegIdx == 0   ?   0   :   xBegIdx - 1;
+        size_t yDataBeg = yBegIdx == 0   ?   0   :   yBegIdx - 1;
+        size_t zDataBeg = zBegIdx == 0   ?   0   :   zBegIdx - 1;
+
+        size_t xDataEnd = std::min(xEndIdx + 2, dim[0]);
+        size_t yDataEnd = std::min(yEndIdx + 2, dim[1]);
+        size_t zDataEnd = std::min(zEndIdx + 2, dim[2]);
+
+        std::vector<T> imageData = readSectionData<T>(
+            xDataBeg, yDataBeg, zDataBeg, xDataEnd, yDataEnd, zDataEnd,
+            file, ti, dim);
+
+        images.emplace_back(
+            imageData,
+            spacing,
+            zeroPos,
+            std::array<size_t, 3>({xBegIdx, yBegIdx, zBegIdx}),
+            std::array<size_t, 3>({xEndIdx, yEndIdx, zEndIdx}),
+            std::array<size_t, 3>({xDataBeg, yDataBeg, zDataBeg}),
+            std::array<size_t, 3>({xDataEnd, yDataEnd, zDataEnd}),
+            dim);
+    }
+
+    return images;
+}
+
+
 template<typename T, std::size_t N>
 struct arrayHash
 {
