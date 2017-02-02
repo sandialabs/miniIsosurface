@@ -60,52 +60,11 @@ After compiling, the following executables will be created:
 
 For all executables, the `input_file`, `output_file` and `isoval` flags must be set.
 Upon running, each executable creates a yaml file describing performance and output
-characteristics. To specify the yaml output file name, the flag is `yaml_output_file`.
+characteristics.
 
-## serial ##
-Example usage with an isovalue of 1.0:
-```
-./serial/serial -input_file myImage.vtk -output_file outputMeshSerial.vtk -isoval 1.0
-```
+The contents of the yaml file is also printed to console.
+To specify the yaml output file name, the flag is `yaml_output_file`.
 
-## openmp ##
-The openmp executable contains an extra argument from the reference implementation, the
-grianDim size. The grain\_dim size controls the granularity of the parallel work.
-Example usage with an isovalue of 1.0 and grain\_dim size of 1012:
-```
-export OMP_NUM_THREADS=n
-./openmp/openmp -input_file myImage.vtk -output_file outputMeshOpenMP.vtk \
- -isoval 1.0 -grain_dim 1012
-```
-
-## openmpDupFree ##
-When parallel versions are run, points along the boundaries may be accounted for multiple
-times. This version is the same as openmp except it removes those duplicate points.
-In addition, this example uses the abbreviated flags.
-```
-export OMP_NUM_THREADS=n
-./openmp/openmp -i myImage.vtk -o outputMeshOpenMP.vtk -v 1.0 -g 1012
-```
-
-## mpi ##
-mpirun can be used to launch this executable. The -np flag tells mpi how many
-processes to run.
-```
-mpirun -np numProcesses ./mpi/mpi -i myImage.vtk -o outputMeshMPI.vtk -v 1.0 -g 1012
-```
-
-## openmpAndMpi ##
-mpirun can be used to launch this executbale. The -np flag tells mpi how many
-processes to run.
-```
-mpirun -np numProcesses ./openmpAndMpi/openmpAndMpi -i myImage.vtk \
-  -o outputMeshOpenmpAndMpi -v 1.0 -g 1012
-```
-
-## SameContentsCheck ##
-There are multiple ways that an output mesh can be represented. To check that two output files
-from mantevo-marching-cubes have equivalent meshes, use SameContentsCheck:
-```
-./tests/SameContentsCheck outputMeshSerial.vtk outputMeshOpenMP.vtk
-```
+Some executables have additional flags. To print out all flags for an executable,
+use the `help` flag.
 
