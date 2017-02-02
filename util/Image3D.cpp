@@ -87,8 +87,8 @@ Image3D<T>::computeGradient(size_t xidx, size_t yidx, size_t zidx) const
     std::array<T, 3> run;
 
     std::array<size_t, 3> dim = { dataEnd[0] - dataBeg[0],
-                                    dataEnd[1] - dataBeg[1],
-                                    dataEnd[2] - dataBeg[2] };
+                                  dataEnd[1] - dataBeg[1],
+                                  dataEnd[2] - dataBeg[2] };
 
     size_t dataIdx = xidx + yidx * dim[0] + zidx * dim[0] * dim[1];
     if (xidx == 0)
@@ -257,8 +257,8 @@ Image3D<T>::createBuffer(size_t xbeg, size_t yidx, size_t zidx) const
     zidx -= dataBeg[2];
 
     std::array<size_t, 3> dim = { dataEnd[0] - dataBeg[0],
-                                    dataEnd[1] - dataBeg[1],
-                                    dataEnd[2] - dataBeg[2] };
+                                  dataEnd[1] - dataBeg[1],
+                                  dataEnd[2] - dataBeg[2] };
 
     using Iter = typename std::vector<T>::const_iterator;
 

@@ -31,6 +31,7 @@
 #include "../mantevo/YAML_Doc.hpp"
 
 #include "mpi_size_type.h"
+#include "mpiutil.h"
 #include <mpi.h>
 
 using std::size_t;
@@ -367,21 +368,6 @@ MarchingCubes(std::vector<util::Image3D<T> > const& images, T const& isoval)
             processPointMap);               // for modification, taken by reference
     }
 
-    // TODO The mesh information is not communicated across processes in the original
-    // implementation. Instead, each process outputs a process unique mesh which
-    // then gets output to n output files, where n is the number of processes.
-    //
-    // Also, the original implementation tried to remove duplicate points. But because
-    // this function is done sequentially on this process and all the point information
-    // will be stored in this set of process vectors, there won't be any duplicated
-    // points--on this process. However, there could be duplicated points across all of
-    // the processes.
-    //
-    // The TODO is:
-    //   -Should duplicate points be removed and there only be one output?
-    //   -Or should there be n output files? This is what is implemented now.  In this
-    //   case the duplicated points are needed.
-
     return util::TriangleMesh<T>(processPoints, processNormals, processIndexTriangles);
 }
 
@@ -391,6 +377,7 @@ int main(int argc, char* argv[])
     bool isovalSet = false;
     char* vtkFile = NULL;
     char* outFile = NULL;
+    bool oneOutputMesh = false;
     std::string yamlDirectory = "";
     std::string yamlFileName  = "";
 
@@ -419,6 +406,10 @@ int main(int argc, char* argv[])
         {
             grainDim = std::stoul(argv[++i]);
         }
+        else if( (strcmp(argv[i], "-m") == 0) || (strcmp(argv[i], "-one_mesh") == 0))
+        {
+            oneOutputMesh = atoi(argv[++i]);
+        }
         else if( (strcmp(argv[i], "-y") == 0) || (strcmp(argv[i], "-yaml_output_file") == 0))
         {
             std::string wholeFile(argv[++i]);
@@ -443,6 +434,7 @@ int main(int argc, char* argv[])
                 "  -output_file (-o)"             << std::endl <<
                 "  -isoval (-v)"                  << std::endl <<
                 "  -grain_dim (-g), default 256"  << std::endl <<
+                "  -one_mesh (-m), default 0"     << std::endl <<
                 "  -yaml_output_file (-y)"        << std::endl <<
                 "  -help (-h)"                    << std::endl;
             return 0;
@@ -530,20 +522,26 @@ int main(int argc, char* argv[])
     std::vector<double> CPUtimes(gatherSize);
     std::vector<double> wallTimes(gatherSize);
 
-    MPI_Gather(&numSectionsHere, 1, my_MPI_SIZE_T, numSections.data(), 1, my_MPI_SIZE_T, 0,
-                MPI_COMM_WORLD);
-     MPI_Gather(&numVertsHere, 1, my_MPI_SIZE_T, numVerts.data(), 1, my_MPI_SIZE_T, 0,
-                MPI_COMM_WORLD);
-     MPI_Gather(&numTrisHere, 1, my_MPI_SIZE_T, numTris.data(), 1, my_MPI_SIZE_T, 0,
-                MPI_COMM_WORLD);
-    MPI_Gather(&CPUticksHere, 1, MPI_DOUBLE, CPUticks.data(), 1, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
-    MPI_Gather(&CPUtimeHere, 1, MPI_DOUBLE, CPUtimes.data(), 1, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
-    MPI_Gather(&wallTimeHere, 1, MPI_DOUBLE, wallTimes.data(), 1, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
+    MPI_Gather(&numSectionsHere, 1, my_MPI_SIZE_T,
+               numSections.data(), 1, my_MPI_SIZE_T,
+               0, MPI_COMM_WORLD);
+    MPI_Gather(&numVertsHere, 1, my_MPI_SIZE_T,
+               numVerts.data(), 1, my_MPI_SIZE_T,
+               0, MPI_COMM_WORLD);
+    MPI_Gather(&numTrisHere, 1, my_MPI_SIZE_T,
+               numTris.data(), 1, my_MPI_SIZE_T,
+               0, MPI_COMM_WORLD);
+    MPI_Gather(&CPUticksHere, 1, MPI_DOUBLE,
+               CPUticks.data(), 1, MPI_DOUBLE,
+               0, MPI_COMM_WORLD);
+    MPI_Gather(&CPUtimeHere, 1, MPI_DOUBLE,
+               CPUtimes.data(), 1, MPI_DOUBLE,
+               0, MPI_COMM_WORLD);
+    MPI_Gather(&wallTimeHere, 1, MPI_DOUBLE,
+               wallTimes.data(), 1, MPI_DOUBLE,
+               0, MPI_COMM_WORLD);
 
-    // Only create the YAML file on the process zero
+    // Only create the YAML file on process zero
     if(pid == 0)
     {
         size_t totalSections = 0;
@@ -580,9 +578,29 @@ int main(int argc, char* argv[])
         std::cout << doc.generateYAML();
     }
 
-    // Write the output file, appending the process id number
-    std::string outFilePid = std::string(outFile) + "." + std::to_string(pid);
-    util::saveTriangleMesh(polygonalMesh, outFilePid.c_str());
+    if(oneOutputMesh)
+    {
+        // It is an option to output only one output mesh instead of one
+        // output mesh for each processer. gatherMeshes and mergeMeshes
+        // are not designed to be performant.
+
+        std::vector<util::TriangleMesh<float> > meshes =
+            mpiutil::gatherMeshes(polygonalMesh, pid, numVerts, numTris);
+
+        if(pid == 0)
+        {
+            util::TriangleMesh<float> globalPolygonalMesh =
+                mpiutil::mergeMeshes(meshes);
+
+            util::saveTriangleMesh(globalPolygonalMesh, outFile);
+        }
+    }
+    else
+    {
+        // Write the output file, appending the process id number
+        std::string outFilePid = std::string(outFile) + "." + std::to_string(pid);
+        util::saveTriangleMesh(polygonalMesh, outFilePid.c_str());
+    }
 
     // And don't forget to tell MPI that everything is done!
     MPI::Finalize();

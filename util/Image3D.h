@@ -60,14 +60,14 @@ public:
 
     size_t
     getGlobalEdgeIndex(size_t xidx, size_t yidx, size_t zidx,
-                 size_t cubeEdgeIdx) const;
+                       size_t cubeEdgeIdx) const;
 
     size_t xBeginIdx() const { return indexBeg[0]; }
     size_t yBeginIdx() const { return indexBeg[1]; }
     size_t zBeginIdx() const { return indexBeg[2]; }
-    size_t xEndIdx() const { return indexEnd[0]; }
-    size_t yEndIdx() const { return indexEnd[1]; }
-    size_t zEndIdx() const { return indexEnd[2]; }
+    size_t xEndIdx()   const { return indexEnd[0]; }
+    size_t yEndIdx()   const { return indexEnd[1]; }
+    size_t zEndIdx()   const { return indexEnd[2]; }
 
     size_t xdimension() const { return globalDim[0]; }
     size_t ydimension() const { return globalDim[1]; }
@@ -122,19 +122,19 @@ private:
 
     std::array<T, 3>        zeroPos;    // The position at index (0, 0, 0).
 
-    std::array<size_t, 3> indexBeg;   // The indices that can be used to get
-    std::array<size_t, 3> indexEnd;   // information for a cube are all indices
+    std::array<size_t, 3> indexBeg;     // The indices that can be used to get
+    std::array<size_t, 3> indexEnd;     // information for a cube are all indices
                                         // such that index[i] is in
                                         // [indexBeg[i], indexEnd[i]) where i
                                         // is 0, 1, or 2.
 
-    std::array<size_t, 3> dataBeg;    // The indices that data contains are
-    std::array<size_t, 3> dataEnd;    // given by dataBeg and dataEnd. So
+    std::array<size_t, 3> dataBeg;      // The indices that data contains are
+    std::array<size_t, 3> dataEnd;      // given by dataBeg and dataEnd. So
                                         // all indices such that index[i] is in
                                         // [dataBeg[i], dataEnd[i]) where i
                                         // is 0, 1 or 2.
 
-    std::array<size_t, 3> globalDim;  // The dimension of the entire
+    std::array<size_t, 3> globalDim;    // The dimension of the entire
                                         // image.
 };
 

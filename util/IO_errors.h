@@ -25,7 +25,7 @@ public:
         fileName(inFileName) {
 
         std::cout << "file_not_found " << inFileName << std::endl;
-        std::cout << "Given Path: " << fileName << std:endl;
+        std::cout << "Given Path: " << fileName << std::endl;
     }
 
 private:
