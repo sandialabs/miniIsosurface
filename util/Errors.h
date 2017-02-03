@@ -1,5 +1,5 @@
 /*
- * IO_errors.h
+ * Errors.h
  *
  *  Created on: Jul 6, 2015
  *      Author: sjmunn
@@ -7,10 +7,6 @@
 
 #ifndef IO_ERRORS_H_
 #define IO_ERRORS_H_
-
-//#include"../includes.h"
-
-//#include"Log.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -50,6 +46,16 @@ public:
         std::cout << "Type not defined error with message: " << inMessage << std::endl;
     }
 
+private:
+    const char* const message;
+};
+
+class not_enough_memory_allocated: public std::exception {
+public:
+    not_enough_memory_allocated(const char* const inMessage) :
+        message(inMessage) {
+            std::cout << "Not enough memory allocated: " << inMessage << std::endl;
+    }
 private:
     const char* const message;
 };

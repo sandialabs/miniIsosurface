@@ -23,6 +23,7 @@ mantevo-marching-cubes makes use of C++11 features. Namely
 * The `std::vector<T>::data` member function
 * The `std::vector<T>::emplace_back` member function
 * The `std::array<T, N>` class
+* The `std::to_string` function
 
 # Build Instructions #
 1. Clone the repository
@@ -68,3 +69,7 @@ To specify the yaml output file name, the flag is `yaml_output_file`.
 Some executables have additional flags. To print out all flags for an executable,
 use the `help` flag.
 
+## Kokkos Build Instructions ##
+
+The Kokkos implementation does not use CMake. See the Kokkos README for the Marching Cubes
+with Kokkos specific build instrucions.
