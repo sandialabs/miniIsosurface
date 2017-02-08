@@ -29,7 +29,7 @@
 #include "../util/DuplicateRemover.h"
 
 #include "../util/Timer.h"
-#include "../mantevo/YAML_Doc.hpp"
+#include "../mantevoCommon/YAML_Doc.hpp"
 
 #include "../mpi/mpi_size_type.h"
 #include "../mpi/mpiutil.h"

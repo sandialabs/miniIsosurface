@@ -48,7 +48,7 @@ Image3D.o : ../util/Image3D.h ../util/Image3D.cpp
 #	$(CXX) $(KOKKOS_CPPFLAGS) $(KOKKOS_CXXFLAGS) $(CXXFLAGS) $(EXTRA_INC) -c Image3D.cpp
 Timer.o : ../util/Timer.h ../util/Timer.cpp
 	$(CXX) $(CXXFLAGS) -c ../util/Timer.cpp
-YAML_Doc.o : ../mantevo/YAML_Doc.hpp ../mantevo/YAML_Doc.cpp
-	$(CXX) $(CXXFLAGS) -c ../mantevo/YAML_Doc.cpp
-YAML_Element.o : ../mantevo/YAML_Element.hpp ../mantevo/YAML_Element.cpp
-	$(CXX) $(CXXFLAGS) -c ../mantevo/YAML_Element.cpp
+YAML_Doc.o : ../mantevoCommon/YAML_Doc.hpp ../mantevoCommon/YAML_Doc.cpp
+	$(CXX) $(CXXFLAGS) -c ../mantevoCommon/YAML_Doc.cpp
+YAML_Element.o : ../mantevoCommon/YAML_Element.hpp ../mantevoCommon/YAML_Element.cpp
+	$(CXX) $(CXXFLAGS) -c ../mantevoCommon/YAML_Element.cpp

@@ -28,7 +28,7 @@
 #include "../util/MarchingCubesTables.h"
 
 #include "../util/Timer.h"
-#include "../mantevo/YAML_Doc.hpp"
+#include "../mantevoCommon/YAML_Doc.hpp"
 
 #include "mpi_size_type.h"
 #include "mpiutil.h"

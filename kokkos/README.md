@@ -27,6 +27,6 @@ can be controlled by the command line flags `points_allocate` and
 how much to allocate.
 
 ```
-./kokkos/kokkos -i myImages.vtk -o outputMeshKokkos.vtk -v 1.0 -g 1012 \
+./kokkos -i myImages.vtk -o outputMeshKokkos.vtk -v 1.0 -g 1012 \
 -points_allocate 2000000 -triangles_allocate 4000000
 ```

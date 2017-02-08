@@ -27,7 +27,7 @@
 #include "../util/MarchingCubesTables.h"
 
 #include "../util/Timer.h"
-#include "../mantevo/YAML_Doc.hpp"
+#include "../mantevoCommon/YAML_Doc.hpp"
 
 using std::size_t;
 

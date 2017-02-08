@@ -28,7 +28,7 @@
 #include "../util/Errors.h"
 
 #include "../util/Timer.h"
-#include "../mantevo/YAML_Doc.hpp"
+#include "../mantevoCommon/YAML_Doc.hpp"
 
 #include <Kokkos_Core.hpp>
 
