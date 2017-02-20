@@ -11,8 +11,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 1 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
-void FlyingEdgesAlgorithm::processGridEdges()
+void FlyingEdgesAlgorithm::pass1()
 {
+    // For each (j, k):
+    //  - for each edge i along fixed (j, k) gridEdge, fill edgeCases with
+    //    cut information.
+    //  - find the locations for computational trimming, xl and xr
     for(size_t k = 0; k != nz; ++k) {
     for(size_t j = 0; j != ny; ++j)
     {
@@ -21,24 +25,21 @@ void FlyingEdgesAlgorithm::processGridEdges()
 
         gridEdge& curGridEdge = gridEdges[k*ny + j];
 
-        // Calculate xl, xr
-        // Fill out edgeCases
-
         std::array<bool, 2> isGE;
         isGE[0] = (curPointValues[0] >= isoval);
         for(int i = 1; i != nx; ++i)
         {
             isGE[i%2] = (curPointValues[i] >= isoval);
 
-            curEdgeCases[i] = calcCaseEdge(isGE[(i+1)%2], isGE[i%2]);
+            curEdgeCases[i-1] = calcCaseEdge(isGE[(i+1)%2], isGE[i%2]);
 
             // If the edge is cut
-            if(curEdgeCases[i] == 1 || curEdgeCases[i] == 2)
+            if(curEdgeCases[i-1] == 1 || curEdgeCases[i-1] == 2)
             {
                 if(curGridEdge.xl == 0)
-                    curGridEdge.xl = i;
+                    curGridEdge.xl == i-1;
 
-                curGridEdge.xr = i+1;
+                curGridEdge.xr = i;
             }
         }
     }}
@@ -48,8 +49,11 @@ void FlyingEdgesAlgorithm::processGridEdges()
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 2 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
-void FlyingEdgesAlgorithm::processGridCells()
+void FlyingEdgesAlgorithm::pass2()
 {
+    // For each (j, k):
+    //  - for each cube (i, j, k) calculate caseId and number of gridEdge cuts
+    //    in the x, y and z direction.
     for(size_t k = 0; k != nz-1; ++k) {
     for(size_t j = 0; j != ny-1; ++j)
     {
@@ -57,18 +61,21 @@ void FlyingEdgesAlgorithm::processGridCells()
         size_t xl, xr;
         calcTrimValues(xl, xr, j, k); // xl, xr set in this function
 
-        // comment TODO
+        // ge0 is owned by this (i, j, k). ge1, ge2 and ge3 are only used for
+        // boundary cells.
         gridEdge& ge0 = gridEdges[k*ny + j];
         gridEdge& ge1 = gridEdges[k*ny + j + 1];
         gridEdge& ge2 = gridEdges[(k+1)*ny + j];
         gridEdge& ge3 = gridEdges[(k+1)*ny + j + 1];
 
-        // comment TODO
+        // ec0, ec1, ec2 and ec3 were set in pass 2. They are used
+        // to calculate the cell caseId.
         auto const& ec0 = edgeCases.begin() + (nx-1)*(k*ny + j);
         auto const& ec1 = edgeCases.begin() + (nx-1)*(k*ny + j + 1);
         auto const& ec2 = edgeCases.begin() + (nx-1)*((k+1)*ny + j);
         auto const& ec3 = edgeCases.begin() + (nx-1)*((k+1)*ny + j + 1);
 
+        // Count the number of triangles along this row of cubes.
         size_t& curTriCounter = *(triCounter.begin() + k*(ny-1) + j);
 
         auto curCubeCaseIds = cubeCases.begin() + (nx-1)*(k*(ny-1) + j);
@@ -80,10 +87,16 @@ void FlyingEdgesAlgorithm::processGridCells()
         {
             bool isXEnd = (i == nx-2);
 
-            // using edgeCases, compute cubeCases for this cube
+            // using edgeCases from pass 2, compute cubeCases for this cube
             uchar caseId = calcCubeCase(ec0[i], ec1[i], ec2[i], ec3[i]);
 
             curCubeCaseIds[i] = caseId;
+
+            // If the cube has no triangles through it
+            if(caseId == 0 || caseId == 255)
+            {
+                continue;
+            }
 
             curTriCounter += util::numTris[caseId];
 
@@ -98,7 +111,32 @@ void FlyingEdgesAlgorithm::processGridCells()
             //       ge0 but ge1, ge2 and ge3 are owned by other gridCells.
             //       Accessing ge1, ge2 and ge3 leads to a race condition
             //       unless gridCell is along the boundry of the image.
+            //
+            //       To really make sense of the indices, it helps to draw
+            //       out the following picture of a cube with the appropriate
+            //       labels:
+            //         v0 is at (i,   j,   k)
+            //         v1       (i+1, j,   k)
+            //         v2       (i+1, j+1, k)
+            //         v3       (i,   j+1, k)
+            //         v4       (i,   j,   k+1)
+            //         v5       (i+1, j,   k+1)
+            //         v6       (i+1, j+1, k+1)
+            //         v7       (i,   j+1, k+1)
+            //         e0  connects v0 to v1 and is parallel to the x-axis
+            //         e1           v1    v2                        y
+            //         e2           v2    v3                        x
+            //         e3           v0    v3                        y
+            //         e4           v4    v5                        x
+            //         e5           v5    v6                        y
+            //         e6           v6    v7                        x
+            //         e7           v4    v7                        y
+            //         e8           v0    v4                        z
+            //         e9           v1    v5                        z
+            //         e10          v3    v7                        z
+            //         e11          v2    v6                        z
 
+            // Handle cubes along the edge of the image
             if(isXEnd)
             {
                 ge0.ystart += isCut[1];
@@ -135,7 +173,7 @@ void FlyingEdgesAlgorithm::processGridCells()
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 3 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
-void FlyingEdgesAlgorithm::configureOutputAndAllocate()
+void FlyingEdgesAlgorithm::pass3()
 {
     // Accumulate triangles into triCounter
     size_t tmp;
@@ -150,7 +188,8 @@ void FlyingEdgesAlgorithm::configureOutputAndAllocate()
         triAccum += tmp;
     }}
 
-    // accumulate points
+    // accumulate points, filling out starting locations of each gridEdge
+    // in the process.
     size_t pointAccum = 0;
     for(size_t k = 0; k != nz; ++k) {
     for(size_t j = 0; j != ny; ++j)
@@ -179,8 +218,12 @@ void FlyingEdgesAlgorithm::configureOutputAndAllocate()
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 4 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
-void FlyingEdgesAlgorithm::generateOutput()
+void FlyingEdgesAlgorithm::pass4()
 {
+    // For each (j, k):
+    //  - For each cube at i, fill out points, normals and triangles owned by
+    //    the cube. Each cube is in charge of filling out e0, e3 and e8. Only
+    //    in edge cases does it also fill out other edges.
     for(size_t k = 0; k != nz-1; ++k) {
     for(size_t j = 0; j != ny-1; ++j)
     {
@@ -215,7 +258,7 @@ void FlyingEdgesAlgorithm::generateOutput()
         {
             bool isXEnd = (i == nx-2);
 
-            uchar caseId = curCubeCaseIds[i]; // is cubeCaseIds even needed?
+            uchar caseId = curCubeCaseIds[i];
 
             if(caseId == 0 || caseId == 255)
             {
@@ -224,16 +267,18 @@ void FlyingEdgesAlgorithm::generateOutput()
 
             const bool* isCut = util::isCut[caseId]; // has 12 elements
 
-            // TODO ineffecient to calculate all of the cube ??
-            //      lazy evaluate?
+            // Most of the information contained in pointCube, isovalCube
+            // and gradCube will be used--but not necessarily all. It has
+            // not been tested whether or not obtaining only the information
+            // needed will provide a significant speedup--but
+            // most likely not.
             cube_t        pointCube = image.getPosCube(i, j, k);
             scalarCube_t  isovalCube = image.getValsCube(i, j, k);
             cube_t        gradCube = image.getGradCube(i, j, k);
 
             // Add Points and normals.
-            // Calculate global indices for triangles...
-
-            std::vector<size_t> globalIdxs(12);
+            // Calculate global indices for triangles
+            std::array<size_t, 12> globalIdxs;
             if(isCut[0])
             {
                 size_t idx = ge0.xstart + x0counter;
@@ -261,7 +306,14 @@ void FlyingEdgesAlgorithm::generateOutput()
                 ++z0counter;
             }
 
+            // Note:
+            //   e1, e5, e9 and e11 will be visited in the next iteration
+            //   when they are e3, e7, e8 and 10 respectively. So don't
+            //   increment their counters. When the cube is an edge cube,
+            //   their counters don't need to be incremented because they
+            //   won't be used agin.
 
+            // Manage edge cases
             if(isCut[1])
             {
                 size_t idx = ge0.ystart + y0counter;
@@ -269,9 +321,10 @@ void FlyingEdgesAlgorithm::generateOutput()
                 {
                     points[idx] = interpolateOnCube(pointCube, isovalCube, 1);
                     normals[idx] = interpolateOnCube(gradCube, isovalCube, 1);
+                    // y0counter counter doesn't need to be incremented
+                    // because it won't be used again.
                 }
                 globalIdxs[1] = idx;
-                ++y0counter;
             }
 
             if(isCut[9])
@@ -281,9 +334,9 @@ void FlyingEdgesAlgorithm::generateOutput()
                 {
                     points[idx] = interpolateOnCube(pointCube, isovalCube, 9);
                     normals[idx] = interpolateOnCube(gradCube, isovalCube, 9);
+                    // z0counter doesn't need to in incremented.
                 }
                 globalIdxs[9] = idx;
-                ++z0counter;
             }
 
             if(isCut[2])
@@ -341,9 +394,9 @@ void FlyingEdgesAlgorithm::generateOutput()
                 {
                     points[idx] = interpolateOnCube(pointCube, isovalCube, 11);
                     normals[idx] = interpolateOnCube(gradCube, isovalCube, 11);
+                    // z1counter does not need to be incremented.
                 }
                 globalIdxs[11] = idx;
-                ++z1counter;
             }
 
             if(isCut[5])
@@ -353,9 +406,9 @@ void FlyingEdgesAlgorithm::generateOutput()
                 {
                     points[idx] = interpolateOnCube(pointCube, isovalCube, 5);
                     normals[idx] = interpolateOnCube(gradCube, isovalCube, 5);
+                    // y2 counter does not need to be incremented.
                 }
                 globalIdxs[5] = idx;
-                ++y2counter;
             }
 
             if(isCut[6])

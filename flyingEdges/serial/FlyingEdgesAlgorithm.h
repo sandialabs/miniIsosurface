@@ -30,13 +30,13 @@ struct FlyingEdgesAlgorithm
         cubeCases((nx-1)*(ny-1)*(nz-1))
     {}
 
-    void processGridEdges();
+    void pass1();
 
-    void processGridCells();
+    void pass2();
 
-    void configureOutputAndAllocate();
+    void pass3();
 
-    void generateOutput();
+    void pass4();
 
     util::TriangleMesh moveOutput();
 
@@ -72,10 +72,10 @@ private:
     size_t const nz; //
 
     std::vector<gridEdge> gridEdges; // size of ny*nz
-    std::vector<size_t> triCounter; // size of (ny-1)*(nz-1)
+    std::vector<size_t> triCounter;  // size of (ny-1)*(nz-1)
 
-    std::vector<uchar> edgeCases; // size (nx-1)*ny*nz
-    std::vector<uchar> cubeCases; // size (nx-1)*(ny-1)*(nz-1)
+    std::vector<uchar> edgeCases;    // size (nx-1)*ny*nz
+    std::vector<uchar> cubeCases;    // size (nx-1)*(ny-1)*(nz-1)
 
     std::vector<std::array<float_t, 3> > points;  //
     std::vector<std::array<float_t, 3> > normals; // The output

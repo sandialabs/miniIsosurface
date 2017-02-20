@@ -82,42 +82,69 @@ int main(int argc, char* argv[])
     doc.add("Polygonal mesh output file", outFile);
     doc.add("Isoval", isoval);
 
+    // Load the image file
     util::Image3D image = util::loadImage(vtkFile);
 
     doc.add("File x-dimension", image.xdimension());
     doc.add("File y-dimension", image.ydimension());
     doc.add("File z-dimension", image.zdimension());
 
+    // Time hte output. util::Timer's constructor starts timing.
     util::Timer runTime;
 
+    // The inputs of the algorithm are the 3D image file and the isoval to
+    // estimate the isosurface at.
     FlyingEdgesAlgorithm algo(image, isoval);
+    // The flying edges algorithm makes 4 passes through the image file.
+    // Each pass is timed.
 
-    // TODO make sure points and normals are exactly the same as with mc
-    //      (same number of triangles and vertices, so thats good)
-
-    util::Timer runTimePass1; // TODO comments
-    algo.processGridEdges(); // Why not call pass1, pass2, pass3, pass4? TODO
+    // Pass 1 of the algorithm labels each edge parallel to the x-axis as cut
+    // or not. In the process, each gridEdge is assigned an xl and xr.
+    // All edges before xl are uncut and all edges after xr are uncut.
+    // Subsequent passes of the algorithm don't look outside of [xl, xr).
+    // A gridEdge E_jk can be thought of as the row of edges parallel to the
+    // x-axis for some fixed j and k.
+    util::Timer runTimePass1;
+    algo.pass1();
     runTimePass1.stop();
 
+    // Pass 2 of the algorithm determines the marching cubes case ID of each
+    // cube. This is determined fully from information obtained in pass1, so
+    // there is no need to access the input image. Each cube starts at (i,j,k)
+    // and extends to (i+1, j+1, k+1).
+    // In addition to determining case ID of each cell, pass 2 counts the
+    // number of cuts on incident to each gridEdge.
     util::Timer runTimePass2;
-    algo.processGridCells();
+    algo.pass2();
     runTimePass2.stop();
 
+    // Pass 3 of the algorithm uses information from pass 2 to determine how
+    // many triangles and points there are. It also sets up starting indices
+    // on each gridEdge. Once these sizes are determined, memory is allocated
+    // for storing triangles, points and normals.
     util::Timer runTimePass3;
-    algo.configureOutputAndAllocate(); // TODO rename this function
+    algo.pass3();
     runTimePass3.stop();
 
+    // Pass 4 of the algorithm calculates calculates and fills out points,
+    // normals and the triangles.
     util::Timer runTimePass4;
-    algo.generateOutput();
+    algo.pass4();
     runTimePass4.stop();
 
+    // This function receives the output. The data is not copied or deep copied
+    // but instead is moved or shallow copied. Once moveOutput is called, the
+    // algo structure no longer maintains responsibility of any data.
     util::TriangleMesh mesh = algo.moveOutput();
 
+    // End overall timing
     runTime.stop();
 
+    // Report mesh information
     doc.add("Number of vertices in mesh", mesh.numberOfVertices());
     doc.add("Number of triangles in mesh", mesh.numberOfTriangles());
 
+    // Report timing information
     doc.add("Pass 1", "");
     doc.get("Pass 1")->add("CPU Time (clicks)", runTimePass1.getTotalTicks());
     doc.get("Pass 1")->add("CPU Time (seconds)", runTimePass1.getCPUtime());
@@ -142,7 +169,9 @@ int main(int argc, char* argv[])
     doc.add("Total Program CPU Time (seconds)", runTime.getCPUtime());
     doc.add("Total Program WALL Time (seconds)", runTime.getWallTime());
 
+    // Generate the YAML file. The file will be both saved and printed to console.
     std::cout << doc.generateYAML();
 
+    // Save the polygonal mesh to the output file.
     util::saveTriangleMesh(mesh, outFile);
 }
