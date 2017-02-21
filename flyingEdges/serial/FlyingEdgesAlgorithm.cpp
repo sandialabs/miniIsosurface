@@ -313,7 +313,8 @@ void FlyingEdgesAlgorithm::pass4()
             //   their counters don't need to be incremented because they
             //   won't be used agin.
 
-            // Manage edge cases
+            // Manage boundary cases if needed. Otherwise just update
+            // globalIdx.
             if(isCut[1])
             {
                 size_t idx = ge0.ystart + y0counter;

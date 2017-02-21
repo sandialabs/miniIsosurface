@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
     doc.add("File y-dimension", image.ydimension());
     doc.add("File z-dimension", image.zdimension());
 
-    // Time hte output. util::Timer's constructor starts timing.
+    // Time the output. util::Timer's constructor starts timing.
     util::Timer runTime;
 
     // The inputs of the algorithm are the 3D image file and the isoval to
