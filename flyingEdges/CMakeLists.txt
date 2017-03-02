@@ -3,5 +3,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(flyingEdges)
 
-add_subdirectory(serial)
+find_package(CUDA REQUIRED)
 
+add_subdirectory(serial)
+add_subdirectory(cuda)

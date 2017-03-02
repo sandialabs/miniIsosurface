@@ -16,8 +16,8 @@
 #include <algorithm>
 #include <unordered_map>
 
-#include "../util/TriangleMesh.h"
-#include "../util/ConvertBuffer.h"
+#include "../../marchingCubes/util/TriangleMesh.h"
+#include "../../marchingCubes/util/ConvertBuffer.h"
 
 using std::size_t;
 

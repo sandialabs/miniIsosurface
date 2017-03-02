@@ -62,7 +62,7 @@ loadHeader(
     for(int count = 0; count != 3; ++count)
     {
         std::getline(stream, line);
-        std::stringstream lineStream = std::stringstream(line);
+        std::stringstream lineStream(line);
         lineStream >> tag;
 
         if (tag == "DIMENSIONS")
@@ -97,7 +97,7 @@ loadHeader(
 
     {
         std::getline(stream, line);
-        std::stringstream lineStream = std::stringstream(line);
+        std::stringstream lineStream(line);
         lineStream >> tag >> npoints;
         if (tag != "POINT_DATA" || lineStream.bad())
         {

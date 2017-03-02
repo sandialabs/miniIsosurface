@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_CXX_STANDARD 11)
 
-project(mantevo-marching-cubes)
+project(marchingCubes)
 
 option(BUILD_OPENMP OFF)
 option(BUILD_MPI OFF)
 
-add_subdirectory(tests)
 add_subdirectory(serial)
 
 if(BUILD_OPENMP)

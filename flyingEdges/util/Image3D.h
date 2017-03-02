@@ -37,6 +37,8 @@ public:
 
     cube_t getGradCube(size_t i, size_t j, size_t k) const;
 
+    const scalar_t* pointer() const { return data.data(); }
+
     size_t xdimension() const { return nx; }
     size_t ydimension() const { return ny; }
     size_t zdimension() const { return nz; }
