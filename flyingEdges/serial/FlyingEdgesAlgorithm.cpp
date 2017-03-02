@@ -209,8 +209,8 @@ void FlyingEdgesAlgorithm::pass3()
         pointAccum += tmp;
     }}
 
-    points = std::vector<std::array<float_t, 3> >(pointAccum);
-    normals = std::vector<std::array<float_t, 3> >(pointAccum);
+    points = std::vector<std::array<scalar_t, 3> >(pointAccum);
+    normals = std::vector<std::array<scalar_t, 3> >(pointAccum);
     tris = std::vector<std::array<size_t, 3> >(triAccum);
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -519,7 +519,7 @@ FlyingEdgesAlgorithm::calcTrimValues(
     xr = max(ge0.xr, max(ge1.xr, max(ge2.xr, ge3.xr)));
 }
 
-inline std::array<float_t, 3>
+inline std::array<scalar_t, 3>
 FlyingEdgesAlgorithm::interpolateOnCube(
     cube_t const& pts,
     scalarCube_t const& isovals,
@@ -528,17 +528,17 @@ FlyingEdgesAlgorithm::interpolateOnCube(
     uchar i0 = util::edgeVertices[edge][0];
     uchar i1 = util::edgeVertices[edge][1];
 
-    float_t weight = (isoval - isovals[i0]) / (isovals[i1] - isovals[i0]);
+    scalar_t weight = (isoval - isovals[i0]) / (isovals[i1] - isovals[i0]);
     return interpolate(pts[i0], pts[i1], weight);
 }
 
-inline std::array<float_t, 3>
+inline std::array<scalar_t, 3>
 FlyingEdgesAlgorithm::interpolate(
-    std::array<float_t, 3> const& a,
-    std::array<float_t, 3> const& b,
-    float_t const& weight) const
+    std::array<scalar_t, 3> const& a,
+    std::array<scalar_t, 3> const& b,
+    scalar_t const& weight) const
 {
-    std::array<float_t, 3> ret;
+    std::array<scalar_t, 3> ret;
     ret[0] = a[0] + (weight * (b[0] - a[0]));
     ret[1] = a[1] + (weight * (b[1] - a[1]));
     ret[2] = a[2] + (weight * (b[2] - a[2]));

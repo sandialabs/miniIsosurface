@@ -9,7 +9,7 @@
 
 namespace util {
 
-std::vector<float_t>::const_iterator
+std::vector<scalar_t>::const_iterator
 Image3D::getRowIter(size_t j, size_t k) const
 {
     return data.cbegin() + nx*(k*ny + j);
@@ -39,9 +39,9 @@ Image3D::getPosCube(size_t i, size_t j, size_t k) const
 {
     cube_t pos;
 
-    float_t xpos = zeroPos[0] + i * spacing[0];
-    float_t ypos = zeroPos[1] + j * spacing[1];
-    float_t zpos = zeroPos[2] + k * spacing[2];
+    scalar_t xpos = zeroPos[0] + i * spacing[0];
+    scalar_t ypos = zeroPos[1] + j * spacing[1];
+    scalar_t zpos = zeroPos[2] + k * spacing[2];
 
     pos[0][0] = xpos;
     pos[0][1] = ypos;
@@ -99,17 +99,17 @@ Image3D::getGradCube(size_t i, size_t j, size_t k) const
 // Private helper functions
 //////////////////////////////////////////////////////////////////////////////
 
-inline float_t
+inline scalar_t
 Image3D::getData(size_t i, size_t j, size_t k) const
 {
     return data[k*nx*ny + j*nx + i];
 }
 
-std::array<float_t, 3>
+std::array<scalar_t, 3>
 Image3D::computeGradient(size_t i, size_t j, size_t k) const
 {
-    std::array<std::array<float_t, 2>, 3> x;
-    std::array<float_t, 3> run;
+    std::array<std::array<scalar_t, 2>, 3> x;
+    std::array<scalar_t, 3> run;
 
     size_t dataIdx = i + j*nx + k*nx*ny;
 
@@ -170,7 +170,7 @@ Image3D::computeGradient(size_t i, size_t j, size_t k) const
         run[2] = 2 * spacing[2];
     }
 
-    std::array<float_t, 3> ret;
+    std::array<scalar_t, 3> ret;
 
     ret[0] = (x[0][1] - x[0][0]) / run[0];
     ret[1] = (x[1][1] - x[1][0]) / run[1];

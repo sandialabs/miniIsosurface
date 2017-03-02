@@ -18,7 +18,7 @@
 
 struct FlyingEdgesAlgorithm
 {
-    FlyingEdgesAlgorithm(util::Image3D const& image, float_t const& isoval)
+    FlyingEdgesAlgorithm(util::Image3D const& image, scalar_t const& isoval)
       : image(image),
         isoval(isoval),
         nx(image.xdimension()),
@@ -65,7 +65,7 @@ private:
 
 private:
     util::Image3D const& image;
-    float_t const isoval;
+    scalar_t const isoval;
 
     size_t const nx; //
     size_t const ny; // for indexing
@@ -77,8 +77,8 @@ private:
     std::vector<uchar> edgeCases;    // size (nx-1)*ny*nz
     std::vector<uchar> cubeCases;    // size (nx-1)*(ny-1)*(nz-1)
 
-    std::vector<std::array<float_t, 3> > points;  //
-    std::vector<std::array<float_t, 3> > normals; // The output
+    std::vector<std::array<scalar_t, 3> > points;  //
+    std::vector<std::array<scalar_t, 3> > normals; // The output
     std::vector<std::array<size_t, 3> > tris;     //
 
 private:
@@ -92,17 +92,17 @@ private:
     inline void calcTrimValues(
         size_t& xl, size_t& xr, size_t const& j, size_t const& k) const;
 
-    inline std::array<float_t, 3>
+    inline std::array<scalar_t, 3>
     interpolateOnCube(
         cube_t const& pts,
         scalarCube_t const& isovals,
         uchar const& edge) const;
 
-    inline std::array<float_t, 3>
+    inline std::array<scalar_t, 3>
     interpolate(
-        std::array<float_t, 3> const& a,
-        std::array<float_t, 3> const& b,
-        float_t const& weight) const;
+        std::array<scalar_t, 3> const& a,
+        std::array<scalar_t, 3> const& b,
+        scalar_t const& weight) const;
 };
 
 

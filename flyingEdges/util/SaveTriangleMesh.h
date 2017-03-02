@@ -35,7 +35,7 @@ saveTriangleMesh(TriangleMesh const& mesh, const char* fileName)
     size_t ntriangles = mesh.numberOfTriangles();
     size_t spacialDimensions = 3;
 
-    TypeInfo ti = createTemplateTypeInfo<float_t>();
+    TypeInfo ti = createTemplateTypeInfo<scalar_t>();
 
     stream << "# vtk DataFile Version 3.0" << std::endl;
     stream << "Isosurface Mesh" << std::endl;
@@ -44,11 +44,11 @@ saveTriangleMesh(TriangleMesh const& mesh, const char* fileName)
     stream << "POINTS " << nverts << " " << ti.name() << std::endl;
 
     std::vector<char> wbuff;
-    std::size_t bufsize = nverts * spacialDimensions * sizeof(float_t);
+    std::size_t bufsize = nverts * spacialDimensions * sizeof(scalar_t);
     wbuff.resize(bufsize);
 
     // Writing points data
-    float_t *bufPointer = reinterpret_cast<float_t*>(&wbuff[0]);
+    scalar_t *bufPointer = reinterpret_cast<scalar_t*>(&wbuff[0]);
 
     PointIterator ptBegIter = mesh.pointsBegin();
     PointIterator ptEndIter = mesh.pointsEnd();
@@ -86,9 +86,9 @@ saveTriangleMesh(TriangleMesh const& mesh, const char* fileName)
     stream << std::endl;
 
     // Writing normals
-    bufsize = nverts * spacialDimensions * sizeof(float_t);
+    bufsize = nverts * spacialDimensions * sizeof(scalar_t);
     wbuff.resize(bufsize);
-    bufPointer = reinterpret_cast<float_t*>(&wbuff[0]);
+    bufPointer = reinterpret_cast<scalar_t*>(&wbuff[0]);
 
     NormalIterator norBegIter = mesh.normalsBegin();
     NormalIterator norEndIter = mesh.normalsEnd();

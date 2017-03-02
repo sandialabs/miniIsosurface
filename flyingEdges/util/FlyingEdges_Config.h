@@ -5,11 +5,11 @@
 
 using std::size_t;
 
-using float_t = float;
+using scalar_t = float;
 
 using uchar = unsigned char;
 
-using cube_t = std::array<std::array<float_t, 3>, 8>;
-using scalarCube_t = std::array<float_t, 8>;
+using cube_t = std::array<std::array<scalar_t, 3>, 8>;
+using scalarCube_t = std::array<scalar_t, 8>;
 
 #endif

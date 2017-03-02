@@ -28,8 +28,8 @@ void
 loadHeader(
     std::ifstream& stream,
     std::array<size_t, 3>& dim,
-    std::array<float_t, 3>& spacing,
-    std::array<float_t, 3>& zeroPos,
+    std::array<scalar_t, 3>& spacing,
+    std::array<scalar_t, 3>& zeroPos,
     size_t& npoints,
     TypeInfo& ti)
 {
@@ -61,7 +61,7 @@ loadHeader(
     for(int count = 0; count != 3; ++count)
     {
         std::getline(stream, line);
-        std::stringstream lineStream = std::stringstream(line);
+        std::stringstream lineStream(line);
         lineStream >> tag;
 
         if (tag == "DIMENSIONS")
@@ -96,7 +96,7 @@ loadHeader(
 
     {
         std::getline(stream, line);
-        std::stringstream lineStream = std::stringstream(line);
+        std::stringstream lineStream(line);
         lineStream >> tag >> npoints;
         if (tag != "POINT_DATA" || lineStream.bad())
         {
@@ -173,8 +173,8 @@ loadImage(const char* file)
         throw file_not_found(file);
 
     std::array<size_t, 3> dim;
-    std::array<float_t, 3> spacing;
-    std::array<float_t, 3> zeroPos;
+    std::array<scalar_t, 3> spacing;
+    std::array<scalar_t, 3> zeroPos;
     size_t npoints;
 
     TypeInfo ti;
@@ -186,7 +186,7 @@ loadImage(const char* file)
     std::vector<char> rbuf(bufsize);
     stream.read(rbuf.data(), bufsize);
 
-    std::vector<float_t> data(dim[0] * dim[1] * dim[2]);
+    std::vector<scalar_t> data(dim[0] * dim[1] * dim[2]);
 
     // Converts elements in the charachter vector to elements of type
     // T and puts them into data.

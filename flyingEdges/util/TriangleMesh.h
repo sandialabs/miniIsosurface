@@ -17,9 +17,9 @@ class TriangleMesh
 {
 public:
     using PointIterator =
-        typename std::vector<std::array<float_t, 3> >::const_iterator;
+        typename std::vector<std::array<scalar_t, 3> >::const_iterator;
     using NormalIterator =
-        typename std::vector<std::array<float_t, 3> >::const_iterator;
+        typename std::vector<std::array<scalar_t, 3> >::const_iterator;
     using TriangleIterator =
         typename std::vector<std::array<size_t, 3> >::const_iterator;
 
@@ -27,8 +27,8 @@ public:
     {}
 
     TriangleMesh(
-        std::vector<std::array<float_t, 3> > && points,
-        std::vector<std::array<float_t, 3> > && normals,
+        std::vector<std::array<scalar_t, 3> > && points,
+        std::vector<std::array<scalar_t, 3> > && normals,
         std::vector<std::array<size_t, 3> > && indexTriangles)
       : points(std::move(points)),   // std::move might be redundant
         normals(std::move(normals)), // but making it explicit.
@@ -76,8 +76,8 @@ public:
     }
 
 private:
-    std::vector<std::array<float_t, 3> > points;
-    std::vector<std::array<float_t, 3> > normals;
+    std::vector<std::array<scalar_t, 3> > points;
+    std::vector<std::array<scalar_t, 3> > normals;
     std::vector<std::array<size_t, 3> > indexTriangles;
 };
 
