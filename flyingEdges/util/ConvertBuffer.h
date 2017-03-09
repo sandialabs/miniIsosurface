@@ -57,9 +57,9 @@ namespace util
         case TypeInfo::ID_DOUBLE:
             convertBuffer(reinterpret_cast<const double*>(in), nelms, out);
             break;
-        default:
-            throw no_type("Data type is not supported");
-            break;
+        //default:
+        //    throw no_type("Data type is not supported");
+        //    break;
         }
     }
 } // util namespace

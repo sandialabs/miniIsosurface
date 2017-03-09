@@ -10,9 +10,42 @@
 #include "../util/Timer.h"
 #include "../mantevoCommon/YAML_Doc.hpp"
 
+__global__ void doubler(scalar_t* a)
+{
+    int i = blockIdx.x;
+
+    a[i] = a[i]*2;
+}
+
 int main(int argc, char* argv[])
 {
-    scalar_t isoval;
+/*
+    std::vector<scalar_t> vec(10);
+    scalar_t c = 9.3;
+    for(scalar_t& s: vec)
+    {
+        s = c;
+        c += 1.15;
+    }
+
+    scalar_t* deviceVec;
+    cudaMalloc(&deviceVec, 10*sizeof(scalar_t));
+
+    cudaMemcpy(deviceVec, vec.data(), 10*sizeof(scalar_t), cudaMemcpyHostToDevice);
+
+    doubler<<<10,1>>>(deviceVec);
+
+    cudaMemcpy(vec.data(), deviceVec, 10*sizeof(scalar_t), cudaMemcpyDeviceToHost);
+
+    cudaFree(deviceVec);
+
+    for(scalar_t const& s: vec)
+        std::cout << s << std::endl;
+
+    return 0;
+*/
+
+    float isoval;
     bool isovalSet = false;
     char* vtkFile = NULL;
     char* outFile = NULL;
@@ -71,80 +104,55 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // Create a yamlDoc. If yamlDirectory and yamlFileName weren't assigned,
-    // YAML_Doc will create a file at in the current directory with a
-    // timestamp on it.
     YAML_Doc doc("Flying Edges", "0.1", yamlDirectory, yamlFileName);
 
-    // Add information related to this run to doc.
-    doc.add("Flying Edges Algorithm", "serial");
+    doc.add("Flying Edges Algorithm", "cuda");
     doc.add("Volume image data file path", vtkFile);
     doc.add("Polygonal mesh output file", outFile);
     doc.add("Isoval", isoval);
 
-    // Load the image file
     util::Image3D image = util::loadImage(vtkFile);
 
     doc.add("File x-dimension", image.xdimension());
     doc.add("File y-dimension", image.ydimension());
     doc.add("File z-dimension", image.zdimension());
 
-    // Time the output. util::Timer's constructor starts timing.
     util::Timer runTime;
 
-    // The inputs of the algorithm are the 3D image file and the isoval to
-    // estimate the isosurface at.
+    util::Timer toDeviceTime;
     FlyingEdgesAlgorithm algo(image, isoval);
-    // The flying edges algorithm makes 4 passes through the image file.
-    // Each pass is timed.
+    toDeviceTime.stop();
 
-    // Pass 1 of the algorithm labels each edge parallel to the x-axis as cut
-    // or not. In the process, each gridEdge is assigned an xl and xr.
-    // All edges before xl are uncut and all edges after xr are uncut.
-    // Subsequent passes of the algorithm don't look outside of [xl, xr).
-    // A gridEdge E_jk can be thought of as the row of edges parallel to the
-    // x-axis for some fixed j and k.
     util::Timer runTimePass1;
     algo.pass1();
     runTimePass1.stop();
 
-    // Pass 2 of the algorithm determines the marching cubes case ID of each
-    // cube. This is determined fully from information obtained in pass1, so
-    // there is no need to access the input image. Each cube starts at (i,j,k)
-    // and extends to (i+1, j+1, k+1).
-    // In addition to determining case ID of each cell, pass 2 counts the
-    // number of cuts on incident to each gridEdge.
     util::Timer runTimePass2;
     algo.pass2();
     runTimePass2.stop();
 
-    // Pass 3 of the algorithm uses information from pass 2 to determine how
-    // many triangles and points there are. It also sets up starting indices
-    // on each gridEdge. Once these sizes are determined, memory is allocated
-    // for storing triangles, points and normals.
     util::Timer runTimePass3;
-//    algo.pass3();
+    algo.pass3();
     runTimePass3.stop();
 
-    // Pass 4 of the algorithm calculates calculates and fills out points,
-    // normals and the triangles.
     util::Timer runTimePass4;
 //    algo.pass4();
     runTimePass4.stop();
 
-    // This function receives the output. The data is not copied or deep copied
-    // but instead is moved or shallow copied. Once moveOutput is called, the
-    // algo structure no longer maintains responsibility of any data.
+    util::Timer fromDeviceTime;
     util::TriangleMesh mesh = algo.moveOutput();
+    fromDeviceTime.stop();
 
-    // End overall timing
     runTime.stop();
 
-    // Report mesh information
     doc.add("Number of vertices in mesh", mesh.numberOfVertices());
     doc.add("Number of triangles in mesh", mesh.numberOfTriangles());
 
-    // Report timing information
+    doc.add("To Device", "");
+    doc.get("To Device")->add("CPU Time (clicks)", toDeviceTime.getTotalTicks());
+    doc.get("To Device")->add("CPU Time (seconds)", toDeviceTime.getCPUtime());
+    doc.get("To Device")->add("Wall Time (seconds)", toDeviceTime.getWallTime());
+
     doc.add("Pass 1", "");
     doc.get("Pass 1")->add("CPU Time (clicks)", runTimePass1.getTotalTicks());
     doc.get("Pass 1")->add("CPU Time (seconds)", runTimePass1.getCPUtime());
@@ -165,13 +173,16 @@ int main(int argc, char* argv[])
     doc.get("Pass 4")->add("CPU Time (seconds)", runTimePass4.getCPUtime());
     doc.get("Pass 4")->add("Wall Time (seconds)", runTimePass4.getWallTime());
 
+    doc.add("From Device", "");
+    doc.get("From Device")->add("CPU Time (clicks)", fromDeviceTime.getTotalTicks());
+    doc.get("From Device")->add("CPU Time (seconds)", fromDeviceTime.getCPUtime());
+    doc.get("From Device")->add("Wall Time (seconds)", fromDeviceTime.getWallTime());
+
     doc.add("Total Program CPU Time (clicks)", runTime.getTotalTicks());
     doc.add("Total Program CPU Time (seconds)", runTime.getCPUtime());
     doc.add("Total Program WALL Time (seconds)", runTime.getWallTime());
 
-    // Generate the YAML file. The file will be both saved and printed to console.
     std::cout << doc.generateYAML();
 
-    // Save the polygonal mesh to the output file.
 //    util::saveTriangleMesh(mesh, outFile);
 }

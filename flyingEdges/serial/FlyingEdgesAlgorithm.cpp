@@ -7,6 +7,9 @@
 #include "FlyingEdgesAlgorithm.h"
 
 #include "../util/MarchingCubesTables.h"
+#include <algorithm>
+
+#include <iostream> // TODO
 
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 1 of the algorithm
@@ -27,6 +30,7 @@ void FlyingEdgesAlgorithm::pass1()
 
         std::array<bool, 2> isGE;
         isGE[0] = (curPointValues[0] >= isoval);
+        curGridEdge.xl = nx;
         for(int i = 1; i != nx; ++i)
         {
             isGE[i%2] = (curPointValues[i] >= isoval);
@@ -36,13 +40,33 @@ void FlyingEdgesAlgorithm::pass1()
             // If the edge is cut
             if(curEdgeCases[i-1] == 1 || curEdgeCases[i-1] == 2)
             {
-                if(curGridEdge.xl == 0)
-                    curGridEdge.xl == i-1;
+                if(curGridEdge.xl == nx)
+                {
+                    curGridEdge.xl = i-1;
+                }
 
                 curGridEdge.xr = i;
             }
         }
     }}
+
+    size_t count;
+    for(int idx = 0; idx != edgeCases.size(); ++idx)
+    {
+        uchar const& val = edgeCases[idx];
+        count += val == 255 ? 0 : val;
+    }
+    std::cout << "Edgecase counter: " << count << std::endl;
+
+    size_t countL = 0;
+    size_t countR = 0;
+    for(int idx = 0; idx != gridEdges.size(); ++idx)
+    {
+        countL += gridEdges[idx].xl;
+        countR += gridEdges[idx].xr;
+    }
+    std::cout << "xl, xr: " << countL << ", " << countR << std::endl;
+
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -68,7 +92,7 @@ void FlyingEdgesAlgorithm::pass2()
         gridEdge& ge2 = gridEdges[(k+1)*ny + j];
         gridEdge& ge3 = gridEdges[(k+1)*ny + j + 1];
 
-        // ec0, ec1, ec2 and ec3 were set in pass 2. They are used
+        // ec0, ec1, ec2 and ec3 were set in pass 1. They are used
         // to calculate the cell caseId.
         auto const& ec0 = edgeCases.begin() + (nx-1)*(k*ny + j);
         auto const& ec1 = edgeCases.begin() + (nx-1)*(k*ny + j + 1);
@@ -167,6 +191,14 @@ void FlyingEdgesAlgorithm::pass2()
             }
         }
     }}
+
+    int count = 0;
+    for(int idx = 0; idx != cubeCases.size(); ++idx)
+    {
+        int val = cubeCases[idx] == 255 ? 0 : cubeCases[idx];
+        count += val;
+    }
+    std::cout << "Cube cases count " << count << std::endl;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -230,6 +262,9 @@ void FlyingEdgesAlgorithm::pass4()
         // find adjusted trim values
         size_t xl, xr;
         calcTrimValues(xl, xr, j, k); // xl, xr set in this function
+
+        if(xl == xr)
+            continue;
 
         size_t triIdx = triCounter[k*(ny-1) + j];
         auto curCubeCaseIds = cubeCases.begin() + (nx-1)*(k*(ny-1) + j);
@@ -503,6 +538,8 @@ FlyingEdgesAlgorithm::calcCubeCase(
     return caseId;
 }
 
+//#include <iostream> // TODO
+
 inline void
 FlyingEdgesAlgorithm::calcTrimValues(
     size_t& xl, size_t& xr,
@@ -513,10 +550,13 @@ FlyingEdgesAlgorithm::calcTrimValues(
     gridEdge const& ge2 = gridEdges[(k+1)*ny + j];
     gridEdge const& ge3 = gridEdges[(k+1)*ny + j + 1];
 
-    using std::min;
-    using std::max;
-    xl = min(ge0.xl, min(ge1.xl, min(ge2.xl, ge3.xl)));
-    xr = max(ge0.xr, max(ge1.xr, max(ge2.xr, ge3.xr)));
+    xl = size_t(std::min({ge0.xl, ge1.xl, ge2.xl, ge3.xl}));
+    xr = size_t(std::max({ge0.xr, ge1.xr, ge2.xr, ge3.xr}));
+
+//    std::cout << ge0.xl << " " << ge1.xl << " " << ge2.xl << " " << ge3.xl << " : " << xl << std::endl;
+
+    if(xl > xr)
+        xl = xr;
 }
 
 inline std::array<scalar_t, 3>
