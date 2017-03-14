@@ -10,7 +10,38 @@
 
 #include <numeric>
 
+#include <algorithm> // TODO
 #include <iostream> // TODO
+
+#define MAX_X_GRID 65535 // says larger but doesnt work if larger..
+#define MAX_Y_GRID 65535
+#define MAX_Z_GRID 65535
+#define MAX_X_BLOCK 1024
+#define MAX_Y_BLOCK 1024
+#define MAX_Z_BLOCK 64
+#define MAX_THREAD_PER_BLOCK 1024
+
+bool validKernelSize(uint3 const& gridDim, uint3 const& blockDim)
+{
+    if(gridDim.x > MAX_X_GRID)
+        return false;
+    if(gridDim.y > MAX_Y_GRID)
+        return false;
+    if(gridDim.z > MAX_Z_GRID)
+        return false;
+
+    if(blockDim.x > MAX_X_BLOCK)
+        return false;
+    if(blockDim.y > MAX_Y_BLOCK)
+        return false;
+    if(blockDim.z > MAX_Z_BLOCK)
+        return false;
+
+    if(blockDim.x * blockDim.y * blockDim.z > MAX_THREAD_PER_BLOCK)
+        return false;
+
+    return true;
+}
 
 // TODO make sure pointValues stored in const memory
 
@@ -45,13 +76,13 @@ void pass1gpu_edgeCases(
     int nx, int ny,
     uchar* edgeCases)
 {
-    // (nx-1, ny, nz) > comes as (nx-1, ny*nz)
+//    // (nx-1, ny, nz) > comes as (nx-1, ny*nz)
     // Each row has several blocks
     // Each thread is one point
 
     int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.y % ny;
-    int k = blockIdx.y / ny;
+    int j = blockIdx.y;
+    int k = blockIdx.z;
 
     __shared__ bool isGE[FE_BLOCK_WIDTH_PLUS_ONE];
 
@@ -105,11 +136,28 @@ void pass1gpu_trim(
     gridEdges[k*ny + j].xr = xr;
 }
 
+//__global__
+//void gah(
+//    int* www)
+//{
+//    int i = blockIdx.x * blockDim.x + threadIdx.x;
+//    int j = blockIdx.y * blockDim.y + threadIdx.y;
+//
+////    int idx = i*512*512 + j;
+//    int idx = i;
+//    if (idx < 512*512*512)
+//        www[idx] = idx+1;
+//}
+
 void FlyingEdgesAlgorithm::pass1()
 {
     int tx = FE_BLOCK_WIDTH;
-    uint3 gridDim = make_uint3(((nx-1) + tx - 1) / tx, ny*nz, 1);
+    uint3 gridDim = make_uint3(((nx-1) + tx - 1) / tx, ny, nz);
     uint3 blockDim = make_uint3(tx, 1, 1);
+
+    if(!validKernelSize(gridDim, blockDim))
+        std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
+
     pass1gpu_edgeCases<<<gridDim, blockDim>>>(
         pointValues,
         isoval,
@@ -120,6 +168,9 @@ void FlyingEdgesAlgorithm::pass1()
     int tz = FE_BLOCK_WIDTH_Z;
     gridDim = make_uint3((ny + ty - 1) / ty, (nz + tz - 1) / tz, 1);
     blockDim = make_uint3(ty, tz, 1);
+
+    if(!validKernelSize(gridDim, blockDim))
+        std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
 
     pass1gpu_trim<<<gridDim, blockDim>>>(
         nx, ny, nz,
@@ -136,6 +187,20 @@ void FlyingEdgesAlgorithm::pass1()
     gridEdge* hostGEs = (gridEdge*)malloc(numGE*sizeof(gridEdge));
     cudaMemcpy(hostGEs, gridEdges, numGE*sizeof(gridEdge),
                cudaMemcpyDeviceToHost);
+
+    int numCubes=(nx-1)*ny*nz;
+    size_t count = 0;
+    uchar* hoseEdgeCases = (uchar*)malloc(numCubes*sizeof(uchar));
+    cudaMemcpy(hoseEdgeCases, edgeCases, numCubes*sizeof(uchar),
+               cudaMemcpyDeviceToHost);
+    for(int idx = 0; idx != numCubes; ++idx)
+    {
+        uchar const& val = hoseEdgeCases[idx];
+        count += val;
+    }
+    std::cout << "Edgecase counter: " << count << std::endl;
+    free(hoseEdgeCases);
+
 
     size_t countL = 0;
     size_t countR = 0;
@@ -471,6 +536,9 @@ void FlyingEdgesAlgorithm::pass2()
     uint3 gridDim = make_uint3(((ny-1) + ty - 1) / ty, ((nz-1) + tz - 1) / tz, 1);
     uint3 blockDim = make_uint3(ty, tz, 1);
 
+    if(!validKernelSize(gridDim, blockDim))
+        std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
+
     pass2gpu_cubeCases<<<gridDim, blockDim>>>(
         nx, ny, nz,
         edgeCases,
@@ -479,6 +547,7 @@ void FlyingEdgesAlgorithm::pass2()
         cubeCases);  // modified
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     size_t sz = (nx-1)*(ny-1)*(nz-1)*sizeof(uchar);
+
     cudaDeviceSynchronize();
     uchar* hostCubeCases = (uchar*)malloc(sz);
     cudaMemcpy(hostCubeCases, cubeCases,
@@ -511,6 +580,27 @@ void FlyingEdgesAlgorithm::pass2()
         gridEdges);
 
     cudaDeviceSynchronize();
+    //std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    size_t sz_ge = nx*ny*sizeof(gridEdge);
+    gridEdge* hostges = (gridEdge*)malloc(sz_ge);
+    auto w = cudaMemcpy(hostges, gridEdges,
+               sz_ge, cudaMemcpyDeviceToHost);
+    if(w != cudaSuccess)
+    {
+        std::cout << "GHASDCFAKSCLKASCKAS:CKASL:CKAS:DLCKASD:" << std::endl;
+        std::cout << cudaGetErrorString(w) << std::endl;
+    }
+
+    int sumxstart = 0;
+    for(int idx = 0; idx != nx*ny; ++idx)
+    {
+        sumxstart += hostges[idx].xstart;
+    }
+    std::cout << "sumxstart " << sumxstart << std::endl;
+    free(hostges);
+
 
 // This is prohibitively slow so pass2gpu_ghost_xz covers it now
 //    pass2gpu_ghost_xyz<<<1, 1, 3>>>(
@@ -653,111 +743,110 @@ void pass3gpu_blockAccum(
     FlyingEdgesAlgorithm::gridEdge* gridEdges,
     int* blockAccum)
 {
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
     int k = blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (j == 0 && k == 0);
-    {
-        // TODO get rid of this exp
-        blockAccum[0] = 191230;
-        blockAccum[1] = 192340;
-        blockAccum[2] = 193450;
-        blockAccum[3] = 194560;
-    }
-    return;
 
     // step 1: accumulate individual y thread
     // step 2: calc block sum
     // step 3: __syncthreads
     // step 4: add to individual y thread
 
-
-    if(k >= nz)
-        return;
-
     __shared__ int accum[4*FE_BLOCK_WIDTH];
-
-    int tmp;
-    int accumX   = 0;
-    int accumY   = 0;
-    int accumZ   = 0;
-    int accumTri = 0;
-    for(int j = 0; j != ny; ++j)
+    //if(k >= nz)
+    //    return;
+    if(k < nz)
     {
-        FlyingEdgesAlgorithm::gridEdge& ge = gridEdges[k*ny + j];
-
-        tmp = ge.xstart;
-        ge.xstart = accumX;
-        accumX += tmp;
-
-        tmp = ge.ystart;
-        ge.ystart = accumY;
-        accumY += tmp;
-
-        tmp = ge.zstart;
-        ge.zstart = accumZ;
-        accumZ += tmp;
-    }
-
-    if(k < nz-1)
-    {
-        for(int j = 0; j != ny-1; ++j)
+        int tmp;
+        int accumX   = 0;
+        int accumY   = 0;
+        int accumZ   = 0;
+        int accumTri = 0;
+        for(int j = 0; j != ny; ++j)
         {
-            int& curTriCount = triCounter[k*(ny-1) + j];
+            FlyingEdgesAlgorithm::gridEdge& ge = gridEdges[k*ny + j];
 
-            tmp = curTriCount;
-            curTriCount = accumTri;
-            accumTri += tmp;
-        }
-    }
+            tmp = ge.xstart;
+            ge.xstart = accumX;
+            accumX += tmp;
 
-    accum[4*threadIdx.z + 0] = accumX;
-    accum[4*threadIdx.z + 1] = accumY;
-    accum[4*threadIdx.z + 2] = accumZ;
-    accum[4*threadIdx.z + 3] = accumTri;
+            tmp = ge.ystart;
+            ge.ystart = accumY;
+            accumY += tmp;
 
-    __syncthreads();
-
-    if(threadIdx.z == 0) // agh!
-    {
-        for(int idx = 1; idx != blockDim.z; ++idx)
-        {
-            accum[4*idx + 0] += accum[4*(idx-1) + 0];
-            accum[4*idx + 1] += accum[4*(idx-1) + 1];
-            accum[4*idx + 2] += accum[4*(idx-1) + 2];
-            accum[4*idx + 3] += accum[4*(idx-1) + 3];
+            tmp = ge.zstart;
+            ge.zstart = accumZ;
+            accumZ += tmp;
         }
 
-        // answer for global accumulation
-        blockAccum[4*blockIdx.z + 0] = accum[4*(blockDim.z-1) + 0];
-        blockAccum[4*blockIdx.z + 1] = accum[4*(blockDim.z-1) + 1];
-        blockAccum[4*blockIdx.z + 2] = accum[4*(blockDim.z-1) + 2];
-        blockAccum[4*blockIdx.z + 3] = accum[4*(blockDim.z-1) + 3];
+        if(k < nz-1)
+        {
+            for(int j = 0; j != ny-1; ++j)
+            {
+                int& curTriCount = triCounter[k*(ny-1) + j];
+
+                tmp = curTriCount;
+                curTriCount = accumTri;
+                accumTri += tmp;
+            }
+        }
+
+        //
+
+        blockAccum[4*k + 0] = accumX;
+        blockAccum[4*k + 1] = accumX;
+        blockAccum[4*k + 2] = accumX;
+        blockAccum[4*k + 3] = accumTri;
+
+
+        //accum[4*threadIdx.y + 0] = accumX;
+        //accum[4*threadIdx.y + 1] = accumY;
+        //accum[4*threadIdx.y + 2] = accumZ;
+        //accum[4*threadIdx.y + 3] = accumTri;
     }
 
     __syncthreads();
 
-    if(threadIdx.z == 0)
+    if(k < nz)
+    {
+        if(threadIdx.y == 0) // agh!
+        {
+            for(int idx = 1; idx != blockDim.y; ++idx)
+            {
+                accum[4*idx + 0] += accum[4*(idx-1) + 0];
+                accum[4*idx + 1] += accum[4*(idx-1) + 1];
+                accum[4*idx + 2] += accum[4*(idx-1) + 2];
+                accum[4*idx + 3] += accum[4*(idx-1) + 3];
+            }
+
+            // answer for global accumulation
+            blockAccum[4*blockIdx.y + 0] = accum[4*(blockDim.y-1) + 0];
+            blockAccum[4*blockIdx.y + 1] = accum[4*(blockDim.y-1) + 1];
+            blockAccum[4*blockIdx.y + 2] = accum[4*(blockDim.y-1) + 2];
+            blockAccum[4*blockIdx.y + 3] = accum[4*(blockDim.y-1) + 3];
+        }
+    }
+    __syncthreads();
+
+    if(threadIdx.y == 0 || k >= nz)
         return;
 
     bool isEndK = k == nz-1;
-    for(int j = 1; j != ny-1; ++j)
+    for(int j = 0; j != ny-1; ++j)
     {
         FlyingEdgesAlgorithm::gridEdge& ge = gridEdges[k*ny + j];
 
-        ge.xstart += accum[4*(threadIdx.z-1) + 0];
-        ge.ystart += accum[4*(threadIdx.z-1) + 1];
-        ge.zstart += accum[4*(threadIdx.z-1) + 2];
+        ge.xstart += accum[4*(threadIdx.y-1) + 0];
+        ge.ystart += accum[4*(threadIdx.y-1) + 1];
+        ge.zstart += accum[4*(threadIdx.y-1) + 2];
 
         // put z stuff here..
         if(!isEndK)
-            triCounter[k*(ny-1) + j] = accum[4*(threadIdx.z-1) + 3];
+            triCounter[k*(ny-1) + j] = accum[4*(threadIdx.y-1) + 3];
     }
 
     FlyingEdgesAlgorithm::gridEdge& ge = gridEdges[k*ny + (ny-1)];
-    ge.xstart += accum[4*(threadIdx.z-1) + 0];
-    ge.ystart += accum[4*(threadIdx.z-1) + 1];
-    ge.zstart += accum[4*(threadIdx.z-1) + 2];
+    ge.xstart += accum[4*(threadIdx.y-1) + 0];
+    ge.ystart += accum[4*(threadIdx.y-1) + 1];
+    ge.zstart += accum[4*(threadIdx.y-1) + 2];
 }
 
 __global__ // TODO can split up along j here easy enough.
@@ -812,26 +901,28 @@ void FlyingEdgesAlgorithm::pass3()
     // there are four because: xstart, ystart, zstart, triaccum
     int sizeBlocks = 4 * numBlocks * sizeof(int);
 
-    uint3 gridDim = make_uint3(1, numBlocks, 1); // TODO FIGURE OUT HOW THREADS PER BLOCK
-                                                 //      STUFF WORKS with at
-                                                 //      3rd dimension..
-                                                 //
-                                                 //      Blocks can have 3
-                                                 //      dimensions
-                                                 //
-                                                 //      Grids can only have 2
-                                                 //      dimensions!
+    uint3 gridDim = make_uint3(1, numBlocks, 1);
     uint3 blockDim = make_uint3(1, tz, 1);
 
     int* hostBlockAccum = (int*)malloc(sizeBlocks);
+    for(int idx = 0; idx != 4*numBlocks; ++idx)
+    {
+        hostBlockAccum[idx] = 0;
+    }
 
     int* deviceBlockAccum;
     cudaMalloc(&deviceBlockAccum, sizeBlocks);
+
+    cudaMemcpy(deviceBlockAccum, hostBlockAccum,
+               sizeBlocks, cudaMemcpyHostToDevice);
 
     std::cout << gridDim.x << ", " << gridDim.y << std::endl;
     std::cout << blockDim.x << ", " << blockDim.y << std::endl;
 
     // Accumulate values locally
+
+    if(!validKernelSize(gridDim, blockDim))
+        std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
 
     pass3gpu_blockAccum<<<gridDim, blockDim>>>(
         nx, ny, nz,
@@ -839,28 +930,23 @@ void FlyingEdgesAlgorithm::pass3()
         gridEdges,
         deviceBlockAccum);
 
-    cudaDeviceSynchronize();
-
     cudaMemcpy(hostBlockAccum, deviceBlockAccum,
                sizeBlocks, cudaMemcpyDeviceToHost);
 
+    std::cout << "ACCUM ";
+    for(int idx = 0; idx != 4*numBlocks; ++idx)
+    {
+        std::cout << hostBlockAccum[idx] << " ";
+    }
+    std::cout << std::endl;
 
-    //////////////////////////////////////////////////////////////
-    // WHAT IS GOING ON HERE?
-    //////////////////////////////////////////////////////////////
+    cudaDeviceSynchronize();
 
-    std::cout  << "SANITY CHECK " << hostBlockAccum[0] << ", " << hostBlockAccum[1] << ", " << hostBlockAccum[2]  << ", " << hostBlockAccum[3] << std::endl;
-//    if(err != cudaSuccess)
-//        std::cout << "AGHHHHHHHHHHHHHHHH" << std::endl;
-//    else
-//        std::cout << __LINE__ << std::endl;
-//    for(int idx = 0; idx != numBlocks; ++idx)
-//    {
-//        std::cout << hostBlockAccum[4*idx + 3] << std::endl;
-//    }
+    std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
     if(numBlocks != 1)
     {
+        std::cout << "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH" << std::endl;
 
         // std::partial_sum(2 2 3 4  3  2  2 ) TODO not using it get rid of header
         // goes to         (2 4 7 11 14 16 18)
@@ -880,6 +966,10 @@ void FlyingEdgesAlgorithm::pass3()
         cudaMemcpy(deviceBlockAccum, hostBlockAccum,
                    sizeBlocks - 4 * sizeof(int), cudaMemcpyHostToDevice);
 
+        // TODO
+        if(!validKernelSize(gridDim, blockDim))
+            std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
+
         // Accumulate values from other blocks
         gridDim = make_uint3(1, 1, numBlocks - 1);
         pass3gpu_gridAccum<<<gridDim, blockDim>>>(
@@ -887,6 +977,9 @@ void FlyingEdgesAlgorithm::pass3()
             triCounter,
             gridEdges,
             deviceBlockAccum);
+
+        cudaDeviceSynchronize();
+        std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     }
 
     // Allocate memory for points, normals and tris
@@ -900,7 +993,8 @@ void FlyingEdgesAlgorithm::pass3()
     cudaMalloc(&normals, 3*sizeof(scalar_t)*numPoints);
     cudaMalloc(&tris, 3*sizeof(int)*numTris);
 
-    std::cout << "PASS3 " << numPoints << " " << numTris << std::endl;
+    std::cout << "numpoints" << numPoints << std::endl;
+    std::cout << "numtris"   << numTris   << std::endl;
 
     // free memory used in this function
     free(hostBlockAccum);

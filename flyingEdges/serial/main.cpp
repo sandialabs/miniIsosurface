@@ -123,13 +123,13 @@ int main(int argc, char* argv[])
     // on each gridEdge. Once these sizes are determined, memory is allocated
     // for storing triangles, points and normals.
     util::Timer runTimePass3;
-//    algo.pass3();
+    algo.pass3();
     runTimePass3.stop();
 
     // Pass 4 of the algorithm calculates calculates and fills out points,
     // normals and the triangles.
     util::Timer runTimePass4;
-//    algo.pass4();
+    algo.pass4();
     runTimePass4.stop();
 
     // This function receives the output. The data is not copied or deep copied

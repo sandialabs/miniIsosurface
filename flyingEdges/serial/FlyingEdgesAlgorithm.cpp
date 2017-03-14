@@ -50,11 +50,11 @@ void FlyingEdgesAlgorithm::pass1()
         }
     }}
 
-    size_t count;
+    size_t count = 0;
     for(int idx = 0; idx != edgeCases.size(); ++idx)
     {
         uchar const& val = edgeCases[idx];
-        count += val == 255 ? 0 : val;
+        count += val;
     }
     std::cout << "Edgecase counter: " << count << std::endl;
 
@@ -199,6 +199,13 @@ void FlyingEdgesAlgorithm::pass2()
         count += val;
     }
     std::cout << "Cube cases count " << count << std::endl;
+
+    int sumxstart = 0;
+    for(int idx = 0; idx != gridEdges.size(); ++idx)
+    {
+        sumxstart += gridEdges[idx].xstart;
+    }
+    std::cout << "sumxstart " << sumxstart << std::endl;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -244,6 +251,9 @@ void FlyingEdgesAlgorithm::pass3()
     points = std::vector<std::array<scalar_t, 3> >(pointAccum);
     normals = std::vector<std::array<scalar_t, 3> >(pointAccum);
     tris = std::vector<std::array<size_t, 3> >(triAccum);
+
+    std::cout << "num points: " << pointAccum << std::endl;
+    std::cout << "num tris:   " << triAccum   << std::endl;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
