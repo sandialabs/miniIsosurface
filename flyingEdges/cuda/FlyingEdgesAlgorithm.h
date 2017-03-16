@@ -39,6 +39,20 @@ struct FlyingEdgesAlgorithm
             throw;
         }
 
+        cuErr = cudaMalloc(&zeroPos, 3*sizeof(scalar_t));
+        if(cuErr != cudaSuccess)
+        {
+            std::cout << "~01.3" << std::endl;
+            throw;
+        }
+
+        cuErr = cudaMalloc(&spacing, 3*sizeof(scalar_t));
+        if(cuErr != cudaSuccess)
+        {
+            std::cout << "~01.5" << std::endl;
+            throw;
+        }
+
         cuErr = cudaMalloc(&gridEdges, ny*nz*sizeof(gridEdge));
         if(cuErr != cudaSuccess)
         {
@@ -73,6 +87,30 @@ struct FlyingEdgesAlgorithm
             image.pointer(),
             nx*ny*nz*sizeof(scalar_t),
             cudaMemcpyHostToDevice);
+
+        scalar_t* tmp = (scalar_t*)malloc(3*sizeof(scalar_t));
+        auto imageZp = image.getZeroPos();
+        tmp[0] = imageZp[0];
+        tmp[1] = imageZp[1];
+        tmp[2] = imageZp[2];
+
+        cudaMemcpy(
+            zeroPos,
+            tmp,
+            3*sizeof(scalar_t),
+            cudaMemcpyHostToDevice);
+
+        auto imageSp = image.getSpacing();
+        tmp[0] = imageSp[0];
+        tmp[1] = imageSp[1];
+        tmp[2] = imageSp[2];
+
+        cudaMemcpy(
+            spacing,
+            tmp,
+            3*sizeof(scalar_t),
+            cudaMemcpyHostToDevice);
+
     }
 
     ~FlyingEdgesAlgorithm()
@@ -85,6 +123,8 @@ struct FlyingEdgesAlgorithm
         if(!deallocated)
         {
             cudaFree(pointValues);
+            cudaFree(zeroPos);
+            cudaFree(spacing);
             cudaFree(gridEdges);
             cudaFree(triCounter);
             cudaFree(edgeCases);
@@ -139,6 +179,8 @@ public:
 
 private:
     scalar_t* pointValues; // size of nx*ny*nz, the input
+    scalar_t* zeroPos;     // size of 3
+    scalar_t* spacing;     // size of 3
     scalar_t const isoval;
 
     int const nx; //
@@ -155,8 +197,10 @@ private:
     bool deallocated;
 
     scalar_t* points;     //
-    scalar_t* normals;    // the output
-    int* tris;            //
+    scalar_t* normals;    //
+    int* tris;            // the output
+    int numPoints;        //
+    int numTris;          //
 
 private:
 /*

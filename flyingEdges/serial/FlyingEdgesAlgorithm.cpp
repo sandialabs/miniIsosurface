@@ -31,7 +31,7 @@ void FlyingEdgesAlgorithm::pass1()
         std::array<bool, 2> isGE;
         isGE[0] = (curPointValues[0] >= isoval);
         curGridEdge.xl = nx;
-        for(int i = 1; i != nx; ++i)
+        for(int i = 1; i != nx-1; ++i)
         {
             isGE[i%2] = (curPointValues[i] >= isoval);
 

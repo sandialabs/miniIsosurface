@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
     runTimePass2.stop();
 
     util::Timer runTimePass3;
-    algo.pass3();
+//    algo.pass3();
     runTimePass3.stop();
 
     util::Timer runTimePass4;

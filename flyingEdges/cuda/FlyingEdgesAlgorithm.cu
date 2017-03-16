@@ -21,6 +21,10 @@
 #define MAX_Z_BLOCK 64
 #define MAX_THREAD_PER_BLOCK 1024
 
+#define DEBUG true
+
+// TODO figure out how to handle errors
+
 bool validKernelSize(uint3 const& gridDim, uint3 const& blockDim)
 {
     if(gridDim.x > MAX_X_GRID)
@@ -76,7 +80,6 @@ void pass1gpu_edgeCases(
     int nx, int ny,
     uchar* edgeCases)
 {
-//    // (nx-1, ny, nz) > comes as (nx-1, ny*nz)
     // Each row has several blocks
     // Each thread is one point
 
@@ -109,8 +112,6 @@ void pass1gpu_trim(
     uchar* edgeCases,                          // input
     FlyingEdgesAlgorithm::gridEdge* gridEdges) // output
 {
-    // (1, ny, nz) > comes as (ny, nz)
-
     int j = blockIdx.x * blockDim.x + threadIdx.x;
     int k = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -122,7 +123,7 @@ void pass1gpu_trim(
 
     uchar* curEdgeCases = edgeCases + k*(nx-1)*ny + j*(nx-1);
 
-    for(int i = 0; i != nx-1; ++i)
+    for(int i = 0; i != nx-2; ++i)
     {
         if(curEdgeCases[i] == 1 || curEdgeCases[i] == 2)
         {
@@ -135,19 +136,6 @@ void pass1gpu_trim(
     gridEdges[k*ny + j].xl = xl;
     gridEdges[k*ny + j].xr = xr;
 }
-
-//__global__
-//void gah(
-//    int* www)
-//{
-//    int i = blockIdx.x * blockDim.x + threadIdx.x;
-//    int j = blockIdx.y * blockDim.y + threadIdx.y;
-//
-////    int idx = i*512*512 + j;
-//    int idx = i;
-//    if (idx < 512*512*512)
-//        www[idx] = idx+1;
-//}
 
 void FlyingEdgesAlgorithm::pass1()
 {
@@ -179,79 +167,41 @@ void FlyingEdgesAlgorithm::pass1()
 
     cudaDeviceSynchronize();
 
-    /////////////////////////////////////
-    // WHAT IS GOING ON?..It works now //  TODO
-    /////////////////////////////////////
-
-    int numGE = nz*ny;
-    gridEdge* hostGEs = (gridEdge*)malloc(numGE*sizeof(gridEdge));
-    cudaMemcpy(hostGEs, gridEdges, numGE*sizeof(gridEdge),
-               cudaMemcpyDeviceToHost);
-
-    int numCubes=(nx-1)*ny*nz;
-    size_t count = 0;
-    uchar* hoseEdgeCases = (uchar*)malloc(numCubes*sizeof(uchar));
-    cudaMemcpy(hoseEdgeCases, edgeCases, numCubes*sizeof(uchar),
-               cudaMemcpyDeviceToHost);
-    for(int idx = 0; idx != numCubes; ++idx)
+    if(DEBUG)
     {
-        uchar const& val = hoseEdgeCases[idx];
-        count += val;
-    }
-    std::cout << "Edgecase counter: " << count << std::endl;
-    free(hoseEdgeCases);
+        int numGE = nz*ny;
+        gridEdge* hostGEs = (gridEdge*)malloc(numGE*sizeof(gridEdge));
+        cudaMemcpy(hostGEs, gridEdges, numGE*sizeof(gridEdge),
+                   cudaMemcpyDeviceToHost);
 
-
-    size_t countL = 0;
-    size_t countR = 0;
-    for(int idx = 0; idx != numGE; ++idx)
-    {
-        countL += hostGEs[idx].xl;
-        countR += hostGEs[idx].xr;
-    }
-
-    std::cout << "xl, xr: " << countL << ", " << countR << std::endl;
-
-    free(hostGEs);
-}
-
-/*
-void FlyingEdgesAlgorithm::pass1()
-{
-    // For each (j, k):
-    //  - for each edge i along fixed (j, k) gridEdge, fill edgeCases with
-    //    cut information.
-    //  - find the locations for computational trimming, xl and xr
-    for(size_t k = 0; k != nz; ++k) {
-    for(size_t j = 0; j != ny; ++j)
-    {
-        auto curEdgeCases = edgeCases.begin() + (nx-1) * (k*ny + j);
-        auto curPointValues = image.getRowIter(j, k);
-
-        gridEdge& curGridEdge = gridEdges[k*ny + j];
-
-        std::array<bool, 2> isGE;
-        isGE[0] = (curPointValues[0] >= isoval);
-        for(int i = 1; i != nx; ++i)
+        int numCubes=(nx-1)*ny*nz;
+        size_t count = 0;
+        uchar* hoseEdgeCases = (uchar*)malloc(numCubes*sizeof(uchar));
+        cudaMemcpy(hoseEdgeCases, edgeCases, numCubes*sizeof(uchar),
+                   cudaMemcpyDeviceToHost);
+        for(int idx = 0; idx != numCubes; ++idx)
         {
-            isGE[i%2] = (curPointValues[i] >= isoval);
-
-            curEdgeCases[i-1] = calcCaseEdge(isGE[(i+1)%2], isGE[i%2]);
-
-            // If the edge is cut
-            if(curEdgeCases[i-1] == 1 || curEdgeCases[i-1] == 2)
-            {
-                if(curGridEdge.xl == 0)
-                    curGridEdge.xl == i-1;
-
-                curGridEdge.xr = i;
-            }
+            uchar const& val = hoseEdgeCases[idx];
+            count += val;
         }
-    }}
+        std::cout << "Edgecase counter: " << count << std::endl;
+        free(hoseEdgeCases);
+
+
+        size_t countL = 0;
+        size_t countR = 0;
+        for(int idx = 0; idx != numGE; ++idx)
+        {
+            countL += hostGEs[idx].xl;
+            countR += hostGEs[idx].xr;
+        }
+
+        std::cout << "xl, xr: " << countL << ", " << countR << std::endl;
+
+        free(hostGEs);
+    }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-*/
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 2 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
@@ -266,6 +216,9 @@ void calcTrimValues(
 {
     xl = min(ge0.xl, min(ge1.xl, min(ge2.xl, ge3.xl)));
     xr = max(ge0.xr, max(ge1.xr, max(ge2.xr, ge3.xr)));
+
+    if(xl > xr)
+        xl = xr;
 }
 
 __device__
@@ -306,7 +259,6 @@ void pass2gpu_cubeCases(
     int* triCounter,
     uchar* cubeCases)
 {
-    // (1, ny-1, nz-1) > comes as (ny-1, nz-1)
     int j = blockIdx.x * blockDim.x + threadIdx.x;
     int k = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -318,10 +270,10 @@ void pass2gpu_cubeCases(
     FlyingEdgesAlgorithm::gridEdge& ge2 = gridEdges[(k+1)*ny + j];
     FlyingEdgesAlgorithm::gridEdge& ge3 = gridEdges[(k+1)*ny + j + 1];
 
-    uchar* ec0 = edgeCases + k*ny*(nx-1) + j*(nx-1); // (nx-1)*(k*ny + j);
-    uchar* ec1 = edgeCases + k*ny*(nx-1) + (j+1)*(nx-1); // (nx-1)*(k*ny + j + 1);
-    uchar* ec2 = edgeCases + (k+1)*ny*(nx-1) + j*(nx-1); // (nx-1)*((k+1)*ny + j);
-    uchar* ec3 = edgeCases + (k+1)*ny*(nx-1) + (j+1)*(nx-1); // (nx-1)*((k+1)*ny + j + 1);
+    uchar* ec0 = edgeCases + k*ny*(nx-1) + j*(nx-1);
+    uchar* ec1 = edgeCases + k*ny*(nx-1) + (j+1)*(nx-1);
+    uchar* ec2 = edgeCases + (k+1)*ny*(nx-1) + j*(nx-1);
+    uchar* ec3 = edgeCases + (k+1)*ny*(nx-1) + (j+1)*(nx-1);
 
     int xl, xr;
     calcTrimValues(xl, xr, ge0, ge1, ge2, ge3);
@@ -337,13 +289,9 @@ void pass2gpu_cubeCases(
     for(int i = xl; i != xr; ++i) // What happens here on a gpu?
                                   // I imagine it takes the max xr-xl of all blocks
     {
-        // TODO why is this needed?
-        if (i >= nx-1)
-            return;
-
         uchar caseId = calcCubeCase(ec0[i], ec1[i], ec2[i], ec3[i]);
 
-        curCubeCases[i] = caseId; // THIS LINE BREAKS EVERYTHING
+        curCubeCases[i] = caseId;
 
         // Can't imagine this would do anything on a gpu unless all threads
         // on a block evaluated to the same value.
@@ -351,6 +299,7 @@ void pass2gpu_cubeCases(
         {
             continue;
         }
+
 
         triCount += cuda_util::numTris[caseId];
         isCut = cuda_util::isCut[caseId]; // if xr == nx-1, then xr-1 is cut
@@ -383,8 +332,6 @@ void pass2gpu_ghost_xz(
 {
     int k = blockIdx.x * blockDim.x + threadIdx.x;
 
-    //if(k >= nz-1)
-    //    return;
     if(k >= nz) // This function will deal with gridEdge at (_, ny-1, nz-1)
         return;
 
@@ -402,9 +349,6 @@ void pass2gpu_ghost_xz(
 
     int xl = min(ge0.xl, nx*isCorner + (1-isCorner)*ge1.xl);
     int xr = max(ge0.xr, (1-isCorner)*ge1.xr);
-
-    if(xl >= xr)
-        return;
 
     int xstart = 0;
     int zstart = 0; // TODO don't set initial values in gridEdge Constructor;
@@ -490,37 +434,6 @@ void pass2gpu_ghost_xy(
     ge0.zstart = 0;
 }
 
-// TOO SLOW! done in xz ghost function
-//__global__
-//void pass2gpu_ghost_xyz(
-//    int nx, int ny, int nz,
-//    uchar* edgeCases,
-//    FlyingEdgesAlgorithm::gridEdge* gridEdges)
-//{
-//    int j = ny-1;
-//    int k = nz-1;
-//
-//    FlyingEdgesAlgorithm::gridEdge& ge = gridEdges[k*ny + j];
-//    uchar* ec = edgeCases + k*ny*(nx-1) + j*(nx-1);
-//
-//    int xl = ge.xl;
-//    int xr = ge.xr;
-//
-//    int xstart = 0;
-//
-//    uchar c;
-//
-//    for(int i = xl; i != xr; ++i)
-//    {
-//        c = ec[i];
-//        xstart += (c == 1 || c == 2);
-//    }
-//
-//    ge.xstart = xstart;
-//    ge.ystart = 0;
-//    ge.zstart = 0;
-//}
-
 void FlyingEdgesAlgorithm::pass2()
 {
     // pass2 calculates
@@ -545,25 +458,35 @@ void FlyingEdgesAlgorithm::pass2()
         gridEdges,   // modified
         triCounter,  // modified
         cubeCases);  // modified
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    size_t sz = (nx-1)*(ny-1)*(nz-1)*sizeof(uchar);
 
-    cudaDeviceSynchronize();
-    uchar* hostCubeCases = (uchar*)malloc(sz);
-    cudaMemcpy(hostCubeCases, cubeCases,
-               sz, cudaMemcpyDeviceToHost);
+    // POSSIBLE to do this here TODO
+    // cudaFree(edgeCases);
 
-    int count = 0;
-    // TODO hostCubeCases is not the same every time.
-    for(int i = 0; i != (nx-1)*(ny-1)*(nz-1); ++i)
+    if(DEBUG)
     {
-        if(hostCubeCases[i] != 0 && hostCubeCases[i] != 255)
-            count += hostCubeCases[i];
+       std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     }
-    std::cout << "Count cube cases " << count << std::endl;
 
-    free(hostCubeCases);
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    if(DEBUG)
+    {
+        size_t sz = (nx-1)*(ny-1)*(nz-1)*sizeof(uchar);
+
+        cudaDeviceSynchronize();
+        uchar* hostCubeCases = (uchar*)malloc(sz);
+        cudaMemcpy(hostCubeCases, cubeCases,
+                   sz, cudaMemcpyDeviceToHost);
+
+        int count = 0;
+        // TODO hostCubeCases is not the same every time.
+        for(int i = 0; i != (nx-1)*(ny-1)*(nz-1); ++i)
+        {
+            if(hostCubeCases[i] != 0 && hostCubeCases[i] != 255)
+                count += hostCubeCases[i];
+        }
+        std::cout << "Count cube cases " << count << std::endl;
+
+        free(hostCubeCases);
+    }
 
     // TODO these can be launched and executed independently of each other
     int bw = FE_BLOCK_WIDTH;
@@ -580,157 +503,30 @@ void FlyingEdgesAlgorithm::pass2()
         gridEdges);
 
     cudaDeviceSynchronize();
-    //std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    size_t sz_ge = nx*ny*sizeof(gridEdge);
-    gridEdge* hostges = (gridEdge*)malloc(sz_ge);
-    auto w = cudaMemcpy(hostges, gridEdges,
-               sz_ge, cudaMemcpyDeviceToHost);
-    if(w != cudaSuccess)
+    if(DEBUG)
     {
-        std::cout << "GHASDCFAKSCLKASCKAS:CKASL:CKAS:DLCKASD:" << std::endl;
-        std::cout << cudaGetErrorString(w) << std::endl;
-    }
-
-    int sumxstart = 0;
-    for(int idx = 0; idx != nx*ny; ++idx)
-    {
-        sumxstart += hostges[idx].xstart;
-    }
-    std::cout << "sumxstart " << sumxstart << std::endl;
-    free(hostges);
-
-
-// This is prohibitively slow so pass2gpu_ghost_xz covers it now
-//    pass2gpu_ghost_xyz<<<1, 1, 3>>>(
-//        nx, ny, nz,
-//        edgeCases,
-//        gridEdges);
-}
-
-/*
-void FlyingEdgesAlgorithm::pass2()
-{
-    // For each (j, k):
-    //  - for each cube (i, j, k) calculate caseId and number of gridEdge cuts
-    //    in the x, y and z direction.
-    for(size_t k = 0; k != nz-1; ++k) {
-    for(size_t j = 0; j != ny-1; ++j)
-    {
-        // find adjusted trim values
-        size_t xl, xr;
-        calcTrimValues(xl, xr, j, k); // xl, xr set in this function
-
-        // ge0 is owned by this (i, j, k). ge1, ge2 and ge3 are only used for
-        // boundary cells.
-        gridEdge& ge0 = gridEdges[k*ny + j];
-        gridEdge& ge1 = gridEdges[k*ny + j + 1];
-        gridEdge& ge2 = gridEdges[(k+1)*ny + j];
-        gridEdge& ge3 = gridEdges[(k+1)*ny + j + 1];
-
-        // ec0, ec1, ec2 and ec3 were set in pass 2. They are used
-        // to calculate the cell caseId.
-        auto const& ec0 = edgeCases.begin() + (nx-1)*(k*ny + j);
-        auto const& ec1 = edgeCases.begin() + (nx-1)*(k*ny + j + 1);
-        auto const& ec2 = edgeCases.begin() + (nx-1)*((k+1)*ny + j);
-        auto const& ec3 = edgeCases.begin() + (nx-1)*((k+1)*ny + j + 1);
-
-        // Count the number of triangles along this row of cubes.
-        size_t& curTriCounter = *(triCounter.begin() + k*(ny-1) + j);
-
-        auto curCubeCaseIds = cubeCases.begin() + (nx-1)*(k*(ny-1) + j);
-
-        bool isYEnd = (j == ny-2);
-        bool isZEnd = (k == nz-2);
-
-        for(size_t i = xl; i != xr; ++i)
+        size_t sz_ge = nx*ny*sizeof(gridEdge);
+        gridEdge* hostges = (gridEdge*)malloc(sz_ge);
+        auto w = cudaMemcpy(hostges, gridEdges,
+                   sz_ge, cudaMemcpyDeviceToHost);
+        if(w != cudaSuccess)
         {
-            bool isXEnd = (i == nx-2);
-
-            // using edgeCases from pass 2, compute cubeCases for this cube
-            uchar caseId = calcCubeCase(ec0[i], ec1[i], ec2[i], ec3[i]);
-
-            curCubeCaseIds[i] = caseId;
-
-            // If the cube has no triangles through it
-            if(caseId == 0 || caseId == 255)
-            {
-                continue;
-            }
-
-            curTriCounter += util::numTris[caseId];
-
-            const bool* isCut = util::isCut[caseId]; // size 12
-
-            ge0.xstart += isCut[0];
-            ge0.ystart += isCut[3];
-            ge0.zstart += isCut[8];
-
-            // Note: Each 'gridCell' contains four gridEdges running along it,
-            //       ge0, ge1, ge2 and ge3. Each gridCell can access it's own
-            //       ge0 but ge1, ge2 and ge3 are owned by other gridCells.
-            //       Accessing ge1, ge2 and ge3 leads to a race condition
-            //       unless gridCell is along the boundry of the image.
-            //
-            //       To really make sense of the indices, it helps to draw
-            //       out the following picture of a cube with the appropriate
-            //       labels:
-            //         v0 is at (i,   j,   k)
-            //         v1       (i+1, j,   k)
-            //         v2       (i+1, j+1, k)
-            //         v3       (i,   j+1, k)
-            //         v4       (i,   j,   k+1)
-            //         v5       (i+1, j,   k+1)
-            //         v6       (i+1, j+1, k+1)
-            //         v7       (i,   j+1, k+1)
-            //         e0  connects v0 to v1 and is parallel to the x-axis
-            //         e1           v1    v2                        y
-            //         e2           v2    v3                        x
-            //         e3           v0    v3                        y
-            //         e4           v4    v5                        x
-            //         e5           v5    v6                        y
-            //         e6           v6    v7                        x
-            //         e7           v4    v7                        y
-            //         e8           v0    v4                        z
-            //         e9           v1    v5                        z
-            //         e10          v3    v7                        z
-            //         e11          v2    v6                        z
-
-            // Handle cubes along the edge of the image
-            if(isXEnd)
-            {
-                ge0.ystart += isCut[1];
-                ge0.zstart += isCut[9];
-            }
-            if(isYEnd)
-            {
-                ge1.xstart += isCut[2];
-                ge1.zstart += isCut[10];
-            }
-            if(isZEnd)
-            {
-                ge2.xstart += isCut[4];
-                ge2.ystart += isCut[7];
-            }
-
-            if(isXEnd and isYEnd)
-            {
-                ge1.zstart += isCut[11];
-            }
-            if(isXEnd and isZEnd)
-            {
-                ge2.ystart += isCut[5];
-            }
-            if(isYEnd and isZEnd)
-            {
-                ge3.xstart += isCut[6];
-            }
+            std::cout << "GHASDCFAKSCLKASCKAS:CKASL:CKAS:DLCKASD:" << std::endl;
+            std::cout << cudaGetErrorString(w) << std::endl;
         }
-    }}
+
+        int sumxstart = 0;
+        for(int idx = 0; idx != nx*ny; ++idx)
+        {
+            sumxstart += hostges[idx].xstart;
+        }
+        std::cout << "sumxstart " << sumxstart << std::endl;
+        free(hostges);
+    }
+
 }
-*/
-///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 3 of the algorithm
@@ -751,8 +547,7 @@ void pass3gpu_blockAccum(
     // step 4: add to individual y thread
 
     __shared__ int accum[4*FE_BLOCK_WIDTH];
-    //if(k >= nz)
-    //    return;
+
     if(k < nz)
     {
         int tmp;
@@ -789,18 +584,10 @@ void pass3gpu_blockAccum(
             }
         }
 
-        //
-
-        blockAccum[4*k + 0] = accumX;
-        blockAccum[4*k + 1] = accumX;
-        blockAccum[4*k + 2] = accumX;
-        blockAccum[4*k + 3] = accumTri;
-
-
-        //accum[4*threadIdx.y + 0] = accumX;
-        //accum[4*threadIdx.y + 1] = accumY;
-        //accum[4*threadIdx.y + 2] = accumZ;
-        //accum[4*threadIdx.y + 3] = accumTri;
+        accum[4*threadIdx.y + 0] = accumX;
+        accum[4*threadIdx.y + 1] = accumY;
+        accum[4*threadIdx.y + 2] = accumZ;
+        accum[4*threadIdx.y + 3] = accumTri;
     }
 
     __syncthreads();
@@ -819,8 +606,8 @@ void pass3gpu_blockAccum(
 
             // answer for global accumulation
             blockAccum[4*blockIdx.y + 0] = accum[4*(blockDim.y-1) + 0];
-            blockAccum[4*blockIdx.y + 1] = accum[4*(blockDim.y-1) + 1];
-            blockAccum[4*blockIdx.y + 2] = accum[4*(blockDim.y-1) + 2];
+            blockAccum[4*blockIdx.y + 1] =  accum[4*(blockDim.y-1) + 1];
+            blockAccum[4*blockIdx.y + 2] =  accum[4*(blockDim.y-1) + 2];
             blockAccum[4*blockIdx.y + 3] = accum[4*(blockDim.y-1) + 3];
         }
     }
@@ -914,15 +701,13 @@ void FlyingEdgesAlgorithm::pass3()
     cudaMalloc(&deviceBlockAccum, sizeBlocks);
 
     cudaMemcpy(deviceBlockAccum, hostBlockAccum,
-               sizeBlocks, cudaMemcpyHostToDevice);
-
-    std::cout << gridDim.x << ", " << gridDim.y << std::endl;
-    std::cout << blockDim.x << ", " << blockDim.y << std::endl;
+                   sizeBlocks, cudaMemcpyHostToDevice);
 
     // Accumulate values locally
 
     if(!validKernelSize(gridDim, blockDim))
         std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
+
 
     pass3gpu_blockAccum<<<gridDim, blockDim>>>(
         nx, ny, nz,
@@ -933,21 +718,22 @@ void FlyingEdgesAlgorithm::pass3()
     cudaMemcpy(hostBlockAccum, deviceBlockAccum,
                sizeBlocks, cudaMemcpyDeviceToHost);
 
-    std::cout << "ACCUM ";
-    for(int idx = 0; idx != 4*numBlocks; ++idx)
+    if(DEBUG)
     {
-        std::cout << hostBlockAccum[idx] << " ";
+        std::cout << "ACCUM ";
+        for(int idx = 0; idx != 4*numBlocks; ++idx)
+        {
+            std::cout << hostBlockAccum[idx] << " ";
+        }
+        std::cout << std::endl;
+
+        cudaDeviceSynchronize();
+
+        std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     }
-    std::cout << std::endl;
-
-    cudaDeviceSynchronize();
-
-    std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
     if(numBlocks != 1)
     {
-        std::cout << "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH" << std::endl;
-
         // std::partial_sum(2 2 3 4  3  2  2 ) TODO not using it get rid of header
         // goes to         (2 4 7 11 14 16 18)
         // std::partial_sum(hostBlockAccum, hostBlockAccum + numBlocks, hostBlockAccum);
@@ -977,24 +763,24 @@ void FlyingEdgesAlgorithm::pass3()
             triCounter,
             gridEdges,
             deviceBlockAccum);
-
-        cudaDeviceSynchronize();
-        std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     }
 
     // Allocate memory for points, normals and tris
     outputAllocated = true;
-    size_t numPoints = hostBlockAccum[4*(numBlocks-1) + 0] +
-                       hostBlockAccum[4*(numBlocks-1) + 1] +
-                       hostBlockAccum[4*(numBlocks-1) + 2];
-    size_t numTris   = hostBlockAccum[4*(numBlocks-1) + 3];
+    numPoints = hostBlockAccum[4*(numBlocks-1) + 0] +
+                hostBlockAccum[4*(numBlocks-1) + 1] +
+                hostBlockAccum[4*(numBlocks-1) + 2];
+    numTris   = hostBlockAccum[4*(numBlocks-1) + 3];
 
-    cudaMalloc(&points,  3*sizeof(scalar_t)*numPoints);
-    cudaMalloc(&normals, 3*sizeof(scalar_t)*numPoints);
-    cudaMalloc(&tris, 3*sizeof(int)*numTris);
+//    cudaMalloc(&points,  3*sizeof(scalar_t)*numPoints);
+//    cudaMalloc(&normals, 3*sizeof(scalar_t)*numPoints);
+//    cudaMalloc(&tris, 3*sizeof(int)*numTris);
 
-    std::cout << "numpoints" << numPoints << std::endl;
-    std::cout << "numtris"   << numTris   << std::endl;
+    if(DEBUG)
+    {
+        std::cout << "numpoints" << numPoints << std::endl;
+        std::cout << "numtris"   << numTris   << std::endl;
+    }
 
     // free memory used in this function
     free(hostBlockAccum);
@@ -1002,412 +788,550 @@ void FlyingEdgesAlgorithm::pass3()
 
     cudaDeviceSynchronize();
 
-}
-/*
-void FlyingEdgesAlgorithm::pass3()
-{
-    // Accumulate triangles into triCounter
-    size_t tmp;
-    size_t triAccum = 0;
-    for(size_t k = 0; k != nz-1; ++k) {
-    for(size_t j = 0; j != ny-1; ++j)
+    if(DEBUG)
     {
-        size_t& curTriCounter = triCounter[k*(ny-1)+j];
-
-        tmp = curTriCounter;
-        curTriCounter = triAccum;
-        triAccum += tmp;
-    }}
-
-    // accumulate points, filling out starting locations of each gridEdge
-    // in the process.
-    size_t pointAccum = 0;
-    for(size_t k = 0; k != nz; ++k) {
-    for(size_t j = 0; j != ny; ++j)
-    {
-        gridEdge& curGridEdge = gridEdges[k*ny + j];
-
-        tmp = curGridEdge.xstart;
-        curGridEdge.xstart = pointAccum;
-        pointAccum += tmp;
-
-        tmp = curGridEdge.ystart;
-        curGridEdge.ystart = pointAccum;
-        pointAccum += tmp;
-
-        tmp = curGridEdge.zstart;
-        curGridEdge.zstart = pointAccum;
-        pointAccum += tmp;
-    }}
-
-    points = std::vector<std::array<scalar_t, 3> >(pointAccum);
-    normals = std::vector<std::array<scalar_t, 3> >(pointAccum);
-    tris = std::vector<std::array<size_t, 3> >(triAccum);
+        std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+    }
 }
-*/
-///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 4 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
-void FlyingEdgesAlgorithm::pass4()
+__device__
+void computeGradient(
+    int const& i, int const& j, int const& k,
+    int const& nx, int const& ny, int const& nz,
+    scalar_t* data,
+    scalar_t* spacing,
+    scalar_t* point)
 {
-/* Copy of pass 2, should be similar, just different kernels
- *
-    int ty = FE_BLOCK_WIDTH_Y;
-    int tz = FE_BLOCK_WIDTH_Z;
-    uint3 gridDim = make_uint3(1, ((ny-1) + ty - 1) / ty, ((nz-1) + tz - 1) / tz);
-    uint3 blockDim = make_uint3(1, ty, tz);
+    scalar_t x0[2];
+    scalar_t x1[2];
+    scalar_t x2[2];
+    scalar_t run[3];
 
-    pass2gpu_cubeCases<<<gridDim, blockDim>>>(
-        nx, ny, nz,
-        edgeCases,
-        gridEdges,   // modified
-        triCounter,  // modified
-        cubeCases);  // modified
+    size_t dataIdx = k*nx*ny + j*nx + i;
 
-    // TODO these can be launched and executed independently of each other
-    int bw = FE_BLOCK_WIDTH;
-
-    // Making sure that the xz face takes care of the (_, ny-1, nz-1) gridEdge
-    // BE CAREFUL. xz takes care of corner. don't use (nz-1)
-    pass2gpu_ghost_xz<<<(nz + bw - 1) / bw, bw>>>(
-        nx, ny, nz,
-        edgeCases,
-        gridEdges);
-    pass2gpu_ghost_xy<<<((ny-1) + bw - 1) / bw, bw>>>(
-        nx, ny, nz,
-        edgeCases,
-        gridEdges);
-*/
-}
-/*
-void FlyingEdgesAlgorithm::pass4()
-{
-    // For each (j, k):
-    //  - For each cube at i, fill out points, normals and triangles owned by
-    //    the cube. Each cube is in charge of filling out e0, e3 and e8. Only
-    //    in edge cases does it also fill out other edges.
-    for(size_t k = 0; k != nz-1; ++k) {
-    for(size_t j = 0; j != ny-1; ++j)
+    if (i == 0)
     {
-        // find adjusted trim values
-        size_t xl, xr;
-        calcTrimValues(xl, xr, j, k); // xl, xr set in this function
+        x0[0] = data[dataIdx + 1];
+        x0[1] = data[dataIdx];
+        run[0] = spacing[0];
+    }
+    else if (i == (nx - 1))
+    {
+        x0[0] = data[dataIdx];
+        x0[1] = data[dataIdx - 1];
+        run[0] = spacing[0];
+    }
+    else
+    {
+        x0[0] = data[dataIdx + 1];
+        x0[1] = data[dataIdx - 1];
+        run[0] = 2 * spacing[0];
+    }
 
-        size_t triIdx = triCounter[k*(ny-1) + j];
-        auto curCubeCaseIds = cubeCases.begin() + (nx-1)*(k*(ny-1) + j);
+    if (j == 0)
+    {
+        x1[0] = data[dataIdx + nx];
+        x1[1] = data[dataIdx];
+        run[1] = spacing[1];
+    }
+    else if (j == (ny - 1))
+    {
+        x1[0] = data[dataIdx];
+        x1[1] = data[dataIdx - nx];
+        run[1] = spacing[1];
+    }
+    else
+    {
+        x1[0] = data[dataIdx + nx];
+        x1[1] = data[dataIdx - ny];
+        run[1] = 2 * spacing[1];
+    }
 
-        gridEdge const& ge0 = gridEdges[k*ny + j];
-        gridEdge const& ge1 = gridEdges[k*ny + j + 1];
-        gridEdge const& ge2 = gridEdges[(k+1)*ny + j];
-        gridEdge const& ge3 = gridEdges[(k+1)*ny + j + 1];
+    if (k == 0)
+    {
+        x2[0] = data[dataIdx + nx*ny];
+        x2[1] = data[dataIdx];
+        run[2] = spacing[2];
+    }
+    else if (k == (nz - 1))
+    {
+        x2[0] = data[dataIdx];
+        x2[1] = data[dataIdx - nx*ny];
+        run[2] = spacing[2];
+    }
+    else
+    {
+        x2[0] = data[dataIdx + nx*ny];
+        x2[1] = data[dataIdx - nx*ny];
+        run[2] = 2 * spacing[2];
+    }
 
-        size_t x0counter = 0;
-        size_t y0counter = 0;
-        size_t z0counter = 0;
-
-        size_t x1counter = 0;
-        size_t z1counter = 0;
-
-        size_t x2counter = 0;
-        size_t y2counter = 0;
-
-        size_t x3counter = 0;
-
-        bool isYEnd = (j == ny-2);
-        bool isZEnd = (k == nz-2);
-
-        for(size_t i = xl; i != xr; ++i)
-        {
-            bool isXEnd = (i == nx-2);
-
-            uchar caseId = curCubeCaseIds[i];
-
-            if(caseId == 0 || caseId == 255)
-            {
-                continue;
-            }
-
-            const bool* isCut = util::isCut[caseId]; // has 12 elements
-
-            // Most of the information contained in pointCube, isovalCube
-            // and gradCube will be used--but not necessarily all. It has
-            // not been tested whether or not obtaining only the information
-            // needed will provide a significant speedup--but
-            // most likely not.
-            cube_t        pointCube = image.getPosCube(i, j, k);
-            scalarCube_t  isovalCube = image.getValsCube(i, j, k);
-            cube_t        gradCube = image.getGradCube(i, j, k);
-
-            // Add Points and normals.
-            // Calculate global indices for triangles
-            std::array<size_t, 12> globalIdxs;
-            if(isCut[0])
-            {
-                size_t idx = ge0.xstart + x0counter;
-                points[idx] = interpolateOnCube(pointCube, isovalCube, 0);
-                normals[idx] = interpolateOnCube(gradCube, isovalCube, 0);
-                globalIdxs[0] = idx;
-                ++x0counter;
-            }
-
-            if(isCut[3])
-            {
-                size_t idx = ge0.ystart + y0counter;
-                points[idx] = interpolateOnCube(pointCube, isovalCube, 3);
-                normals[idx] = interpolateOnCube(gradCube, isovalCube, 3);
-                globalIdxs[3] = idx;
-                ++y0counter;
-            }
-
-            if(isCut[8])
-            {
-                size_t idx = ge0.zstart + z0counter;
-                points[idx] = interpolateOnCube(pointCube, isovalCube, 8);
-                normals[idx] = interpolateOnCube(gradCube, isovalCube, 8);
-                globalIdxs[8] = idx;
-                ++z0counter;
-            }
-
-            // Note:
-            //   e1, e5, e9 and e11 will be visited in the next iteration
-            //   when they are e3, e7, e8 and 10 respectively. So don't
-            //   increment their counters. When the cube is an edge cube,
-            //   their counters don't need to be incremented because they
-            //   won't be used agin.
-
-            // Manage boundary cases if needed. Otherwise just update
-            // globalIdx.
-            if(isCut[1])
-            {
-                size_t idx = ge0.ystart + y0counter;
-                if(isXEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 1);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 1);
-                    // y0counter counter doesn't need to be incremented
-                    // because it won't be used again.
-                }
-                globalIdxs[1] = idx;
-            }
-
-            if(isCut[9])
-            {
-                size_t idx = ge0.zstart + z0counter;
-                if(isXEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 9);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 9);
-                    // z0counter doesn't need to in incremented.
-                }
-                globalIdxs[9] = idx;
-            }
-
-            if(isCut[2])
-            {
-                size_t idx = ge1.xstart + x1counter;
-                if(isYEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 2);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 2);
-                }
-                globalIdxs[2] = idx;
-                ++x1counter;
-            }
-
-            if(isCut[10])
-            {
-                size_t idx = ge1.zstart + z1counter;
-                if(isYEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 10);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 10);
-                }
-                globalIdxs[10] = idx;
-                ++z1counter;
-            }
-
-            if(isCut[4])
-            {
-                size_t idx = ge2.xstart + x2counter;
-                if(isZEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 4);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 4);
-                }
-                globalIdxs[4] = idx;
-                ++x2counter;
-            }
-
-            if(isCut[7])
-            {
-                size_t idx = ge2.ystart + y2counter;
-                if(isZEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 7);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 7);
-                }
-                globalIdxs[7] = idx;
-                ++y2counter;
-            }
-
-            if(isCut[11])
-            {
-                size_t idx = ge1.zstart + z1counter;
-                if(isXEnd and isYEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 11);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 11);
-                    // z1counter does not need to be incremented.
-                }
-                globalIdxs[11] = idx;
-            }
-
-            if(isCut[5])
-            {
-                size_t idx = ge2.ystart + y2counter;
-                if(isXEnd and isZEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 5);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 5);
-                    // y2 counter does not need to be incremented.
-                }
-                globalIdxs[5] = idx;
-            }
-
-            if(isCut[6])
-            {
-                size_t idx = ge3.xstart + x3counter;
-                if(isYEnd and isZEnd)
-                {
-                    points[idx] = interpolateOnCube(pointCube, isovalCube, 6);
-                    normals[idx] = interpolateOnCube(gradCube, isovalCube, 6);
-                }
-                globalIdxs[6] = idx;
-                ++x3counter;
-            }
-
-            // Add triangles
-            const char* caseTri = util::caseTriangles[caseId]; // size 16
-            for(int idx = 0; caseTri[idx] != -1; idx += 3)
-            {
-                tris[triIdx][0] = globalIdxs[caseTri[idx]];
-                tris[triIdx][1] = globalIdxs[caseTri[idx+1]];
-                tris[triIdx][2] = globalIdxs[caseTri[idx+2]];
-                ++triIdx;
-            }
-        }
-    }}
-}
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Don't copy points, normals and tris but move the output into a TrianlgeMesh.
-///////////////////////////////////////////////////////////////////////////////
-util::TriangleMesh FlyingEdgesAlgorithm::moveOutput()
-{
-    return util::TriangleMesh(std::move(points),
-                              std::move(normals),
-                              std::move(tris));
-}
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Private helper functions
-///////////////////////////////////////////////////////////////////////////////
-
-inline uchar
-FlyingEdgesAlgorithm::calcCaseEdge(
-    bool const& prevEdge,
-    bool const& currEdge) const
-{
-    // o -- is greater than or equal to
-    // case 0: (i-1) o-----o (i) | (_,j,k)
-    // case 1: (i-1) x-----o (i) | (_,j+1,k)
-    // case 2: (i-1) o-----x (i) | (_,j,k+1)
-    // case 3: (i-1) x-----x (i) | (_,j+1,k+1)
-    if(prevEdge && currEdge)
-        return 0;
-    if(!prevEdge && currEdge)
-        return 1;
-    if(prevEdge && !currEdge)
-        return 2;
-    else // !prevEdge && !currEdge
-        return 3;
+    point[0] = (x0[1] - x0[0]) / run[0];
+    point[1] = (x1[1] - x1[0]) / run[1];
+    point[2] = (x2[1] - x2[0]) / run[2];
 }
 
-inline uchar
-FlyingEdgesAlgorithm::calcCubeCase(
-    uchar const& ec0, uchar const& ec1,
-    uchar const& ec2, uchar const& ec3) const
-{
-    // ec0 | (_,j,k)
-    // ec1 | (_,j+1,k)
-    // ec2 | (_,j,k+1)
-    // ec3 | (_,j+1,k+1)
 
-    uchar caseId = 0;
-    if((ec0 == 0) || (ec0 == 2)) // 0 | (i,j,k)
-        caseId |= 1;
-    if((ec0 == 0) || (ec0 == 1)) // 1 | (i+1,j,k)
-        caseId |= 2;
-    if((ec1 == 0) || (ec1 == 1)) // 2 | (i+1,j+1,k)
-        caseId |= 4;
-    if((ec1 == 0) || (ec1 == 2)) // 3 | (i,j+1,k)
-        caseId |= 8;
-    if((ec2 == 0) || (ec2 == 2)) // 4 | (i,j,k+1)
-        caseId |= 16;
-    if((ec2 == 0) || (ec2 == 1)) // 5 | (i+1,j,k+1)
-        caseId |= 32;
-    if((ec3 == 0) || (ec3 == 1)) // 6 | (i+1,j+1,k+1)
-        caseId |= 64;
-    if((ec3 == 0) || (ec3 == 2)) // 7 | (i,j+1,k+1)
-        caseId |= 128;
-    return caseId;
+__device__
+void getCubeInfo(
+    int i, int j, int k,
+    int nx, int ny, int nz,
+    scalar_t* pointValues, scalar_t* zeroPos, scalar_t* spacing,
+    scalar_t* pointCube, scalar_t* isovalCube, scalar_t* gradCube)
+{
+    isovalCube[0] = pointValues[k*ny*nx + j*nx + i];
+    isovalCube[1] = pointValues[k*ny*nx + j*nx + i+1];
+    isovalCube[2] = pointValues[k*ny*nx + (j+1)*nx + i+1];
+    isovalCube[3] = pointValues[k*ny*nx + (j+1)*nx + i];
+    isovalCube[4] = pointValues[(k+1)*ny*nx + j*nx + i];
+    isovalCube[5] = pointValues[(k+1)*ny*nx + j*nx + i+1];
+    isovalCube[6] = pointValues[(k+1)*ny*nx + (j+1)*nx + (i+1)];
+    isovalCube[7] = pointValues[(k+1)*ny*nx + (j+1)*nx + i];
+
+    scalar_t xpos = zeroPos[0] + i * spacing[0];
+    scalar_t ypos = zeroPos[1] + j * spacing[1];
+    scalar_t zpos = zeroPos[2] + k * spacing[2];
+
+    pointCube[0*3 + 0] = xpos;
+    pointCube[0*3 + 1] = ypos;
+    pointCube[0*3 + 2] = zpos;
+
+    pointCube[1*3 + 0] = xpos + spacing[0];
+    pointCube[1*3 + 1] = ypos;
+    pointCube[1*3 + 2] = zpos;
+
+    pointCube[2*3 + 0] = xpos + spacing[0];
+    pointCube[2*3 + 1] = ypos + spacing[1];
+    pointCube[2*3 + 2] = zpos;
+
+    pointCube[3*3 + 0] = xpos;
+    pointCube[3*3 + 1] = ypos + spacing[1];
+    pointCube[3*3 + 2] = zpos;
+
+    pointCube[4*3 + 0] = xpos;
+    pointCube[4*3 + 1] = ypos;
+    pointCube[4*3 + 2] = zpos + spacing[2];
+
+    pointCube[5*3 + 0] = xpos + spacing[0];
+    pointCube[5*3 + 1] = ypos;
+    pointCube[5*3 + 2] = zpos + spacing[2];
+
+    pointCube[6*3 + 0] = xpos + spacing[0];
+    pointCube[6*3 + 1] = ypos + spacing[1];
+    pointCube[6*3 + 2] = zpos + spacing[2];
+
+    pointCube[7*3 + 0] = xpos;
+    pointCube[7*3 + 1] = ypos + spacing[1];
+    pointCube[7*3 + 2] = zpos + spacing[2];
+
+    computeGradient(i  , j  , k  , nx, ny, nz, pointValues, spacing, gradCube + 3*0);
+    computeGradient(i+1, j  , k  , nx, ny, nz, pointValues, spacing, gradCube + 3*1);
+    computeGradient(i+1, j+1, k  , nx, ny, nz, pointValues, spacing, gradCube + 3*2);
+    computeGradient(i  , j+1, k  , nx, ny, nz, pointValues, spacing, gradCube + 3*3);
+    computeGradient(i  , j  , k+1, nx, ny, nz, pointValues, spacing, gradCube + 3*4);
+    computeGradient(i+1, j  , k+1, nx, ny, nz, pointValues, spacing, gradCube + 3*5);
+    computeGradient(i+1, j+1, k+1, nx, ny, nz, pointValues, spacing, gradCube + 3*6);
+    computeGradient(i  , j+1, k+1, nx, ny, nz, pointValues, spacing, gradCube + 3*7);
 }
 
-inline void
-FlyingEdgesAlgorithm::calcTrimValues(
-    size_t& xl, size_t& xr,
-    size_t const& j, size_t const& k) const
+__device__
+void interpolate(
+    scalar_t const& weight,
+    scalar_t* a,
+    scalar_t* b,
+    scalar_t* out)
 {
-    gridEdge const& ge0 = gridEdges[k*ny + j];
-    gridEdge const& ge1 = gridEdges[k*ny + j + 1];
-    gridEdge const& ge2 = gridEdges[(k+1)*ny + j];
-    gridEdge const& ge3 = gridEdges[(k+1)*ny + j + 1];
-
-    using std::min;
-    using std::max;
-    xl = min(ge0.xl, min(ge1.xl, min(ge2.xl, ge3.xl)));
-    xr = max(ge0.xr, max(ge1.xr, max(ge2.xr, ge3.xr)));
+    out[0] = a[0] + (weight * (b[0] - a[0]));
+    out[1] = a[1] + (weight * (b[1] - a[1]));
+    out[2] = a[2] + (weight * (b[2] - a[2]));
 }
 
-inline std::array<scalar_t, 3>
-FlyingEdgesAlgorithm::interpolateOnCube(
-    cube_t const& pts,
-    scalarCube_t const& isovals,
-    uchar const& edge) const
+__device__
+void interpolateOnCube(
+    uchar const& edge,
+    scalar_t const& isoval,
+    scalar_t* pts,
+    scalar_t* isovals,
+    scalar_t* out)
 {
-    uchar i0 = util::edgeVertices[edge][0];
-    uchar i1 = util::edgeVertices[edge][1];
+    uchar i0 = cuda_util::edgeVertices[edge][0];
+    uchar i1 = cuda_util::edgeVertices[edge][1];
 
     scalar_t weight = (isoval - isovals[i0]) / (isovals[i1] - isovals[i0]);
-    return interpolate(pts[i0], pts[i1], weight);
+    interpolate(weight, pts + 3*i0, pts + 3*i1, out);
 }
 
-inline std::array<scalar_t, 3>
-FlyingEdgesAlgorithm::interpolate(
-    std::array<scalar_t, 3> const& a,
-    std::array<scalar_t, 3> const& b,
-    scalar_t const& weight) const
+__global__
+void pass4gpu_pointsAndNormals(
+    int nx, int ny, int nz,
+    scalar_t* pointValues, scalar_t* zeroPos, scalar_t* spacing,
+    scalar_t isoval,
+    FlyingEdgesAlgorithm::gridEdge* gridEdges,
+    int* triCounter,
+    uchar* cubeCases,
+    scalar_t* points, scalar_t* normals, int* tris)
 {
-    std::array<scalar_t, 3> ret;
-    ret[0] = a[0] + (weight * (b[0] - a[0]));
-    ret[1] = a[1] + (weight * (b[1] - a[1]));
-    ret[2] = a[2] + (weight * (b[2] - a[2]));
-    return ret;
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    int k = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if(DEBUG)
+    {
+        if(j == 0 && k == 0)
+        {
+//            for(int i = 0; i != 3*1370424; ++i)
+//            {
+//                points[i] = -1;
+//                normals[i] = -1;
+//            }
+
+            for(int i = 0; i != 3*2740864; ++i)
+                tris[i] = -1;
+        }
+    }
+
+    if(j >= ny-1 || k >= nz-1)
+        return;
+
+    FlyingEdgesAlgorithm::gridEdge& ge0 = gridEdges[k*ny + j];
+    FlyingEdgesAlgorithm::gridEdge& ge1 = gridEdges[k*ny + j+1];
+    FlyingEdgesAlgorithm::gridEdge& ge2 = gridEdges[(k+1)*ny + j];
+    FlyingEdgesAlgorithm::gridEdge& ge3 = gridEdges[(k+1)*ny + j+1];
+
+    int xl, xr;
+    calcTrimValues(xl, xr, ge0, ge1, ge2, ge3);
+
+    if(xl == xr)
+        return;
+
+    size_t triIdx = triCounter[k*(ny-1) + j];
+    uchar* curCubeCaseIds = cubeCases + (nx-1)*(k*(ny-1) + j);
+
+    size_t x0counter = 0;
+    size_t y0counter = 0;
+    size_t z0counter = 0;
+
+    size_t x1counter = 0;
+    size_t z1counter = 0;
+
+    size_t x2counter = 0;
+    size_t y2counter = 0;
+
+    size_t x3counter = 0;
+
+    bool isYEnd = (j == ny-2);
+    bool isZEnd = (k == nz-2);
+
+    scalar_t pointCube[8*3];
+    scalar_t isovalCube[8];
+    scalar_t gradCube[8*3];
+
+    for(size_t i = xl; i != xr; ++i)
+    {
+        bool isXEnd = (i == nx-2);
+
+        uchar caseId = curCubeCaseIds[i];
+
+        if(caseId == 0 || caseId == 255)
+        {
+            continue;
+        }
+
+        const bool* isCut = cuda_util::isCut[caseId]; // has 12 elements
+
+        // Most of the information contained in pointCube, isovalCube
+        // and gradCube will be used--but not necessarily all. It has
+        // not been tested whether or not obtaining only the information
+        // needed will provide a significant speedup--but
+        // most likely not.
+
+        // fill out pointCube, isovalCube and gradCube
+        getCubeInfo(i, j, k,
+                    nx, ny, nz,
+                    pointValues, zeroPos, spacing,
+                    pointCube, isovalCube, gradCube);
+
+        // Add Points and normals.
+        // Calculate global indices for triangles
+        int globalIdxs[12];
+        if(isCut[0])
+        {
+            int idx = ge0.xstart + x0counter;
+            interpolateOnCube(0, isoval, pointCube, isovalCube, points + 3*idx);
+            interpolateOnCube(0, isoval, gradCube, isovalCube, normals + 3*idx);
+            globalIdxs[0] = idx;
+            ++x0counter;
+        }
+
+        if(isCut[3])
+        {
+            int idx = ge0.ystart + y0counter;
+            interpolateOnCube(3, isoval, pointCube, isovalCube, points + 3*idx);
+            interpolateOnCube(3, isoval, gradCube, isovalCube, normals + 3*idx);
+            globalIdxs[3] = idx;
+            ++y0counter;
+        }
+
+        if(isCut[8])
+        {
+            int idx = ge0.zstart + z0counter;
+            interpolateOnCube(8, isoval, pointCube, isovalCube, points + 3*idx);
+            interpolateOnCube(8, isoval, gradCube, isovalCube, normals + 3*idx);
+            globalIdxs[8] = idx;
+            ++z0counter;
+        }
+
+        // Note:
+        //   e1, e5, e9 and e11 will be visited in the next iteration
+        //   when they are e3, e7, e8 and 10 respectively. So don't
+        //   increment their counters. When the cube is an edge cube,
+        //   their counters don't need to be incremented because they
+        //   won't be used agin.
+
+        // Manage boundary cases if needed. Otherwise just update
+        // globalIdx.
+        if(isCut[1])
+        {
+            int idx = ge0.ystart + y0counter;
+            if(isXEnd)
+            {
+                interpolateOnCube(1, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(1, isoval, gradCube, isovalCube, normals + 3*idx);
+                // y0counter counter doesn't need to be incremented
+                // because it won't be used again.
+            }
+            globalIdxs[1] = idx;
+        }
+
+        if(isCut[9])
+        {
+            int idx = ge0.zstart + z0counter;
+            if(isXEnd)
+            {
+                interpolateOnCube(9, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(9, isoval, gradCube, isovalCube, normals + 3*idx);
+                // z0counter doesn't need to in incremented.
+            }
+            globalIdxs[9] = idx;
+        }
+
+        if(isCut[2])
+        {
+            int idx = ge1.xstart + x1counter;
+            if(isYEnd)
+            {
+                interpolateOnCube(2, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(2, isoval, gradCube, isovalCube, normals + 3*idx);
+            }
+            globalIdxs[2] = idx;
+            ++x1counter;
+        }
+
+        if(isCut[10])
+        {
+            int idx = ge1.zstart + z1counter;
+            if(isYEnd)
+            {
+                interpolateOnCube(10, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(10, isoval, gradCube, isovalCube, normals + 3*idx);
+            }
+            globalIdxs[10] = idx;
+            ++z1counter;
+        }
+
+        if(isCut[4])
+        {
+            int idx = ge2.xstart + x2counter;
+            if(isZEnd)
+            {
+                interpolateOnCube(4, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(4, isoval, gradCube, isovalCube, normals + 3*idx);
+            }
+            globalIdxs[4] = idx;
+            ++x2counter;
+        }
+
+        if(isCut[7])
+        {
+            int idx = ge2.ystart + y2counter;
+            if(isZEnd)
+            {
+                interpolateOnCube(7, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(7, isoval, gradCube, isovalCube, normals + 3*idx);
+            }
+            globalIdxs[7] = idx;
+            ++y2counter;
+        }
+
+        if(isCut[11])
+        {
+            int idx = ge1.zstart + z1counter;
+            if(isXEnd and isYEnd)
+            {
+                interpolateOnCube(11, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(11, isoval, gradCube, isovalCube, normals + 3*idx);
+                // z1counter does not need to be incremented.
+            }
+            globalIdxs[11] = idx;
+        }
+
+        if(isCut[5])
+        {
+            int idx = ge2.ystart + y2counter;
+            if(isXEnd and isZEnd)
+            {
+                interpolateOnCube(5, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(5, isoval, gradCube, isovalCube, normals + 3*idx);
+                // y2 counter does not need to be incremented.
+            }
+            globalIdxs[5] = idx;
+        }
+
+        if(isCut[6])
+        {
+            int idx = ge3.xstart + x3counter;
+            if(isYEnd and isZEnd)
+            {
+                interpolateOnCube(6, isoval, pointCube, isovalCube, points + 3*idx);
+                interpolateOnCube(6, isoval, gradCube, isovalCube, normals + 3*idx);
+            }
+            globalIdxs[6] = idx;
+            ++x3counter;
+        }
+
+        // Add triangles
+        const char* caseTri = cuda_util::caseTriangles[caseId]; // size 16
+        for(int idx = 0; caseTri[idx] != -1; idx += 3)
+        {
+            tris[3*triIdx + 0] = i;
+            tris[3*triIdx + 1] = j;
+            tris[3*triIdx + 2] = k;
+
+//            tris[3*triIdx + 0] = globalIdxs[caseTri[idx]];
+//            tris[3*triIdx + 1] = globalIdxs[caseTri[idx+1]];
+//            tris[3*triIdx + 2] = globalIdxs[caseTri[idx+2]];
+//            ++triIdx;
+        }
+    }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-*/
+
+void FlyingEdgesAlgorithm::pass4()
+{
+    // pass4 calculates points and normals
+    //   1) points and normals
+
+    // 1st kernel:           Calculate the main cube rays
+    // 2nd and third kernel:
+
+    int ty = 1;//FE_BLOCK_WIDTH_Y / 2; // divide by 2? TODO figure out this problem..
+    int tz = 1;//FE_BLOCK_WIDTH_Z / 2; // gah....
+    uint3 gridDim = make_uint3(((ny-1) + ty - 1) / ty, ((nz-1) + tz - 1) / tz, 1);
+    uint3 blockDim = make_uint3(ty, tz, 1);
+
+    std::cout << gridDim.x << ", " << gridDim.y << ", " << gridDim.z << std::endl;
+    std::cout << blockDim.x << ", " << blockDim.y << ", " << blockDim.z << std::endl;
+
+    if(!validKernelSize(gridDim, blockDim))
+        std::cout << "GAHHHHHHHHHHHH GP2 ENGINE " << __LINE__ << std::endl; // TODO
+
+    if(DEBUG)
+    {
+       cudaDeviceSynchronize();
+    }
+
+    pass4gpu_pointsAndNormals<<<gridDim, blockDim>>>(
+        nx, ny, nz,                                    // input
+        pointValues, zeroPos, spacing,                 // input
+        isoval,                                        // input
+        gridEdges, triCounter, cubeCases,              // input
+        points, normals, tris);                        // output
+
+    if(DEBUG)
+    {
+       cudaDeviceSynchronize();
+       std::cout << "MEOWWWWWW " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+    }
+
+    if(DEBUG)
+    {
+        size_t sz = 3 * numPoints * sizeof(scalar_t);
+
+        scalar_t* hostPts = (scalar_t*)malloc(sz);
+        scalar_t* hostNrs = (scalar_t*)malloc(sz);
+        int*      hostTrs = (int*)malloc(3*numTris*sizeof(int));
+
+        cudaMemcpy(hostPts, points,  sz, cudaMemcpyDeviceToHost);
+        cudaMemcpy(hostNrs, normals, sz, cudaMemcpyDeviceToHost);
+        cudaMemcpy(hostTrs, tris, 3*numTris*sizeof(int), cudaMemcpyDeviceToHost);
+
+        scalar_t accumP = 0.0;
+        for(int idx = 0; idx != 3 * numPoints; ++idx)
+        {
+            accumP += hostPts[idx];
+            accumP += hostTrs[idx];
+
+            while(accumP >= 1000000)
+                accumP -= 1000000;
+        }
+
+        int accumT = 0;
+        int num0 = -1;
+        int num9 = 0;
+        int num8 = 0;
+        int num7 = 0;
+
+        int numSetPoints = 0;
+        for(int idx = 0; idx != 3 * numPoints; ++idx)
+        {
+            if(hostPts[idx] != -1)
+                numSetPoints += 1;
+        }
+
+        std::cout << "numSetPoints " << numSetPoints << std::endl;
+
+        for(int idx = 0; idx != 3 * numTris; ++idx)
+        {
+            if(hostTrs[idx] == 0)
+                num0 += 1;
+
+            if(hostTrs[idx] == 9)
+                num9 += 1;
+
+            if(hostTrs[idx] == 8)
+                num8 += 1;
+
+            if(hostTrs[idx] == 7)
+                num7 += 1;
+
+            accumT += hostTrs[idx];
+
+            while(accumT >= 1000000)
+                accumT -= 1000000;
+        }
+
+        std::cout << "pass 4 hashsum " << accumP << ", " << accumT << std::endl;
+        std::cout << "num0 in Tris "   << num0 <<                     std::endl;
+        std::cout << "num9 in Tris "   << num9 <<                     std::endl;
+        std::cout << "num8 in Tris "   << num8 <<                     std::endl;
+        std::cout << "num7 in Tris "   << num7 <<                     std::endl;
+
+        for(int idx = 0; idx != numTris*3; idx += 3)
+        {
+            if(hostTrs[idx] != -1)
+            {
+                std::cout << hostTrs[idx+0] << ", "
+                          << hostTrs[idx+1] << ", "
+                          << hostTrs[idx+2] << std::endl;
+            }
+        }
+
+        free(hostPts);
+        free(hostNrs);
+        free(hostTrs);
+    }
+}
+
+

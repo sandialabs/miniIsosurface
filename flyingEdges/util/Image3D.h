@@ -39,6 +39,9 @@ public:
 
     const scalar_t* pointer() const { return data.data(); }
 
+    std::array<scalar_t, 3> getZeroPos() const { return zeroPos; }
+    std::array<scalar_t, 3> getSpacing() const { return spacing; }
+
     size_t xdimension() const { return nx; }
     size_t ydimension() const { return ny; }
     size_t zdimension() const { return nz; }
