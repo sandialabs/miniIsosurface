@@ -10,6 +10,7 @@
 
 #include <array>
 #include <vector>
+#include <thrust/device_vector.h>
 #include <string>
 
 #include <iostream>
@@ -186,7 +187,7 @@ loadImage(const char* file)
     std::vector<char> rbuf(bufsize);
     stream.read(rbuf.data(), bufsize);
 
-    std::vector<scalar_t> data(dim[0] * dim[1] * dim[2]);
+    thrust::host_vector<scalar_t> data(dim[0] * dim[1] * dim[2]);
 
     // Converts elements in the charachter vector to elements of type
     // T and puts them into data.
@@ -194,57 +195,17 @@ loadImage(const char* file)
 
     stream.close();
 
-    return Image3D(data, spacing, zeroPos, dim);
-}
-
-void loadImage_thrust(
-    const char* file,
-    std::vector<scalar_t>& data,
-    scalar_t& spacingX,
-    scalar_t& spacingY,
-    scalar_t& spacingZ,
-    scalar_t& zeroPosX,
-    scalar_t& zeroPosY,
-    scalar_t& zeroPosZ,
-    int& nx,
-    int& ny,
-    int& nz)
-{
-    std::ifstream stream(file);
-    if (!stream)
-        throw file_not_found(file);
-
-    std::array<size_t, 3> dim;
-    std::array<scalar_t, 3> spacing;
-    std::array<scalar_t, 3> zeroPos;
-    size_t npoints;
-
-    TypeInfo ti;
-
-    // These variables are all taken by reference
-    loadHeader(stream, dim, spacing, zeroPos, npoints, ti);
-
-    std::size_t bufsize = npoints * ti.size();
-    std::vector<char> rbuf(bufsize);
-    stream.read(rbuf.data(), bufsize);
-
-    data.resize(dim[0] * dim[1] * dim[2]);
-
-    // Converts elements in the charachter vector to elements of type
-    // T and puts them into data.
-    convertBufferWithTypeInfo(rbuf.data(), ti, npoints, data.data());
-
-    stream.close();
-
-    spacingX = spacing[0];
-    spacingY = spacing[1];
-    spacingZ = spacing[2];
-    zeroPosX = zeroPos[0];
-    zeroPosY = zeroPos[1];
-    zeroPosZ = zeroPos[2];
-    nx = dim[0];
-    ny = dim[1];
-    nz = dim[2];
+    return Image3D(
+        data,
+        spacing[0],
+        spacing[1],
+        spacing[2],
+        zeroPos[0],
+        zeroPos[1],
+        zeroPos[2]
+        dim[0],
+        dim[1],
+        dim[2]);
 }
 
 } // util namespace

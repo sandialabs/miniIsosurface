@@ -82,6 +82,8 @@ private:
     std::vector<std::array<size_t, 3> > tris;     //
 
 private:
+    bool isCutEdge(size_t const& i, size_t const& j, size_t const& k) const;
+
     inline uchar
     calcCaseEdge(bool const& prevEdge, bool const& currEdge) const;
 

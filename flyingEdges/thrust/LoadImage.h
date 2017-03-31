@@ -16,11 +16,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "FlyingEdges_Config.h"
+#include "config.h"
 
-#include "Image3D.h"
-#include "TypeInfo.h"
-#include "ConvertBuffer.h"
+#include "../util/TypeInfo.h"
+#include "../util/ConvertBuffer.h"
 
 namespace util {
 
@@ -163,38 +162,6 @@ streamIgnore(std::ifstream& stream, size_t nPoints, std::size_t pointSize)
             stream.read(&rbufIgnore[0], ignoreSize);
         }
     }
-}
-
-Image3D
-loadImage(const char* file)
-{
-    std::ifstream stream(file);
-    if (!stream)
-        throw file_not_found(file);
-
-    std::array<size_t, 3> dim;
-    std::array<scalar_t, 3> spacing;
-    std::array<scalar_t, 3> zeroPos;
-    size_t npoints;
-
-    TypeInfo ti;
-
-    // These variables are all taken by reference
-    loadHeader(stream, dim, spacing, zeroPos, npoints, ti);
-
-    std::size_t bufsize = npoints * ti.size();
-    std::vector<char> rbuf(bufsize);
-    stream.read(rbuf.data(), bufsize);
-
-    std::vector<scalar_t> data(dim[0] * dim[1] * dim[2]);
-
-    // Converts elements in the charachter vector to elements of type
-    // T and puts them into data.
-    convertBufferWithTypeInfo(rbuf.data(), ti, npoints, data.data());
-
-    stream.close();
-
-    return Image3D(data, spacing, zeroPos, dim);
 }
 
 void loadImage_thrust(

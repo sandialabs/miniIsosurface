@@ -123,7 +123,7 @@ void pass1gpu_trim(
 
     uchar* curEdgeCases = edgeCases + k*(nx-1)*ny + j*(nx-1);
 
-    for(int i = 0; i != nx-2; ++i)
+    for(int i = 0; i != nx-1; ++i)
     {
         if(curEdgeCases[i] == 1 || curEdgeCases[i] == 2)
         {

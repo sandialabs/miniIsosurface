@@ -9,8 +9,6 @@
 #include "../util/MarchingCubesTables.h"
 #include <algorithm>
 
-#include <iostream> // TODO
-
 ///////////////////////////////////////////////////////////////////////////////
 // Pass 1 of the algorithm
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,25 +18,33 @@ void FlyingEdgesAlgorithm::pass1()
     //  - for each edge i along fixed (j, k) gridEdge, fill edgeCases with
     //    cut information.
     //  - find the locations for computational trimming, xl and xr
+    //  To properly find xl and xr, have to check along the x axis,
+    //  the y-axis and the z-axis!
     for(size_t k = 0; k != nz; ++k) {
     for(size_t j = 0; j != ny; ++j)
     {
         auto curEdgeCases = edgeCases.begin() + (nx-1) * (k*ny + j);
         auto curPointValues = image.getRowIter(j, k);
 
-        gridEdge& curGridEdge = gridEdges[k*ny + j];
-
         std::array<bool, 2> isGE;
         isGE[0] = (curPointValues[0] >= isoval);
-        curGridEdge.xl = nx;
-        for(int i = 1; i != nx-1; ++i)
+        for(int i = 1; i != nx; ++i)
         {
             isGE[i%2] = (curPointValues[i] >= isoval);
 
             curEdgeCases[i-1] = calcCaseEdge(isGE[(i+1)%2], isGE[i%2]);
+        }
+    }}
 
+    for(size_t k = 0; k != nz; ++k) {
+    for(size_t j = 0; j != ny; ++j)
+    {
+        gridEdge& curGridEdge = gridEdges[k*ny + j];
+        curGridEdge.xl = nx;
+        for(int i = 1; i != nx; ++i)
+        {
             // If the edge is cut
-            if(curEdgeCases[i-1] == 1 || curEdgeCases[i-1] == 2)
+            if(isCutEdge(i-1, j, k))
             {
                 if(curGridEdge.xl == nx)
                 {
@@ -49,24 +55,6 @@ void FlyingEdgesAlgorithm::pass1()
             }
         }
     }}
-
-    size_t count = 0;
-    for(int idx = 0; idx != edgeCases.size(); ++idx)
-    {
-        uchar const& val = edgeCases[idx];
-        count += val;
-    }
-    std::cout << "Edgecase counter: " << count << std::endl;
-
-    size_t countL = 0;
-    size_t countR = 0;
-    for(int idx = 0; idx != gridEdges.size(); ++idx)
-    {
-        countL += gridEdges[idx].xl;
-        countR += gridEdges[idx].xr;
-    }
-    std::cout << "xl, xr: " << countL << ", " << countR << std::endl;
-
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -191,21 +179,6 @@ void FlyingEdgesAlgorithm::pass2()
             }
         }
     }}
-
-    int count = 0;
-    for(int idx = 0; idx != cubeCases.size(); ++idx)
-    {
-        int val = cubeCases[idx] == 255 ? 0 : cubeCases[idx];
-        count += val;
-    }
-    std::cout << "Cube cases count " << count << std::endl;
-
-    int sumxstart = 0;
-    for(int idx = 0; idx != gridEdges.size(); ++idx)
-    {
-        sumxstart += gridEdges[idx].xstart;
-    }
-    std::cout << "sumxstart " << sumxstart << std::endl;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -248,12 +221,43 @@ void FlyingEdgesAlgorithm::pass3()
         pointAccum += tmp;
     }}
 
+/* Saving jic. Same thing as above just scanned in different order
+ *
+    size_t pointAccum = 0;
+    for(size_t k = 0; k != nz; ++k) {
+    for(size_t j = 0; j != ny; ++j)
+    {
+        gridEdge& curGridEdge = gridEdges[k*ny + j];
+
+        tmp = curGridEdge.xstart;
+        curGridEdge.xstart = pointAccum;
+        pointAccum += tmp;
+    }}
+
+    for(size_t k = 0; k != nz; ++k) {
+    for(size_t j = 0; j != ny; ++j)
+    {
+        gridEdge& curGridEdge = gridEdges[k*ny + j];
+
+        tmp = curGridEdge.ystart;
+        curGridEdge.ystart = pointAccum;
+        pointAccum += tmp;
+    }}
+
+    for(size_t k = 0; k != nz; ++k) {
+    for(size_t j = 0; j != ny; ++j)
+    {
+        gridEdge& curGridEdge = gridEdges[k*ny + j];
+
+        tmp = curGridEdge.zstart;
+        curGridEdge.zstart = pointAccum;
+        pointAccum += tmp;
+    }}
+*/
+
     points = std::vector<std::array<scalar_t, 3> >(pointAccum);
     normals = std::vector<std::array<scalar_t, 3> >(pointAccum);
     tris = std::vector<std::array<size_t, 3> >(triAccum);
-
-    std::cout << "num points: " << pointAccum << std::endl;
-    std::cout << "num tris:   " << triAccum   << std::endl;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -324,6 +328,7 @@ void FlyingEdgesAlgorithm::pass4()
             // Add Points and normals.
             // Calculate global indices for triangles
             std::array<size_t, 12> globalIdxs;
+
             if(isCut[0])
             {
                 size_t idx = ge0.xstart + x0counter;
@@ -400,6 +405,7 @@ void FlyingEdgesAlgorithm::pass4()
             if(isCut[10])
             {
                 size_t idx = ge1.zstart + z1counter;
+
                 if(isYEnd)
                 {
                     points[idx] = interpolateOnCube(pointCube, isovalCube, 10);
@@ -498,6 +504,47 @@ util::TriangleMesh FlyingEdgesAlgorithm::moveOutput()
 // Private helper functions
 ///////////////////////////////////////////////////////////////////////////////
 
+bool FlyingEdgesAlgorithm::isCutEdge(
+    size_t const& i, size_t const& j, size_t const& k) const
+{
+    // Assuming edgeCases are all set
+    size_t edgeCaseIdx = k*(nx-1)*ny + j*(nx-1) + i;
+    if(edgeCases[edgeCaseIdx] == 1 || edgeCases[edgeCaseIdx] == 2)
+    {
+        return true;
+    }
+
+    if(j != ny - 1)
+    {
+        size_t edgeCaseIdxY = k*(nx-1)*ny + (j+1)*(nx-1) + i;
+
+        // If (edgeCaseX, edgeCaseY) is (0, 1), (1, 2), (2, 3), (0, 3)
+        //                              (1, 0), (2, 1), (3, 2), (3, 0)
+        // and not the other options of (0, 2), (1, 3),
+        //                              (2, 0), (3, 1)
+        // then the edge along the y axis is cut.
+        // So check to see if edgeCaseX + edgeCaseY is odd.
+        if((edgeCases[edgeCaseIdx] + edgeCases[edgeCaseIdxY]) % 2 == 1)
+        {
+            return true;
+        }
+    }
+
+    if(k != nz - 1)
+    {
+        size_t edgeCaseIdxZ = (k+1)*(nx-1)*ny + j*(nx-1) + i;
+
+        // Same as above. If it is odd, then there is a cut except this
+        // time along the z axis.
+        if((edgeCases[edgeCaseIdx] + edgeCases[edgeCaseIdxZ]) % 2 == 1)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 inline uchar
 FlyingEdgesAlgorithm::calcCaseEdge(
     bool const& prevEdge,
@@ -548,8 +595,6 @@ FlyingEdgesAlgorithm::calcCubeCase(
     return caseId;
 }
 
-//#include <iostream> // TODO
-
 inline void
 FlyingEdgesAlgorithm::calcTrimValues(
     size_t& xl, size_t& xr,
@@ -562,8 +607,6 @@ FlyingEdgesAlgorithm::calcTrimValues(
 
     xl = size_t(std::min({ge0.xl, ge1.xl, ge2.xl, ge3.xl}));
     xr = size_t(std::max({ge0.xr, ge1.xr, ge2.xr, ge3.xr}));
-
-//    std::cout << ge0.xl << " " << ge1.xl << " " << ge2.xl << " " << ge3.xl << " : " << xl << std::endl;
 
     if(xl > xr)
         xl = xr;

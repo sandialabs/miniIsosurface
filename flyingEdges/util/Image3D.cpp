@@ -147,7 +147,7 @@ Image3D::computeGradient(size_t i, size_t j, size_t k) const
     else
     {
         x[1][0] = data[dataIdx + nx];
-        x[1][1] = data[dataIdx - ny];
+        x[1][1] = data[dataIdx - nx];
         run[1] = 2 * spacing[1];
     }
 

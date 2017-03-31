@@ -46,6 +46,15 @@ public:
     size_t ydimension() const { return ny; }
     size_t zdimension() const { return nz; }
 
+    void cutDown(int const& numX)
+    {
+        nx = numX;
+        std::vector<scalar_t> newData(nx*ny*nz);
+        std::copy(data.begin(), data.begin() + nx*ny*nz,
+                  newData.begin());
+        data = newData;
+    }
+
 private:
     inline scalar_t
     getData(size_t i, size_t j, size_t k) const;

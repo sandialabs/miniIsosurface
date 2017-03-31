@@ -73,6 +73,15 @@ public:
     size_t ydimension() const { return globalDim[1]; }
     size_t zdimension() const { return globalDim[2]; }
 
+    // TODO
+    void cut_down(int const& i)
+    {
+        data.resize(i*ydimension()*zdimension());
+        dataEnd[0] = i;
+        globalDim[0] = i;
+        indexEnd[0] = i;
+    }
+
 private:
     std::array<T, 3>
     computeGradient(size_t xidx, size_t yidx, size_t zidx) const;
