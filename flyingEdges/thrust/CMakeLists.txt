@@ -1,4 +1,4 @@
-set(target thrust)
+set(target flyingEdgesThrust)
 
 set(srcs
     ../util/Timer.cpp

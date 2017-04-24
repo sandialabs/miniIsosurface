@@ -1,4 +1,4 @@
-# mantevo-marching-cubes #
+# miniIsosurface/marchingCubes #
 
 Marching Cubes is an algorithm that creates a polygonal mesh to approximate an isosurface
 from a three-dimensional discrete scalar field. The discrete scalar field is subdivided into
@@ -29,20 +29,20 @@ mantevo-marching-cubes makes use of C++11 features. Namely
 1. Clone the repository
 
 ```
-git clone https://gitlab.sandia.gov/kmorel-src/mantevo-marching-cubes.git
+git clone git@gitlab.sandia.gov:visMiniapps/miniIsosurface.git
 ```
 2. Create a build directory. mantevo-marching-mubes does not require an out-of-tree build, but it is
 cleaner.
 
 ```
-mkdir my_build_dir
-cd my_build_dir
+mkdir miniIsosurface/mcBuild
+cd miniIsosurface/mcBuild
 ```
-3. Invoke CMake from your build directory, pointing to the mantevo-marching-cubes source directory.
-The two flags, BUILD\_OPENMP and BUILD\_MPI, must be turned on to build all implementations.
+3. Invoke CMake from your build directory, pointing to the miniIsosurface/marchingCubes source directory.
+The two flags, BUILD\_OPENMP and BUILD\_MPI, must be turned on to build all implementations under the CMake build system.
 
 ```
-cmake /path/to/mantevo-marching-cubes -DBUILD_OPENMP=On -DBUILD_MPI=On
+cmake /path/to/miniIsosurface/marchingCubes -DBUILD_OPENMP=On -DBUILD_MPI=On
 ```
 
 4. Invoke GNU make from the build directory.
