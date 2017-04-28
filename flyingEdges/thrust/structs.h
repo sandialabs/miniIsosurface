@@ -3,55 +3,31 @@
 
 #include "config.h"
 
-struct abc_transform
+struct fill_out_pre_scan_values // TODO better name
   : public thrust::unary_function<
         int,
-        tuple<
-            tuple<
-                scalar_t, scalar_t, scalar_t,
-                scalar_t, scalar_t, scalar_t>,
-            tuple<
-                scalar_t, scalar_t, scalar_t,
-                scalar_t, scalar_t, scalar_t>,
-            tuple<
-                scalar_t, scalar_t, scalar_t,
-                scalar_t, scalar_t, scalar_t>,
-            uchar,
-            int> >
+        tuple<int, int, int, int, uchar> >
 {
-    abc_transform(
+    fill_out_pre_scan_values(
         int const& nx, int const& ny, int const& nz,
-        int const& spacing_x, int const& spacing_y, int const& spacing_z,
-        int const& zeropos_x, int const& zeropos_y, int const& zeropos_z,
         scalar_t const& isoval,
         const_pointer<scalar_t> data)
       : nx(nx), ny(ny), nz(nz),
-        spacing_x(spacing_x), spacing_y(spacing_y), spacing_z(spacing_z),
-        zeropos_x(zeropos_x), zeropos_y(zeropos_y), zeropos_z(zeropos_z),
         isoval(isoval),
         data(data)
     {}
 
     int const nx, ny, nz;
-    int const spacing_x, spacing_y, spacing_z;
-    int const zeropos_x, zeropos_y, zeropos_z;
     scalar_t const isoval;
     const_pointer<scalar_t> data;
 
-    ///////////////////////////////////////////////////////////////////////////
     __platform__
     tuple<
-        tuple<
-            scalar_t, scalar_t, scalar_t,    // points  ax, ay, az
-            scalar_t, scalar_t, scalar_t>,   // normals ax, ay, az
-        tuple<
-            scalar_t, scalar_t, scalar_t,    // points  bx, by, bz
-            scalar_t, scalar_t, scalar_t>,   // normals bx, by, bz
-        tuple<
-            scalar_t, scalar_t, scalar_t,    // points  cx, cy, cz
-            scalar_t, scalar_t, scalar_t>,   // normals cx, cy, cz
-        uchar,                               // cube_id
-        int>                                 // nt
+        int,     // a0
+        int,     // b0
+        int,     // c0
+        int,     // num_tri
+        uchar>   // cube_id
     operator()(
         int const& idx) const
     {
@@ -80,56 +56,19 @@ struct abc_transform
 
         bool const* is_cut = mctable::isCut[cube_id];
 
-        bool calc_a = (i != nx-1) && is_cut[0];
-        bool calc_b = (j != ny-1) && is_cut[3];
-        bool calc_c = (k != nz-1) && is_cut[8];
-
-        scalar_t points[3*3];  // x,y,z coords for a,b,c
-        scalar_t normals[3*3]; // x,y,z coords for a,b,c
-
-        calc_points(
-            points,
-            vals,
-            i, j, k,
-            calc_a, calc_b, calc_c);
-        calc_normals(
-            normals,
-            vals,
-            i, j, k,
-            calc_a, calc_b, calc_c);
-
-        // get min pos for possible points and set that minus 1 as the
-        // not set value.
-        scalar_t default_value = zeropos_x;
-        if(zeropos_y < default_value)
-            default_value = zeropos_y;
-        if(zeropos_z < default_value)
-            default_value = zeropos_z;
-
-        default_value = default_value - 1;
-        auto default_tuple =
-            make_tuple(
-                default_value, default_value, default_value,
-                default_value, default_value, default_value);
+        // don't add values on the edge! Then is_cut value for edges
+        // is bogus because of the call to get_safe.
+        // ... This is because of the need to handle edge cases.
+        int a = (i != nx-1) && is_cut[0];
+        int b = (j != ny-1) && is_cut[3];
+        int c = (k != nz-1) && is_cut[8];
 
         return make_tuple(
-            calc_a
-              ? make_tuple(
-                    points[0],  points[1],  points[2],
-                    normals[0], normals[1], normals[2])
-              : default_tuple,
-            calc_b
-              ? make_tuple(
-                    points[3],  points[4],  points[5],
-                    normals[3], normals[4], normals[5])
-              : default_tuple,
-            calc_c
-              ? make_tuple(
-                    points[6],  points[7],  points[8],
-                    normals[6], normals[7], normals[8])
-              : default_tuple,
-            cube_id,
-            num_tri);
+            a,
+            b,
+            c,
+            num_tri,
+            cube_id);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -149,6 +88,150 @@ struct abc_transform
         if(vals[7] >= isoval) case_id |= 128;
 
         return case_id;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    __platform__
+    scalar_t
+    get_safe(int const& i, int const& j, int const& k) const
+    {
+        if(i == nx || j == ny || k == nz)
+            return 1.0; // arbitray, doesn't matter
+        return *(data + idxer(i, j, k));
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    __platform__
+    int
+    idxer(int const& i, int const& j, int const& k) const
+    {
+        return k*nx*ny + j*nx + i;
+    }
+};
+
+struct calculate_points_and_normals
+  : public thrust::unary_function<
+        tuple<
+            int,
+            tuple<int, int, int, int, uchar> >,
+        void>
+{
+    calculate_points_and_normals(
+        int const& nx, int const& ny, int const& nz,
+        scalar_t const& spacing_x, scalar_t const& spacing_y, scalar_t const& spacing_z,
+        scalar_t const& zeropos_x, scalar_t const& zeropos_y, scalar_t const& zeropos_z,
+        scalar_t const& isoval,
+        const_pointer<scalar_t> data,
+        int const offset,
+        pointer<scalar_t> pts_x, pointer<scalar_t> pts_y, pointer<scalar_t> pts_z,
+        pointer<scalar_t> nrs_x, pointer<scalar_t> nrs_y, pointer<scalar_t> nrs_z)
+      : nx(nx), ny(ny), nz(nz),
+        spacing_x(spacing_x), spacing_y(spacing_y), spacing_z(spacing_z),
+        zeropos_x(zeropos_x), zeropos_y(zeropos_y), zeropos_z(zeropos_z),
+        isoval(isoval),
+        data(data),
+        offset(offset),
+        pts_x(pts_x), pts_y(pts_y), pts_z(pts_z),
+        nrs_x(nrs_x), nrs_y(nrs_y), nrs_z(nrs_z)
+    {}
+
+    int const nx, ny, nz;
+    scalar_t const spacing_x, spacing_y, spacing_z;
+    scalar_t const zeropos_x, zeropos_y, zeropos_z;
+    scalar_t const isoval;
+    const_pointer<scalar_t> data;
+    int const offset;
+    pointer<scalar_t> pts_x, pts_y, pts_z;
+    pointer<scalar_t> nrs_x, nrs_y, nrs_z;
+
+    __platform__
+    void
+    operator()(
+        tuple<
+            int,         // idx
+            tuple<
+                int,     // a0
+                int,     // b0
+                int,     // c0
+                int,     // num_tri
+                uchar>   // cube_id
+            > const& tup)
+    {
+        int const& idx = thrust::get<0>(tup);
+
+        int const k = idx / (nx*ny);
+        int const j = (idx / nx) % ny;
+        int const i = idx % nx;
+
+        // remember to subtract offset
+        int const a0 = thrust::get<0>(thrust::get<1>(tup)) - offset;
+        int const b0 = thrust::get<1>(thrust::get<1>(tup)) - offset;
+        int const c0 = thrust::get<2>(thrust::get<1>(tup)) - offset;
+
+        int const& num_tri   = thrust::get<3>(thrust::get<1>(tup));
+        uchar const& cube_id = thrust::get<4>(thrust::get<1>(tup));
+
+        bool const* is_cut = mctable::isCut[cube_id];
+
+        // The reason cube_id isn't just being calcluated here is
+        // because the set triangle step will need it.
+
+        scalar_t vals[8];
+        vals[0] = get_safe(i,     j,     k);
+        vals[1] = get_safe(i + 1, j,     k);
+        vals[2] = get_safe(i + 1, j + 1, k);
+        vals[3] = get_safe(i,     j + 1, k);
+        vals[4] = get_safe(i,     j,     k + 1);
+        vals[5] = get_safe(i + 1, j,     k + 1);
+        vals[6] = get_safe(i + 1, j + 1, k + 1);
+        vals[7] = get_safe(i,     j + 1, k + 1);
+
+        bool calc_a = (i != nx-1) && is_cut[0];
+        bool calc_b = (j != ny-1) && is_cut[3];
+        bool calc_c = (k != nz-1) && is_cut[8];
+
+        scalar_t points[3*3];  // x,y,z coords for a,b,c
+        scalar_t normals[3*3]; // x,y,z coords for a,b,c
+
+        calc_points(
+            points,
+            vals,
+            i, j, k,
+            calc_a, calc_b, calc_c);
+        calc_normals(
+            normals,
+            vals,
+            i, j, k,
+            calc_a, calc_b, calc_c);
+
+        // set points and normals to their location.
+        if(calc_a)
+        {
+            *(pts_x + a0) = points[0];
+            *(pts_y + a0) = points[1];
+            *(pts_z + a0) = points[2];
+            *(nrs_x + a0) = normals[0];
+            *(nrs_y + a0) = normals[1];
+            *(nrs_z + a0) = normals[2];
+        }
+        if(calc_b)
+        {
+            *(pts_x + b0) = points[3];
+            *(pts_y + b0) = points[4];
+            *(pts_z + b0) = points[5];
+            *(nrs_x + b0) = normals[3];
+            *(nrs_y + b0) = normals[4];
+            *(nrs_z + b0) = normals[5];
+        }
+        if(calc_c)
+        {
+            *(pts_x + c0) = points[6];
+            *(pts_y + c0) = points[7];
+            *(pts_z + c0) = points[8];
+            *(nrs_x + c0) = normals[6];
+            *(nrs_y + c0) = normals[7];
+            *(nrs_z + c0) = normals[8];
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -332,7 +415,7 @@ struct abc_transform
     get_safe(int const& i, int const& j, int const& k) const
     {
         if(i == nx || j == ny || k == nz)
-            return *(data + idxer(i-1, j-1, k-1)); // arbitrary value, doesn't matter
+            return 1.0; // arbitray, doesn't matter
         return *(data + idxer(i, j, k));
     }
 
@@ -351,122 +434,6 @@ struct abc_transform
         return k*nx*ny + j*nx + i;
     }
 
-};
-
-struct neq
-  : public unary_function<
-        scalar_t,
-        int>
-{
-    neq(scalar_t const& default_value)
-      : default_value(default_value)
-    {}
-
-    scalar_t default_value;
-
-    __platform__
-    int
-    operator()(scalar_t const& val) const
-    {
-        return val != default_value;
-    }
-};
-
-struct set_points_and_normals
-  : public unary_function<
-        tuple<
-            tuple<
-                int, int, int>,
-            tuple<
-                scalar_t, scalar_t, scalar_t,    // points  ax, ay, az
-                scalar_t, scalar_t, scalar_t>,   // normals ax, ay, az
-            tuple<
-                scalar_t, scalar_t, scalar_t,    // points  bx, by, bz
-                scalar_t, scalar_t, scalar_t>,   // normals bx, by, bz
-            tuple<
-                scalar_t, scalar_t, scalar_t,    // points  cx, cy, cz
-                scalar_t, scalar_t, scalar_t> >, // normals cx, cy, cz
-            void>
-{
-    set_points_and_normals(
-        pointer<scalar_t> pts_x,
-        pointer<scalar_t> pts_y,
-        pointer<scalar_t> pts_z,
-        pointer<scalar_t> nrs_x,
-        pointer<scalar_t> nrs_y,
-        pointer<scalar_t> nrs_z,
-        scalar_t const& default_value,
-        int const& offset)
-      : pts_x(pts_x), pts_y(pts_y), pts_z(pts_z),
-        nrs_x(nrs_x), nrs_y(nrs_y), nrs_z(nrs_z),
-        default_value(default_value),
-        offset(offset)
-    {}
-
-    pointer<scalar_t> pts_x, pts_y, pts_z;
-    pointer<scalar_t> nrs_x, nrs_y, nrs_z;
-    scalar_t const default_value;
-    int const offset;
-
-    __device__ __host__
-    void
-    operator()(
-        tuple<
-            tuple<
-                int, int, int>, // a0, b0, c0
-            tuple<
-                scalar_t, scalar_t, scalar_t,    // points  ax, ay, az
-                scalar_t, scalar_t, scalar_t>,   // normals ax, ay, az
-            tuple<
-                scalar_t, scalar_t, scalar_t,    // points  bx, by, bz
-                scalar_t, scalar_t, scalar_t>,   // normals bx, by, bz
-            tuple<
-                scalar_t, scalar_t, scalar_t,    // points  cx, cy, cz
-                scalar_t, scalar_t, scalar_t> >  // normals cx, cy, cz
-        const& tup) const // the function is const but data pointed to by pts
-                          // is modified (thats the point of the function)
-    {
-        auto const& idxs = get<0>(tup);
-        auto const& a_vals = get<1>(tup);
-        auto const& b_vals = get<2>(tup);
-        auto const& c_vals = get<3>(tup);
-
-        if(get<0>(a_vals) != default_value)
-        {
-            int const a0 = get<0>(idxs) - offset;
-
-            *(pts_x + a0) = get<0>(a_vals);
-            *(pts_y + a0) = get<1>(a_vals);
-            *(pts_z + a0) = get<2>(a_vals);
-            *(nrs_x + a0) = get<3>(a_vals);
-            *(nrs_y + a0) = get<4>(a_vals);
-            *(nrs_z + a0) = get<5>(a_vals);
-        }
-
-        if(get<0>(b_vals) != default_value)
-        {
-            int const b0 = get<1>(idxs) - offset;
-
-            *(pts_x + b0) = get<0>(b_vals);
-            *(pts_y + b0) = get<1>(b_vals);
-            *(pts_z + b0) = get<2>(b_vals);
-            *(nrs_x + b0) = get<3>(b_vals);
-            *(nrs_y + b0) = get<4>(b_vals);
-            *(nrs_z + b0) = get<5>(b_vals);
-        }
-
-        if(get<0>(c_vals) != default_value)
-        {
-            int const c0 = get<2>(idxs) - offset;
-
-            *(pts_x + c0) = get<0>(c_vals);
-            *(pts_y + c0) = get<1>(c_vals);
-            *(pts_z + c0) = get<2>(c_vals);
-            *(nrs_x + c0) = get<3>(c_vals);
-            *(nrs_y + c0) = get<4>(c_vals);
-            *(nrs_z + c0) = get<5>(c_vals);
-        }
-    }
 };
 
 struct set_triangles

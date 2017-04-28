@@ -13,19 +13,10 @@
 
 // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 //
-// While correct, this code is slower than the serial version.
-// The most likely culprit is that way too much memory is being
-// allocated upfront.
+// Next: Split the image up and contain ghost sell information.
 //
-// Instead of setting points and normals in the first part--and
-// thereby allocating way too much memory that is mostly filled with
-// unused values, the next version should only fill out a0, b0, c0,
-// triscan and caseid on the first part. Then scan them. After the
-// scan step, allocate however much memory available and set points
-// and normals and then triangles.
-//
-// The limiting factor is not how much computation can be done but
-// memory.
+// The problem is that for large input, the entire image will not fit
+// into memory.
 //
 // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 
@@ -139,35 +130,9 @@ int main(int argc, char* argv[])
     int n = nx*ny*nz;
     int processed = 0;
 
-    // a_xyz
-    vector<scalar_t> ax(process_size);  // points    ; will be set to -1 if not needed
-    vector<scalar_t> ay(process_size);  //           ; the others don't matter
-    vector<scalar_t> az(process_size);
-    vector<scalar_t> axn(process_size); // normals
-    vector<scalar_t> ayn(process_size);
-    vector<scalar_t> azn(process_size);
-
-    // b_xyz
-    vector<scalar_t> bx(process_size); // has to be set to -1 if not used
-    vector<scalar_t> by(process_size);
-    vector<scalar_t> bz(process_size);
-    vector<scalar_t> bxn(process_size);
-    vector<scalar_t> byn(process_size);
-    vector<scalar_t> bzn(process_size);
-
-    // c_xyz
-    vector<scalar_t> cx(process_size); // has to be set to -1 if not used
-    vector<scalar_t> cy(process_size);
-    vector<scalar_t> cz(process_size);
-    vector<scalar_t> cxn(process_size);
-    vector<scalar_t> cyn(process_size);
-    vector<scalar_t> czn(process_size);
-
-    // cube_ids
-    vector<uchar> cube_ids(n);
-
     // tri_scan
-    vector<int> tri_scan(n); // needs to be int for scan step
+    vector<int> tri_scan(n);
+    vector<uchar> cube_ids(n);
 
     vector<int> a0(n);
     vector<int> b0(n);
@@ -176,106 +141,95 @@ int main(int argc, char* argv[])
     int num_triangles = 0;
     int num_points = 0;
 
-    scalar_t default_value = std::min(
-        zeropos_x,
-        std::min(zeropos_y, zeropos_z)) - 1;
+    int max_cur_points = process_size / 100; // used for keeping track of amount
+                                             // reserved in pts, nrs vectors
+    vector<scalar_t> pts_x(max_cur_points);  // process_size is too big of a guess because
+    vector<scalar_t> pts_y(max_cur_points);  // that means every single (x,y,z) is cut.
+    vector<scalar_t> pts_z(max_cur_points);  // going with process_size/100 for now.
 
-    int max_cur_points = process_size;
-    vector<scalar_t> pts_x(process_size); // guess at the size, may make it bigger
-    vector<scalar_t> pts_y(process_size); // during algorithm. But probably already
-    vector<scalar_t> pts_z(process_size); // too big of a guess
+    vector<scalar_t> nrs_x(max_cur_points);
+    vector<scalar_t> nrs_y(max_cur_points);
+    vector<scalar_t> nrs_z(max_cur_points);
 
-    vector<scalar_t> nrs_x(process_size);
-    vector<scalar_t> nrs_y(process_size);
-    vector<scalar_t> nrs_z(process_size);
-
-    host_vector<scalar_t> host_pts_x(0);
-    host_vector<scalar_t> host_pts_y(0);
-    host_vector<scalar_t> host_pts_z(0);
-    host_vector<scalar_t> host_nrs_x(0);
-    host_vector<scalar_t> host_nrs_y(0);
-    host_vector<scalar_t> host_nrs_z(0);
+    int guess_num_pts = n / 100;            // Again, just a guess for amount to reserve.
+    host_vector<scalar_t> host_pts_x;     host_pts_x.reserve(guess_num_pts);
+    host_vector<scalar_t> host_pts_y;     host_pts_y.reserve(guess_num_pts);
+    host_vector<scalar_t> host_pts_z;     host_pts_z.reserve(guess_num_pts);
+    host_vector<scalar_t> host_nrs_x;     host_nrs_x.reserve(guess_num_pts);
+    host_vector<scalar_t> host_nrs_y;     host_nrs_y.reserve(guess_num_pts);
+    host_vector<scalar_t> host_nrs_z;     host_nrs_z.reserve(guess_num_pts);
 
     run_time_allocate_memory.stop();
 
+    // ----- The algorihtm in a nutshel -----
+    // While not all the image has been processed:
+    //   First:  fill out pre scan values. That is a0, b0, c0, tri_scan, case_id
+    //   Second: scan a0, b0, c0, tri_scan.
+    //   Third:  Calculate points and normals. Put to output data at a0, b0 and c0 vals.
+    // Free up image data
+    // Calculate triangles from a0, b0, c0, tri_scan and case_id
+    // --------------------------------------
+
     util::Timer run_time_points_and_normals;
+
+    std::cout << "num to process: " << n << std::endl;
 
     while(processed != n)
     {
         int p = std::min(process_size, n - processed);
 
-        auto a_iter = make_zip_iterator(
-            make_tuple(
-                ax.begin(),  ay.begin(),  az.begin(),
-                axn.begin(), ayn.begin(), azn.begin()));
-        auto b_iter = make_zip_iterator(
-            make_tuple(
-                bx.begin(),  by.begin(),  bz.begin(),
-                bxn.begin(), byn.begin(), bzn.begin()));
-        auto c_iter = make_zip_iterator(
-            make_tuple(
-                cx.begin(),  cy.begin(),  cz.begin(),
-                cxn.begin(), cyn.begin(), czn.begin()));
+        // calculate a0, b0, c0, tri_scan
 
-        auto pts_nors_plus = make_zip_iterator(
+        auto scan_iterator = make_zip_iterator(
             make_tuple(
-                a_iter,
-                b_iter,
-                c_iter,
-                cube_ids.begin() + processed,
-                tri_scan.begin() + processed));
+                a0.begin() + processed,
+                b0.begin() + processed,
+                c0.begin() + processed,
+                tri_scan.begin() + processed,
+                cube_ids.begin() + processed));
+
+        // pass1 calculate whether or not a0, b0, c0 is cut, the number of triangles
+        // at the (x,y,z) cube and the cube_id.
 
         transform(
             policy,
-            make_counting_iterator(processed),     // Will calculate v0, ..., v7 from
-            make_counting_iterator(processed + p), // function. As well as gradient vs
-            pts_nors_plus,
-            abc_transform(
+            make_counting_iterator(processed),
+            make_counting_iterator(processed + p),
+            scan_iterator,
+            fill_out_pre_scan_values(
                 nx, ny, nz,
-                spacing_x, spacing_y, spacing_z,
-                zeropos_x, zeropos_y, zeropos_z,
-                isoval, image_data.data()));
+                isoval,
+                image_data.data()));
 
-        ///////////////////////////////////////////////////////////////////////////
-
+        ///////////////////////////////////////////////////////////////////////
+        // pass 2: scan step + allocate for points and normal values
         // tmp sums
-        int np_a_temp = (ax[p-1] != -1);
-        int np_b_temp = (bx[p-1] != -1);
-        int np_c_temp = (cx[p-1] != -1);
-        int num_triangles_temp = tri_scan[processed + p - 1];
-
-        auto ax_mod_iter = make_transform_iterator(
-            ax.begin(),
-            neq(default_value));
-        auto bx_mod_iter = make_transform_iterator(
-            bx.begin(),
-            neq(default_value));
-        auto cx_mod_iter = make_transform_iterator(
-            cx.begin(),
-            neq(default_value));
+        int tmp_a = a0[processed + p - 1];
+        int tmp_b = b0[processed + p - 1];
+        int tmp_c = c0[processed + p - 1];
+        int tmp_t = tri_scan[processed + p - 1];
 
         exclusive_scan(
             policy,
-            ax_mod_iter,
-            ax_mod_iter + p,
             a0.begin() + processed,
-            num_points);
+            a0.begin() + processed + p,
+            a0.begin() + processed,
+            num_points);                    // increase starting value
 
         exclusive_scan(
             policy,
-            bx_mod_iter,
-            bx_mod_iter + p,
             b0.begin() + processed,
-            np_a_temp + a0[processed + p - 1]); // increase starting value
+            b0.begin() + processed + p,
+            b0.begin() + processed,
+            tmp_a + a0[processed + p - 1]); // increase starting value
 
         exclusive_scan(
             policy,
-            cx_mod_iter,
-            cx_mod_iter + p,
             c0.begin() + processed,
-            np_b_temp + b0[processed + p - 1]); // increase starting value
+            c0.begin() + processed + p,
+            c0.begin() + processed,
+            tmp_b + b0[processed + p - 1]); // increase starting value
 
-        // Don't need num triangles; can do based off of cubeIds!
         exclusive_scan(
             policy,
             tri_scan.begin() + processed,
@@ -284,14 +238,12 @@ int main(int argc, char* argv[])
             num_triangles);
 
         int prev_num_points = num_points;
-        // final values of sums
-        num_triangles = num_triangles_temp + tri_scan[processed + p - 1];
-        num_points = np_c_temp + c0[processed + p - 1];
 
-        ///////////////////////////////////////////////////////////////////////////
+        num_triangles = tmp_t + tri_scan[processed + p - 1];
+        num_points = tmp_c + c0[processed + p - 1];
+
         // Allocate points and normals. Triangles will be allocated later
         int cur_num_points = num_points - prev_num_points;
-
         if(cur_num_points > max_cur_points)
         {
             max_cur_points = cur_num_points;
@@ -305,31 +257,33 @@ int main(int argc, char* argv[])
             nrs_z.resize(cur_num_points);
         }
 
-        ///////////////////////////////////////////////////////////////////////////
-        // Set points and normals
-        auto indexer = make_zip_iterator(
-            make_tuple(
-                a0.begin() + processed,
-                b0.begin() + processed,
-                c0.begin() + processed));
+        ///////////////////////////////////////////////////////////////////////
+        // pass 3: calculate points and normal values.
+        // Triangles will be done at the end.
 
-        auto indexer_plus_info_iterator = make_zip_iterator(
-            make_tuple(
-                indexer,
-                a_iter,
-                b_iter,
-                c_iter));
+        auto pts_nors_info_beg =
+            make_zip_iterator(
+                make_tuple(
+                    make_counting_iterator(processed),
+                    scan_iterator));
+        auto pts_nors_info_end = pts_nors_info_beg + p;
 
         for_each(
             policy,
-            indexer_plus_info_iterator,
-            indexer_plus_info_iterator + p,
-            set_points_and_normals(
+            pts_nors_info_beg,
+            pts_nors_info_end,
+            calculate_points_and_normals(
+                nx, ny, nz,
+                spacing_x, spacing_y, spacing_z,
+                zeropos_x, zeropos_y, zeropos_z,
+                isoval,
+                image_data.data(),
+                prev_num_points,
                 pts_x.data(), pts_y.data(), pts_z.data(),
-                nrs_x.data(), nrs_y.data(), nrs_z.data(),
-                default_value,
-                prev_num_points));
+                nrs_x.data(), nrs_y.data(), nrs_z.data()));
 
+        // TODO make sure host_pts_x has a good initial guess to the size.
+        // Its on the host, so can make big lar
         host_pts_x.resize(num_points);
         host_pts_y.resize(num_points);
         host_pts_z.resize(num_points);
@@ -347,8 +301,8 @@ int main(int argc, char* argv[])
         thrust::copy(nrs_y.begin(), nrs_y.begin() + cnp, host_nrs_y.begin() + pnp);
         thrust::copy(nrs_z.begin(), nrs_z.begin() + cnp, host_nrs_z.begin() + pnp);
 
+        ///////////////////////////////////////////////////////////////////////
         processed += p;
-
         std::cout << "num processed: " << processed << std::endl;
     }
 
@@ -361,17 +315,9 @@ int main(int argc, char* argv[])
     pts_y.resize(0);   nrs_y.resize(0);
     pts_z.resize(0);   nrs_z.resize(0);
 
-    ax.resize(0);    bx.resize(0);    cx.resize(0);
-    ay.resize(0);    by.resize(0);    cy.resize(0);
-    az.resize(0);    bz.resize(0);    cz.resize(0);
-    axn.resize(0);   bxn.resize(0);   cxn.resize(0);
-    ayn.resize(0);   byn.resize(0);   cyn.resize(0);
-    azn.resize(0);   bzn.resize(0);   czn.resize(0);
-
     ///////////////////////////////////////////////////////////////////////////
     // Set and allocate triangles
-
-    util::Timer run_time_triangles;
+    util::Timer run_time_set_triangles;
 
     vector<int> trs0(num_triangles);
     vector<int> trs1(num_triangles);
@@ -392,7 +338,7 @@ int main(int argc, char* argv[])
     host_vector<int> host_trs_1(trs1);
     host_vector<int> host_trs_2(trs2);
 
-    run_time_triangles.stop();
+    run_time_set_triangles.stop();
     run_time.stop();
 
     doc.add("Number of vertices in mesh", num_points);
@@ -416,11 +362,11 @@ int main(int argc, char* argv[])
 
     doc.add("Set Triangles", "");
     doc.get("Set Triangles")->add(
-        "CPU Time (clicks)", run_time_triangles.getTotalTicks());
+        "CPU Time (clicks)", run_time_set_triangles.getTotalTicks());
     doc.get("Set Triangles")->add(
-        "CPU Time (seconds)", run_time_triangles.getCPUtime());
+        "CPU Time (seconds)", run_time_set_triangles.getCPUtime());
     doc.get("Set Triangles")->add(
-        "Wall Time (seconds)", run_time_triangles.getWallTime());
+        "Wall Time (seconds)", run_time_set_triangles.getWallTime());
 
     doc.add("Total Program CPU Time (clicks)", run_time.getTotalTicks());
     doc.add("Total Program CPU Time (seconds)", run_time.getCPUtime());

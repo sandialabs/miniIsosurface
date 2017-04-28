@@ -5,8 +5,6 @@ project(flyingEdges)
 
 option(BUILD_CUDA OFF)
 
-find_package(CUDA REQUIRED)
-
 add_subdirectory(serial)
 
 if (BUILD_CUDA)
