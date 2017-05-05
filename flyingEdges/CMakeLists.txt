@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 11)
 project(flyingEdges)
 
 option(BUILD_CUDA OFF)
+option(BUILD_OPENMP OFF)
 
 add_subdirectory(serial)
 
@@ -12,4 +13,8 @@ if (BUILD_CUDA)
     add_subdirectory(thrust)
     #add_subdirectory(cuda)
     #add_subdirectory(cuda2)
+endif()
+
+if (BUILD_OPENMP)
+    add_subdirectory(openmp)
 endif()
