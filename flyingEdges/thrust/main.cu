@@ -11,14 +11,12 @@
 #include "config.h"
 #include "structs.h"
 
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+///////////////////////////////////////////////////////////////////////////////
+// TODO
 //
-// Next: Split the image up and contain ghost sell information.
-//
-// The problem is that for large input, the entire image will not fit
-// into memory.
-//
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+// If the image file is too big to fit on the gpu, this will not work.
+// The todo is to fix that by loading parts of the image in at a time.
+///////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char* argv[])
 {
@@ -88,6 +86,23 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Startup the gpu. This takes 5-10 seconds with Nvidia K80 and if isn't
+    // done here, would be reflected in the overall time of the algorithm.
+    {
+        std::vector<scalar_t> startup_gpu_cheat(1);
+
+        util::Timer t;
+        vector<scalar_t> devide_startup_gpu_cheat(startup_gpu_cheat);
+        t.stop();
+
+        std::cout << "Time to startup gpu: " << t.getWallTime() << std::endl;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Load Image from file to host
+    ///////////////////////////////////////////////////////////////////////////
     std::vector<scalar_t> data_host;
     scalar_t spacing_x, spacing_y, spacing_z;
     scalar_t zeropos_x, zeropos_y, zeropos_z;
@@ -116,6 +131,7 @@ int main(int argc, char* argv[])
     doc.add("File x-dimension", nx);
     doc.add("File y-dimension", ny);
     doc.add("File z-dimension", nz);
+    ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
     // copy over image data to device and Allocate memory
@@ -283,7 +299,7 @@ int main(int argc, char* argv[])
                 nrs_x.data(), nrs_y.data(), nrs_z.data()));
 
         // TODO make sure host_pts_x has a good initial guess to the size.
-        // Its on the host, so can make big lar
+        // Its on the host, so it can be made big
         host_pts_x.resize(num_points);
         host_pts_y.resize(num_points);
         host_pts_z.resize(num_points);
@@ -379,50 +395,6 @@ int main(int argc, char* argv[])
         host_pts_x, host_pts_y, host_pts_z,
         host_nrs_x, host_nrs_y, host_nrs_z,
         host_trs_0, host_trs_1, host_trs_2);
-
-/*
- ******* Metrics to test correctness*******
-    scalar_t sum_pts = 0.0;
-    scalar_t sum_nrs = 0.0;
-    for(int w = 0; w != num_points; ++w)
-    {
-        sum_pts += host_pts_x[w] + host_pts_y[w] + host_pts_z[w];
-        sum_nrs += host_nrs_x[w] + host_nrs_y[w] + host_nrs_z[w];
-
-        while(sum_pts > 500000000)
-            sum_pts -=  500000000;
-        while(sum_pts <-500000000)
-            sum_pts +=  500000000;
-        while(sum_nrs > 500000000)
-            sum_nrs -=  500000000;
-        while(sum_nrs <-500000000)
-            sum_nrs +=  500000000;
-    }
-
-    scalar_t sum_tri_pts = 0.0;
-    for(int v = 0; v != num_triangles; ++v)
-    {
-        int p1 = host_trs0[v];
-        int p2 = host_trs1[v];
-        int p3 = host_trs2[v];
-
-        sum_tri_pts += host_pts_x[p1] + host_pts_y[p1] + host_pts_z[p1] +
-                       host_pts_x[p2] + host_pts_y[p2] + host_pts_z[p2] +
-                       host_pts_x[p3] + host_pts_y[p3] + host_pts_z[p3];
-
-
-        while(sum_tri_pts > 500000000)
-            sum_tri_pts -=  500000000;
-        while(sum_tri_pts <-500000000)
-            sum_tri_pts +=  500000000;
-    }
-
-    std::cout << "num points " << num_points << ", " << host_pts_x.size() << std::endl;
-    std::cout << "num triangles " << num_triangles << ", " << host_trs0.size() << std::endl;
-    std::cout << "sum points " << sum_pts << std::endl;
-    std::cout << "sum normals " << sum_nrs << std::endl;
-    std::cout << "sum triangle points " << sum_tri_pts << std::endl;
-*/
 }
 
 
