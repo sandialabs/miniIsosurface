@@ -47,7 +47,7 @@ public:
             std::array<size_t, 3> dimensions)
       : data(data), spacing(spacing), zeroPos(zeroPos),
         indexBeg({0, 0, 0}),
-        indexEnd({dimensions[0] - 1, dimensions[1]-1, dimensions[2]-1}),
+        indexEnd({dimensions[0] - 1, dimensions[1] - 1, dimensions[2] - 1}),
         dataBeg({0, 0, 0}), dataEnd(dimensions),
         globalDim(dimensions)
     {}

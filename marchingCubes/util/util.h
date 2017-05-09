@@ -40,6 +40,30 @@ namespace util
         }
         return ret;
     }
+
+    struct Indexer
+    {
+        Indexer(size_t const& nTotal, size_t const& nSections)
+          : grain(nTotal / nSections),
+            split((grain+1)*nSections - nTotal)
+        {}
+
+        size_t operator()(size_t const& idx) const
+        {
+            if(idx <= split)
+            {
+                return grain*idx;
+            }
+            else
+            {
+                return grain*split + (grain+1)*(idx-split);
+            }
+        }
+
+    private:
+        size_t const grain;
+        size_t const split;
+    };
 }
 
 #endif
