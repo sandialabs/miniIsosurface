@@ -17,6 +17,8 @@
 #include <chrono>
 #include <iomanip>
 
+#include <omp.h>
+
 #include "../util/Image3D.h"
 #include "../util/TriangleMesh.h"
 
@@ -149,7 +151,8 @@ sectionOfMarchingCubes(
 
 template <typename T>
 util::TriangleMesh<T>
-MarchingCubes(util::Image3D<T> const& image, T const& isoval, size_t const& grainDim)
+MarchingCubes(util::Image3D<T> const& image, T const& isoval,
+    size_t const& nSectionsX, size_t const& nSectionsY, size_t const& nSectionsZ)
 {
     // The marching cubes algorithm creates a polygonal mesh to approximate an
     // isosurface from a three-dimensional discrete scalar field.
@@ -197,12 +200,19 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, size_t const& grai
     size_t yEndIdxExtent = image.yEndIdx();
     size_t zEndIdxExtent = image.zEndIdx();
 
-    size_t numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
-    size_t numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
-    size_t numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
+    // The util::Indexer statically distributes the elements that the
+    // section is in charge of.
+    // The operator function of a util::Indexer takes a section index
+    // and returns the corresponding index starting at that section.
+    // Each section W has total_elements_on_section / n_sections or
+    // total_elements_on_section / n_sections + 1 elements in it such
+    // that indexer(n_sections) = total_elements_on_section.
+    util::Indexer indexerX(xEndIdxExtent - xBeginIdx, nSectionsX);
+    util::Indexer indexerY(yEndIdxExtent - yBeginIdx, nSectionsY);
+    util::Indexer indexerZ(zEndIdxExtent - zBeginIdx, nSectionsZ);
 
-    size_t numSections = numSectX * numSectY * numSectZ;
-    size_t numSectionsPerPage = numSectX * numSectY;
+    size_t nSections = nSectionsX * nSectionsY * nSectionsZ;
+    size_t nSectionsPerPage = nSectionsX * nSectionsY;
 
     #pragma omp parallel
     {
@@ -219,20 +229,21 @@ MarchingCubes(util::Image3D<T> const& image, T const& isoval, size_t const& grai
         std::unordered_map<size_t, size_t> threadPointMap;
 
         #pragma omp for nowait
-        for(size_t i = 0; i < numSections; ++i)
+        for(size_t i = 0; i < nSections; ++i)
         {
             // Determine the coordinates of this section.
-            size_t xSectIdx = (i % numSectionsPerPage) % numSectX;
-            size_t ySectIdx = (i % numSectionsPerPage) / numSectX;
-            size_t zSectIdx = (i / numSectionsPerPage);
+            size_t xSectIdx = (i % nSectionsPerPage) % nSectionsX;
+            size_t ySectIdx = (i % nSectionsPerPage) / nSectionsX;
+            size_t zSectIdx = (i / nSectionsPerPage);
 
-            size_t xbeg = xSectIdx * grainDim;
-            size_t ybeg = ySectIdx * grainDim;
-            size_t zbeg = zSectIdx * grainDim;
+            size_t xbeg = indexerX(xSectIdx);
+            size_t ybeg = indexerY(ySectIdx);
+            size_t zbeg = indexerZ(zSectIdx);
 
-            size_t xend = std::min(xbeg + grainDim, xEndIdxExtent);
-            size_t yend = std::min(ybeg + grainDim, yEndIdxExtent);
-            size_t zend = std::min(zbeg + grainDim, zEndIdxExtent);
+            // indexerW(nSectionsW) == wEndIdxExtent - wBeginIdx
+            size_t xend = indexerX(xSectIdx + 1);
+            size_t yend = indexerY(ySectIdx + 1);
+            size_t zend = indexerZ(zSectIdx + 1);
 
             // How does this work? TODO
             // For performance reasons, rehashing the unordered map.
@@ -321,10 +332,22 @@ int main(int argc, char* argv[])
     std::string yamlDirectory = "";
     std::string yamlFileName  = "";
 
-    // To control the granularity of the parallel execution, grainDim is passed
-    // to the algorithm. grainDim is the largest number of cubes to be
-    // processed in each dimension.
-    std::size_t grainDim = 256;
+    // To control the granularity of the parallel execution,
+    // specify how many sections should be in the X, Y and Z direction.
+    std::size_t nSectionsX = 1;
+    std::size_t nSectionsY = 1;
+
+    std::size_t nSectionsZ;
+    // set nSectionsZ to the number of openmp threads being run
+    // Calling omp_get_num_threads() outside of a parallel directive
+    // will return 1
+    #pragma omp parallel
+    {
+        if(omp_get_thread_num() == 0)
+        {
+            nSectionsZ = omp_get_num_threads();
+        }
+    }
 
     // Read command line arguments
     for(int i=0; i<argc; i++)
@@ -342,9 +365,17 @@ int main(int argc, char* argv[])
             isovalSet = true;
             isoval = atof(argv[++i]);
         }
-        else if( (strcmp(argv[i], "-g") == 0) || (strcmp(argv[i], "-grain_dim") == 0))
+        else if( (strcmp(argv[i], "-sx") == 0) || (strcmp(argv[i], "-sections_x") == 0))
         {
-            grainDim = std::stoul(argv[++i]);
+            nSectionsX = std::stoul(argv[++i]);
+        }
+        else if( (strcmp(argv[i], "-sy") == 0) || (strcmp(argv[i], "-sections_y") == 0))
+        {
+            nSectionsY = std::stoul(argv[++i]);
+        }
+        else if( (strcmp(argv[i], "-sz") == 0) || (strcmp(argv[i], "-sections_z") == 0))
+        {
+            nSectionsZ = std::stoul(argv[++i]);
         }
         else if( (strcmp(argv[i], "-y") == 0) || (strcmp(argv[i], "-yaml_output_file") == 0))
         {
@@ -369,7 +400,9 @@ int main(int argc, char* argv[])
                 "  -input_file (-i)"              << std::endl <<
                 "  -output_file (-o)"             << std::endl <<
                 "  -isoval (-v)"                  << std::endl <<
-                "  -grain_dim (-g), default 256"  << std::endl <<
+                "  -sections_x (-sx)"             << std::endl <<
+                "  -sections_y (-sy)"             << std::endl <<
+                "  -sections_z (-sz)"             << std::endl <<
                 "  -yaml_output_file (-y)"        << std::endl <<
                 "  -help (-h)"                    << std::endl;
             return 0;
@@ -393,24 +426,26 @@ int main(int argc, char* argv[])
     doc.add("Volume image data file path", vtkFile);
     doc.add("Polygonal mesh output file", outFile);
     doc.add("Isoval", isoval);
-    doc.add("Grain Dimensions", grainDim);
 
     // Load the image file
     util::Image3D<float> image = util::loadImage<float>(vtkFile);
 
+    // Readjust nSections if they are set too large.
+    if(nSectionsX > image.xdimension() - 1)
+        nSectionsX = image.xdimension() - 1;
+    if(nSectionsY > image.ydimension() - 1)
+        nSectionsY = image.ydimension() - 1;
+    if(nSectionsZ > image.zdimension() - 1)
+        nSectionsZ = image.zdimension() - 1;
+
+    doc.add("Number of X sections", nSectionsX);
+    doc.add("Number of Y sections", nSectionsY);
+    doc.add("Number of Z sections", nSectionsZ);
+    doc.add("Number of sections", nSectionsX * nSectionsY * nSectionsZ);
+
     doc.add("File x-dimension", image.xdimension());
     doc.add("File y-dimension", image.ydimension());
     doc.add("File z-dimension", image.zdimension());
-
-    // The number of sections along the x, y and z directions is calculated
-    // in MarchingCubes but this is done here so it can be output via doc.
-    std::size_t numSectX = (image.xEndIdx() - image.xBeginIdx() + grainDim - 1)
-        / grainDim;
-    std::size_t numSectY = (image.yEndIdx() - image.xBeginIdx() + grainDim - 1)
-        / grainDim;
-    std::size_t numSectZ = (image.zEndIdx() - image.zBeginIdx() + grainDim - 1)
-        / grainDim;
-    doc.add("Number of sections", numSectX * numSectY * numSectZ);
 
     // Time the output. Timer's constructor starts timing.
     util::Timer runTime;
@@ -419,7 +454,8 @@ int main(int argc, char* argv[])
     // loaded at vtkFile and the isoval of the surface to approximate. It's
     // output is a TriangleMesh which stores the mesh as a vector
     // of triangles.
-    util::TriangleMesh<float> polygonalMesh = MarchingCubes(image, isoval, grainDim);
+    util::TriangleMesh<float> polygonalMesh =
+        MarchingCubes(image, isoval, nSectionsX, nSectionsY, nSectionsZ);
 
     // End timing
     runTime.stop();
