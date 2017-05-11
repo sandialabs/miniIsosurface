@@ -183,6 +183,12 @@ MarchingCubes(std::vector<util::Image3D<T> > const& images, T const& isoval)
 
 int main(int argc, char* argv[])
 {
+    // Initialize MPI
+    MPI::Init(argc, argv);
+
+    int pid = MPI::COMM_WORLD.Get_rank();
+    int nProcesses = MPI::COMM_WORLD.Get_size();
+
     float isoval;
     bool isovalSet = false;
     char* vtkFile = NULL;
@@ -191,10 +197,9 @@ int main(int argc, char* argv[])
     std::string yamlDirectory = "";
     std::string yamlFileName  = "";
 
-    // To control the granularity of the parallel execution, grainDim is passed
-    // to the algorithm. grainDim is the largest number of cubes to be
-    // processed in each dimension.
-    std::size_t grainDim = 256;
+    std::size_t nSectionsX = 1;
+    std::size_t nSectionsY = 1;
+    std::size_t nSectionsZ = nProcesses;
 
     // Read command line arguments
     for(int i=0; i<argc; i++)
@@ -212,9 +217,17 @@ int main(int argc, char* argv[])
             isovalSet = true;
             isoval = atof(argv[++i]);
         }
-        else if( (strcmp(argv[i], "-g") == 0) || (strcmp(argv[i], "-grain_dim") == 0))
+        else if( (strcmp(argv[i], "-sx") == 0) || (strcmp(argv[i], "-sections_x") == 0))
         {
-            grainDim = std::stoul(argv[++i]);
+            nSectionsX = std::stoul(argv[++i]);
+        }
+        else if( (strcmp(argv[i], "-sy") == 0) || (strcmp(argv[i], "-sections_y") == 0))
+        {
+            nSectionsY = std::stoul(argv[++i]);
+        }
+        else if( (strcmp(argv[i], "-sz") == 0) || (strcmp(argv[i], "-sections_z") == 0))
+        {
+            nSectionsZ = std::stoul(argv[++i]);
         }
         else if( (strcmp(argv[i], "-m") == 0) || (strcmp(argv[i], "-one_mesh") == 0))
         {
@@ -243,7 +256,9 @@ int main(int argc, char* argv[])
                 "  -input_file (-i)"              << std::endl <<
                 "  -output_file (-o)"             << std::endl <<
                 "  -isoval (-v)"                  << std::endl <<
-                "  -grain_dim (-g), default 256"  << std::endl <<
+                "  -sections_x (-sx)"             << std::endl <<
+                "  -sections_y (-sy)"             << std::endl <<
+                "  -sections_z (-sz)"             << std::endl <<
                 "  -one_mesh (-m), default 0"     << std::endl <<
                 "  -yaml_output_file (-y)"        << std::endl <<
                 "  -help (-h)"                    << std::endl;
@@ -258,12 +273,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // Initialize MPI
-    MPI::Init(argc, argv);
-
-    int pid = MPI::COMM_WORLD.Get_rank();
-    int nProcesses = MPI::COMM_WORLD.Get_size();
-
     // Create a yamlDoc. If yamlDirectory and yamlFileName weren't assigned,
     // YAML_Doc will create a file at in the current directory with a
     // timestamp on it.
@@ -271,21 +280,19 @@ int main(int argc, char* argv[])
     // This file won't be created unless pid is 0.
     YAML_Doc doc("Marching Cubes", "0.2", yamlDirectory, yamlFileName);
 
-    if(pid == 0)
-    {
-        // Add information related to this run to doc.
-        doc.add("Marching Cubes Algorithm", "mpi");
-        doc.add("Volume image data file path", vtkFile);
-        doc.add("Polygonal mesh output file", outFile);
-        doc.add("Isoval", isoval);
-        doc.add("Grain Dimensions", grainDim);
-    }
-
     // Each image in images will be used to run the algorithm for a section.
     // Each processor is in charge of running the algorithm on an evenly
     // distributed number of sections.
     std::vector<util::Image3D<float> > images =
-        mpiutil::loadImageSections<float>(vtkFile, grainDim);
+        mpiutil::loadImageSections<float>(vtkFile, nSectionsX, nSectionsY, nSectionsZ);
+
+    // Readjust nSections if they are set too large.
+    if(nSectionsX > images[0].xdimension() - 1)
+        nSectionsX = images[0].xdimension() - 1;
+    if(nSectionsY > images[0].ydimension() - 1)
+        nSectionsY = images[0].ydimension() - 1;
+    if(nSectionsZ > images[0].zdimension() - 1)
+        nSectionsZ = images[0].zdimension() - 1;
 
     if (pid == 0)
     {
@@ -293,6 +300,15 @@ int main(int argc, char* argv[])
         std::size_t xdim = images[0].xdimension();
         std::size_t ydim = images[0].ydimension();
         std::size_t zdim = images[0].zdimension();
+        // Add information related to this run to doc.
+        doc.add("Marching Cubes Algorithm", "mpi");
+        doc.add("Volume image data file path", vtkFile);
+        doc.add("Polygonal mesh output file", outFile);
+        doc.add("Isoval", isoval);
+        doc.add("Number of X sections", nSectionsX);
+        doc.add("Number of Y sections", nSectionsY);
+        doc.add("Number of Z sections", nSectionsZ);
+        doc.add("Number of sections", nSectionsX * nSectionsY * nSectionsZ);
         doc.add("File x-dimension", xdim);
         doc.add("File y-dimension", ydim);
         doc.add("File z-dimension", zdim);

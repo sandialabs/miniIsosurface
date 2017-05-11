@@ -240,6 +240,7 @@ void FlyingEdgesAlgorithm::pass3()
                     parts[idx] += parts[idx-1];
                 }
             }
+
             #pragma omp barier
             if(tID > 0)
             {

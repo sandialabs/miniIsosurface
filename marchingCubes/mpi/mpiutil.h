@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #include "../util/TriangleMesh.h"
+#include "../util/util.h"
 
 #include <mpi.h>
 
@@ -77,7 +78,8 @@ readSectionData(
 
 template <typename T>
 std::vector<util::Image3D<T> >
-loadImageSections(const char* file, size_t const& grainDim)
+loadImageSections(const char* file,
+    size_t const& nSectionsX, size_t const& nSectionsY, size_t const& nSectionsZ)
 {
     std::ifstream stream(file);
     if (!stream)
@@ -101,18 +103,18 @@ loadImageSections(const char* file, size_t const& grainDim)
     size_t yEndIdxExtent = dim[1] - 1;
     size_t zEndIdxExtent = dim[2] - 1;
 
-    size_t numSectX = (xEndIdxExtent - xBeginIdx + grainDim - 1) / grainDim;
-    size_t numSectY = (yEndIdxExtent - yBeginIdx + grainDim - 1) / grainDim;
-    size_t numSectZ = (zEndIdxExtent - zBeginIdx + grainDim - 1) / grainDim;
+    util::Indexer indexerX(xEndIdxExtent - xBeginIdx, nSectionsX);
+    util::Indexer indexerY(yEndIdxExtent - yBeginIdx, nSectionsY);
+    util::Indexer indexerZ(zEndIdxExtent - zBeginIdx, nSectionsZ);
 
-    size_t numSections = numSectX * numSectY * numSectZ;
-    size_t numSectionsPerPage = numSectX * numSectY;
+    size_t nSections = nSectionsX * nSectionsY * nSectionsZ;
+    size_t nSectionsPerPage = nSectionsX * nSectionsY;
 
     int pid = MPI::COMM_WORLD.Get_rank();
     int nProcesses = MPI::COMM_WORLD.Get_size();
 
-    size_t sectPerProcess = (numSections + nProcesses - 1) / nProcesses;
-    size_t split = nProcesses + numSections - sectPerProcess * nProcesses;
+    size_t sectPerProcess = (nSections + nProcesses - 1) / nProcesses;
+    size_t split = nProcesses + nSections - sectPerProcess * nProcesses;
 
     size_t startSectNum, endSectNum;
     if (pid < split)
@@ -131,9 +133,9 @@ loadImageSections(const char* file, size_t const& grainDim)
     for(size_t i = startSectNum; i != endSectNum; ++i)
     {
         // Determine the coordinates of this section.
-        size_t xSectIdx = (i % numSectionsPerPage) % numSectX;
-        size_t ySectIdx = (i % numSectionsPerPage) / numSectX;
-        size_t zSectIdx = (i / numSectionsPerPage);
+        size_t xSectIdx = (i % nSectionsPerPage) % nSectionsX;
+        size_t ySectIdx = (i % nSectionsPerPage) / nSectionsX;
+        size_t zSectIdx = (i / nSectionsPerPage);
 
         // Let w be either x, y, or z. wBegIdx/wEndIdx and wDataBeg/wDataEnd
         // will most likely refer to different ranges. wBegIdx/wEndIdx defines
@@ -176,13 +178,13 @@ loadImageSections(const char* file, size_t const& grainDim)
         //   The third section:
         //     xDataBeg = 199, xDataEnd = 300
         //     xBegIdx = 200, xEndIdx = 299
-        size_t xBegIdx = xSectIdx * grainDim;
-        size_t yBegIdx = ySectIdx * grainDim;
-        size_t zBegIdx = zSectIdx * grainDim;
+        size_t xBegIdx = indexerX(xSectIdx);
+        size_t yBegIdx = indexerY(ySectIdx);
+        size_t zBegIdx = indexerZ(zSectIdx);
 
-        size_t xEndIdx = std::min(xBegIdx + grainDim, xEndIdxExtent);
-        size_t yEndIdx = std::min(yBegIdx + grainDim, yEndIdxExtent);
-        size_t zEndIdx = std::min(zBegIdx + grainDim, zEndIdxExtent);
+        size_t xEndIdx = indexerX(xSectIdx + 1);
+        size_t yEndIdx = indexerY(ySectIdx + 1);
+        size_t zEndIdx = indexerZ(zSectIdx + 1);
 
         size_t xDataBeg = xBegIdx == 0   ?   0   :   xBegIdx - 1;
         size_t yDataBeg = yBegIdx == 0   ?   0   :   yBegIdx - 1;
