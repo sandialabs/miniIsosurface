@@ -168,8 +168,48 @@ streamIgnore(std::ifstream& stream, size_t nPoints, std::size_t pointSize)
 
 template <typename T>
 Image3D<T>
-loadImage(const char* file)
+loadDatImage(const char* file)
 {
+    std::array<size_t, 3> dim{0, 0, 0};
+    std::array<T, 3> spacing{1, 1, 1};
+    std::array<T, 3> zeroPos{0, 0, 0};
+
+    std::ifstream fp(file, std::ios::binary);
+
+    fp.read(reinterpret_cast<char*>(&dim[0]), 2);
+    fp.read(reinterpret_cast<char*>(&dim[1]), 2);
+    fp.read(reinterpret_cast<char*>(&dim[2]), 2);
+
+    std::vector<T> data(dim[0]*dim[1]*dim[2]);
+
+    int idx = 0;
+    for(int z = 0; z != dim[2]; ++z)
+    {
+        for(int y = 0; y != dim[1]; ++y)
+        {
+            for(int x = 0; x != dim[0]; ++x)
+            {
+                int w = 0;
+                fp.read(reinterpret_cast<char*>(&w), 2);
+
+                data[idx] = w;
+                idx += 1;
+            }
+        }
+    }
+
+    return Image3D<T>(data, spacing, zeroPos, dim);
+}
+
+template <typename T>
+Image3D<T>
+loadImage(const char* file, bool useDat = false)
+{
+    if(useDat)
+    {
+        return loadDatImage<T>(file);
+    }
+
     std::ifstream stream(file);
     if (!stream)
         throw file_not_found(file);

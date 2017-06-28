@@ -191,10 +191,16 @@ int main(int argc, char* argv[])
     char* outFile = NULL;
     std::string yamlDirectory = "";
     std::string yamlFileName  = "";
+    bool useDat = false;
 
     // Read command line arguments
     for(int i=0; i<argc; i++)
     {
+        if( strcmp(argv[i], "-input_dat") == 0)
+        {
+            vtkFile = argv[++i];
+            useDat = true;
+        }
         if( (strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "-input_file") == 0))
         {
             vtkFile = argv[++i];
@@ -229,6 +235,7 @@ int main(int argc, char* argv[])
             std::cout <<
                 "Serial Marching Cubes Options:"  << std::endl <<
                 "  -input_file (-i)"              << std::endl <<
+                "  -input_dat"                    << std::endl <<
                 "  -output_file (-o)"             << std::endl <<
                 "  -isoval (-v)"                  << std::endl <<
                 "  -yaml_output_file (-y)"        << std::endl <<
@@ -256,7 +263,7 @@ int main(int argc, char* argv[])
     doc.add("Isoval", isoval);
 
     // Load the image file
-    util::Image3D<float> image = util::loadImage<float>(vtkFile);
+    util::Image3D<float> image = util::loadImage<float>(vtkFile, useDat);
 
     doc.add("File x-dimension", image.xdimension());
     doc.add("File y-dimension", image.ydimension());
