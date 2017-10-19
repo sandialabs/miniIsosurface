@@ -21,8 +21,7 @@ For further information, see the README files in the
 [vtkReference](vtkReference/README.md) directories.
 
 
-License
-=======
+## License ##
 
 miniIsosurface is distributed under the OSI-approved BSD 3-clause License.
 See [LICENSE.txt](LICENSE.txt) for details.

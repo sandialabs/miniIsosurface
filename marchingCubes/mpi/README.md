@@ -16,3 +16,14 @@ be written, `outputMeshMPI.vtk.0` and `outputMeshMPI.vtk.1`. The other option
 is to set the `one_mesh` flag to 1. In that case, once the algorithm has been
 run and timed, the meshes from each process will be combined and one output
 file will be written.
+
+
+## License ##
+
+miniIsosurface is distributed under the OSI-approved BSD 3-clause License.
+See [LICENSE.txt](../../LICENSE.txt) for details.
+
+Copyright (c) 2017
+National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under
+the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+certain rights in this software.
